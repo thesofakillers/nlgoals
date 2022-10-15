@@ -10,7 +10,7 @@ environment to the agent. This reward signal is typically computed via
 some handcrafted reward function. However, handcrafted reward functions
 can be difficult to specify for more complex problems and environments,
 and can lead to undesired agent behaviour due to reward hacking
-\[[14](#ref-pan_effects_2022)\].
+\[[26](#ref-pan_effects_2022), [34](#ref-skalse_defining_2022)\].
 
 ## Why We Want To Solve It
 
@@ -22,33 +22,36 @@ suffer from bias and human error, leading to subpar or undesired
 performance of our models. Generally, these are symptoms signaling
 difficulty in scaling and generalisation. In the case of undesired model
 performance, this has safety implications
-\[[11](#ref-hendrycks_unsolved_2022)\].
+\[[16](#ref-hendrycks_unsolved_2022)\].
 
 ## Current Solutions and their Shortcomings
 
 ### Inverse Reinforcement Learning
 
-Inverse Reinforcement Learning (IRL) \[[12](#ref-ho_generative_2016),
-[13](#ref-ng_algorithms_2000), [22](#ref-ziebart_maximum_2008)\] is the
+Inverse Reinforcement Learning (IRL) \[[17](#ref-ho_generative_2016),
+[25](#ref-ng_algorithms_2000), [43](#ref-ziebart_maximum_2008)\] is the
 problem of extracting a reward function given observed expert behaviour
 (demonstrations). While promising and perhaps suitable for many
-problems, IRL presents some limitations:
+problems, IRL presents some limitations. For instance expert
+demonstrations are not always available and can be difficult to obtain.
+Furthermore, for many environments it is very difficult to determine the
+reward function from the demonstrations, although there is some research
+addressing this issue \[[2](#ref-amin_towards_2016),
+[7](#ref-choi_inverse_2011)\]. Another limitation is that model
+performance may be limited to the performance of the experts from which
+it is learning, with additional research addressing this issue
+\[[11](#ref-evans_learning_2015-1), [12](#ref-evans_learning_2015)\].
+IRL is often also criticised for overlooking side-effects
+\[[22](#ref-krakovna_penalizing_2019)\] and encouraging power-seeking
+\[[36](#ref-turner_optimal_2021)\]. Even if these issues were addressed,
+IRL does not necessarily address the overarching problem, as reward
+hacking has been observed in the IRL context as well
+\[[19](#ref-ibarz_reward_2018)\]. Finally, one could argue that natural
+intelligent agents (e.g. humans) don’t always need expert demonstrations
+to learn a reward function, so this is indicative of a lack of
+generalisation.
 
--   Expert demonstrations are not always available and can be difficult
-    to obtain
--   For many environments it is very difficult to determine the reward
-    function from the demonstrations.
-    -   There is some research addressing this issue
-        \[[2](#ref-amin_towards_2016), [5](#ref-choi_inverse_2011)\].
--   Model performance may be limited to the performance of the experts
-    from which it is learning.
-    -   There is some research addressing this issue
-        \[[8](#ref-evans_learning_2015-1),
-        [9](#ref-evans_learning_2015)\].
--   Natural intelligent agents (e.g. humans) don’t always need expert
-    demonstrations to learn a reward function, so this is indicative of
-    a lack of generalisation.
-    <!-- - [Model Mis-specification and Inverse Reinforcement Learning | Academically Interesting (wordpress.com)](https://jsteinhardt.wordpress.com/2017/02/07/model-mis-specification-and-inverse-reinforcement-learning/) -->
+<!-- - [Model Mis-specification and Inverse Reinforcement Learning | Academically Interesting (wordpress.com)](https://jsteinhardt.wordpress.com/2017/02/07/model-mis-specification-and-inverse-reinforcement-learning/) -->
 
 IRL has a considerable overlap with ***imitation learning***
 \[[1](#ref-abbeel_apprenticeship_2004)\], where the goal is now to
@@ -60,24 +63,45 @@ faces similar limitations to those of IRL.
 Preference-based learning circumvents the need for demonstrations by
 using a more direct signal of human preferences. This includes, for
 example, directly asking users what they want via e.g. pairwise
-comparisons \[[3](#ref-biyik_batch_2018),
-[6](#ref-christiano_deep_2017), [18](#ref-sadigh_active_2017)\].
-
--   Expression of preferences via pairwise comparison can be limited.
--   Expressed preferences may be different from real preferences.
+comparisons \[[4](#ref-biyik_batch_2018),
+[8](#ref-christiano_deep_2017), [30](#ref-sadigh_active_2017)\]. The
+main approach is to expression preferences via pairwise comparison. This
+however can be limited in expressivity. Another potential issue is that
+the expressed preferences may be different from the real preferences.
 
 ## Proposed Approach
 
 Using advances in natural language processing, particularly in large
-language models (LLMs) \[[4](#ref-brown_language_2020),
-[19](#ref-sanh_multitask_2022), [20](#ref-vaswani_attention_2017)\] and
-prompting techniques \[[10](#ref-gal_image_2022),
-[16](#ref-reynolds_prompt_2021), [21](#ref-wu_ai_2022)\], and inspired
+language models (LLMs) \[[6](#ref-brown_language_2020),
+[31](#ref-sanh_multitask_2022), [37](#ref-vaswani_attention_2017)\] and
+prompting techniques \[[14](#ref-gal_image_2022),
+[28](#ref-reynolds_prompt_2021), [38](#ref-wu_ai_2022)\], and inspired
 by their applications beyond a pure NLP context
-\[[7](#ref-dosovitskiy_image_2021), [15](#ref-ramesh_hierarchical_2022),
-[17](#ref-rombach_high-resolution_2022)\], we can develop a more natural
+\[[10](#ref-dosovitskiy_image_2021),
+[27](#ref-ramesh_hierarchical_2022),
+[29](#ref-rombach_high-resolution_2022)\], we can develop a more natural
 interface between human and machine to specify goals and or rewards.
 This is after-all how humans communicate desired outcomes to each other.
+There already exist many works leveraging the expressivity of language
+models in an RL context, particularly from the last year
+\[[5](#ref-brooks_-context_2022), [9](#ref-ding_robot_2022),
+[15](#ref-gramopadhye_generating_2022), [18](#ref-huang_inner_2022),
+[20](#ref-jiang_vima_2022), [24](#ref-lu_neuro-symbolic_2022),
+[32](#ref-shridhar_cliport_2021),
+[33](#ref-shridhar_perceiver-actor_2022),
+[35](#ref-sumers_learning_2021), [39](#ref-yao_react_2022),
+[40](#ref-yu_using_2022), [42](#ref-zhou_inverse_2020)\]. A number of
+NL-RL-hybrid environments and datasets
+\[[3](#ref-anderson_vision-and-language_2018),
+[13](#ref-fan_minedojo_2022), [21](#ref-jiang_yunfan_vima_2022),
+[23](#ref-liu_reinforcement_2018), [41](#ref-zholus_iglu_2022)\] have
+accompanied many of these papers in the field. These works however
+mostly focus on their contributions to planning performance, learning
+efficiency and other more common RL metrics of success. Using similar to
+techniques developed by \[[26](#ref-pan_effects_2022)\] and taking
+inspiration from the recent works cited above, this work hopes to
+explore the question: **to what extent can natural language interfaces
+curtail the issue of reward hacking in RL?**
 
 # References
 
@@ -94,105 +118,211 @@ Unidentifiability in Inverse Reinforcement
 Learning](https://doi.org/10.48550/arXiv.1601.06569). arXiv.</span>
 
 <span class="csl-left-margin">\[3\] </span><span
+class="csl-right-inline">Anderson, P. et al. 2018. [Vision-and-Language
+Navigation: Interpreting Visually-Grounded Navigation Instructions in
+Real
+Environments](https://openaccess.thecvf.com/content_cvpr_2018/html/Anderson_Vision-and-Language_Navigation_Interpreting_CVPR_2018_paper.html).
+(2018), 3674–3683.</span>
+
+<span class="csl-left-margin">\[4\] </span><span
 class="csl-right-inline">Biyik, E. and Sadigh, D. 2018. [Batch Active
 Preference-Based Learning of Reward
 Functions](https://proceedings.mlr.press/v87/biyik18a.html).
 *Proceedings of The 2nd Conference on Robot Learning* (Oct. 2018),
 519–528.</span>
 
-<span class="csl-left-margin">\[4\] </span><span
+<span class="csl-left-margin">\[5\] </span><span
+class="csl-right-inline">Brooks, E. et al. 2022. [In-Context Policy
+Iteration](https://doi.org/10.48550/arXiv.2210.03821). arXiv.</span>
+
+<span class="csl-left-margin">\[6\] </span><span
 class="csl-right-inline">Brown, T.B. et al. 2020. [Language Models are
 Few-Shot Learners](http://arxiv.org/abs/2005.14165).</span>
 
-<span class="csl-left-margin">\[5\] </span><span
+<span class="csl-left-margin">\[7\] </span><span
 class="csl-right-inline">Choi, J. and Kim, K.-E. 2011. [Inverse
 Reinforcement Learning in Partially Observable
 Environments](http://jmlr.org/papers/v12/choi11a.html). *Journal of
 Machine Learning Research*. 12, 21 (2011), 691–730.</span>
 
-<span class="csl-left-margin">\[6\] </span><span
+<span class="csl-left-margin">\[8\] </span><span
 class="csl-right-inline">Christiano, P. et al. 2017. [Deep reinforcement
 learning from human
 preferences](https://doi.org/10.48550/arXiv.1706.03741). arXiv.</span>
 
-<span class="csl-left-margin">\[7\] </span><span
+<span class="csl-left-margin">\[9\] </span><span
+class="csl-right-inline">Ding, Y. et al. 2022. [Robot Task Planning and
+Situation Handling in Open
+Worlds](https://doi.org/10.48550/arXiv.2210.01287). arXiv.</span>
+
+<span class="csl-left-margin">\[10\] </span><span
 class="csl-right-inline">Dosovitskiy, A. et al. 2021. [An Image is Worth
 16x16 Words: Transformers for Image Recognition at
 Scale](https://doi.org/10.48550/arXiv.2010.11929). arXiv.</span>
 
-<span class="csl-left-margin">\[8\] </span><span
+<span class="csl-left-margin">\[11\] </span><span
 class="csl-right-inline">Evans, O. et al. 2015. Learning the preferences
 of bounded agents. (2015).</span>
 
-<span class="csl-left-margin">\[9\] </span><span
+<span class="csl-left-margin">\[12\] </span><span
 class="csl-right-inline">Evans, O. et al. 2015. [Learning the
 Preferences of Ignorant, Inconsistent
 Agents](https://doi.org/10.48550/arXiv.1512.05832). arXiv.</span>
 
-<span class="csl-left-margin">\[10\] </span><span
+<span class="csl-left-margin">\[13\] </span><span
+class="csl-right-inline">Fan, L. et al. 2022. [MineDojo: Building
+Open-Ended Embodied Agents with Internet-Scale
+Knowledge](https://doi.org/10.48550/arXiv.2206.08853). arXiv.</span>
+
+<span class="csl-left-margin">\[14\] </span><span
 class="csl-right-inline">Gal, R. et al. 2022. [An Image is Worth One
 Word: <span class="nocase">Personalizing Text-to-Image Generation</span>
 using Textual Inversion](https://doi.org/10.48550/arXiv.2208.01618).
 arXiv.</span>
 
-<span class="csl-left-margin">\[11\] </span><span
+<span class="csl-left-margin">\[15\] </span><span
+class="csl-right-inline">Gramopadhye, M. and Szafir, D. 2022.
+[Generating Executable Action Plans with Environmentally-Aware Language
+Models](https://doi.org/10.48550/arXiv.2210.04964). arXiv.</span>
+
+<span class="csl-left-margin">\[16\] </span><span
 class="csl-right-inline">Hendrycks, D. et al. 2022. [Unsolved Problems
 in ML Safety](https://doi.org/10.48550/arXiv.2109.13916). arXiv.</span>
 
-<span class="csl-left-margin">\[12\] </span><span
+<span class="csl-left-margin">\[17\] </span><span
 class="csl-right-inline">Ho, J. and Ermon, S. 2016. [Generative
 Adversarial Imitation
 Learning](https://proceedings.neurips.cc/paper/2016/hash/cc7e2b878868cbae992d1fb743995d8f-Abstract.html).
 *Advances in Neural Information Processing Systems* (2016).</span>
 
-<span class="csl-left-margin">\[13\] </span><span
+<span class="csl-left-margin">\[18\] </span><span
+class="csl-right-inline">Huang, W. et al. 2022. [Inner Monologue:
+Embodied Reasoning through Planning with Language
+Models](https://doi.org/10.48550/arXiv.2207.05608). arXiv.</span>
+
+<span class="csl-left-margin">\[19\] </span><span
+class="csl-right-inline">Ibarz, B. et al. 2018. [Reward learning from
+human preferences and demonstrations in
+Atari](https://doi.org/10.48550/arXiv.1811.06521). arXiv.</span>
+
+<span class="csl-left-margin">\[20\] </span><span
+class="csl-right-inline">Jiang, Y. et al. 2022. [VIMA: General Robot
+Manipulation with Multimodal
+Prompts](https://doi.org/10.48550/arXiv.2210.03094). arXiv.</span>
+
+<span class="csl-left-margin">\[21\] </span><span
+class="csl-right-inline">Jiang, Y. et al. 2022. [VIMA: General Robot
+Manipulation with Multimodal
+Prompts](https://doi.org/10.5281/ZENODO.7127587). Zenodo.</span>
+
+<span class="csl-left-margin">\[22\] </span><span
+class="csl-right-inline">Krakovna, V. et al. 2019. [Penalizing side
+effects using stepwise relative
+reachability](https://doi.org/10.48550/arXiv.1806.01186). arXiv.</span>
+
+<span class="csl-left-margin">\[23\] </span><span
+class="csl-right-inline">Liu, E.Z. et al. 2018. [Reinforcement Learning
+on Web Interfaces Using Workflow-Guided
+Exploration](https://doi.org/10.48550/arXiv.1802.08802). arXiv.</span>
+
+<span class="csl-left-margin">\[24\] </span><span
+class="csl-right-inline">Lu, Y. et al. 2022. [Neuro-Symbolic Procedural
+Planning with Commonsense
+Prompting](https://doi.org/10.48550/arXiv.2206.02928). arXiv.</span>
+
+<span class="csl-left-margin">\[25\] </span><span
 class="csl-right-inline">Ng, A.Y. and Russell, S. 2000. Algorithms for
 Inverse Reinforcement Learning. *In Proc. 17th International Conf. On
 Machine Learning* (2000), 663–670.</span>
 
-<span class="csl-left-margin">\[14\] </span><span
+<span class="csl-left-margin">\[26\] </span><span
 class="csl-right-inline">Pan, A. et al. 2022. [The Effects of Reward
 Misspecification: Mapping and Mitigating Misaligned
 Models](https://doi.org/10.48550/arXiv.2201.03544). arXiv.</span>
 
-<span class="csl-left-margin">\[15\] </span><span
+<span class="csl-left-margin">\[27\] </span><span
 class="csl-right-inline">Ramesh, A. et al. 2022. [Hierarchical
 Text-Conditional Image Generation with CLIP
 Latents](https://doi.org/10.48550/arXiv.2204.06125). arXiv.</span>
 
-<span class="csl-left-margin">\[16\] </span><span
+<span class="csl-left-margin">\[28\] </span><span
 class="csl-right-inline">Reynolds, L. and McDonell, K. 2021. [Prompt
 Programming for Large Language Models: Beyond the Few-Shot
 Paradigm](https://doi.org/10.48550/arXiv.2102.07350). arXiv.</span>
 
-<span class="csl-left-margin">\[17\] </span><span
+<span class="csl-left-margin">\[29\] </span><span
 class="csl-right-inline">Rombach, R. et al. 2022. [High-Resolution Image
 Synthesis With Latent Diffusion
 Models](https://openaccess.thecvf.com/content/CVPR2022/html/Rombach_High-Resolution_Image_Synthesis_With_Latent_Diffusion_Models_CVPR_2022_paper.html).
 (2022), 10684–10695.</span>
 
-<span class="csl-left-margin">\[18\] </span><span
+<span class="csl-left-margin">\[30\] </span><span
 class="csl-right-inline">Sadigh, D. et al. 2017. *[Active
 preference-based learning of reward
 functions](https://doi.org/10.15607/rss.2017.xiii.053)*.</span>
 
-<span class="csl-left-margin">\[19\] </span><span
+<span class="csl-left-margin">\[31\] </span><span
 class="csl-right-inline">Sanh, V. et al. 2022. [Multitask Prompted
 Training Enables Zero-Shot Task
 Generalization](http://arxiv.org/abs/2110.08207).</span>
 
-<span class="csl-left-margin">\[20\] </span><span
+<span class="csl-left-margin">\[32\] </span><span
+class="csl-right-inline">Shridhar, M. et al. 2021. [CLIPort: What and
+Where Pathways for Robotic
+Manipulation](https://doi.org/10.48550/arXiv.2109.12098). arXiv.</span>
+
+<span class="csl-left-margin">\[33\] </span><span
+class="csl-right-inline">Shridhar, M. et al. 2022. [Perceiver-Actor: A
+Multi-Task Transformer for Robotic
+Manipulation](https://doi.org/10.48550/arXiv.2209.05451). arXiv.</span>
+
+<span class="csl-left-margin">\[34\] </span><span
+class="csl-right-inline">Skalse, J. et al. 2022. [Defining and
+Characterizing Reward
+Hacking](https://doi.org/10.48550/arXiv.2209.13085). arXiv.</span>
+
+<span class="csl-left-margin">\[35\] </span><span
+class="csl-right-inline">Sumers, T.R. et al. 2021. [Learning Rewards
+from Linguistic Feedback](https://doi.org/10.48550/arXiv.2009.14715).
+arXiv.</span>
+
+<span class="csl-left-margin">\[36\] </span><span
+class="csl-right-inline">Turner, A.M. et al. 2021. [Optimal Policies
+Tend to Seek Power](https://doi.org/10.48550/arXiv.1912.01683).
+arXiv.</span>
+
+<span class="csl-left-margin">\[37\] </span><span
 class="csl-right-inline">Vaswani, A. et al. 2017. [Attention Is All You
 Need](http://arxiv.org/abs/1706.03762).</span>
 
-<span class="csl-left-margin">\[21\] </span><span
+<span class="csl-left-margin">\[38\] </span><span
 class="csl-right-inline">Wu, T. et al. 2022. [AI Chains: Transparent and
 Controllable Human-AI Interaction by Chaining Large Language Model
 Prompts](https://doi.org/10.1145/3491102.3517582). *Proceedings of the
 2022 CHI Conference on Human Factors in Computing Systems* (New York,
 NY, USA, Apr. 2022), 1–22.</span>
 
-<span class="csl-left-margin">\[22\] </span><span
+<span class="csl-left-margin">\[39\] </span><span
+class="csl-right-inline">Yao, S. et al. 2022. [ReAct: Synergizing
+Reasoning and Acting in Language
+Models](https://doi.org/10.48550/arXiv.2210.03629). arXiv.</span>
+
+<span class="csl-left-margin">\[40\] </span><span
+class="csl-right-inline">Yu, A. and Mooney, R.J. 2022. [Using Both
+Demonstrations and Language Instructions to Efficiently Learn Robotic
+Tasks](https://doi.org/10.48550/arXiv.2210.04476). arXiv.</span>
+
+<span class="csl-left-margin">\[41\] </span><span
+class="csl-right-inline">Zholus, A. et al. 2022. [IGLU Gridworld: Simple
+and Fast Environment for Embodied Dialog
+Agents](https://doi.org/10.48550/arXiv.2206.00142). arXiv.</span>
+
+<span class="csl-left-margin">\[42\] </span><span
+class="csl-right-inline">Zhou, L. and Small, K. 2020. [Inverse
+Reinforcement Learning with Natural Language
+Goals](https://doi.org/10.48550/arXiv.2008.06924). arXiv.</span>
+
+<span class="csl-left-margin">\[43\] </span><span
 class="csl-right-inline">Ziebart, B.D. et al. 2008. Maximum entropy
 inverse reinforcement learning. *Proceedings of the 23rd national
 conference on Artificial intelligence - Volume 3* (Chicago, Illinois,
