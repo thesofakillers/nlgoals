@@ -21,7 +21,7 @@ header-includes:
   - \usepackage{setspace}
 ---
 
-## The Problem
+## The problem
 
 In Reinforcement Learning (RL), the goal of a particular autonomous agent is
 formalised in the form of a reward signal emitted by the environment to the
@@ -30,7 +30,7 @@ function. However, handcrafted reward functions can be difficult to specify for
 more complex problems and environments, and can lead to undesired agent
 behaviour due to reward hacking [@pan_effects_2022;@skalse_defining_2022].
 
-## Why We Want To Solve It
+## Why we want to solve it
 
 Relying on handcrafted reward functions can be tedious, requiring at times ample
 domain knowledge and mental effort. Furthermore, after design, the reward
@@ -41,7 +41,7 @@ symptoms signaling difficulty in scaling and generalisation. In the case of
 undesired model performance, this has safety implications
 [@hendrycks_unsolved_2022].
 
-## Current Solutions and their Shortcomings
+## Current solutions and their shortcomings
 
 ### Inverse Reinforcement Learning
 
@@ -71,7 +71,7 @@ IRL has a considerable overlap with _**imitation learning**_
 given expert demonstrations. Imitation learning faces similar limitations to
 those of IRL.
 
-### Preference-Based Learning
+### Preference-based learning
 
 Preference-based learning circumvents the need for demonstrations by using a
 more direct signal of human preferences. This includes, for example, directly
@@ -81,7 +81,7 @@ approach is to expression preferences via pairwise comparison. This however can
 be limited in expressivity. Another potential issue is that the expressed
 preferences may be different from the real preferences.
 
-## Proposed Approach
+## Proposed approach
 
 Using advances in natural language processing, particularly in large language
 models (LLMs) [@vaswani_attention_2017; @brown_language_2020;
