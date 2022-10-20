@@ -68,9 +68,11 @@ Preference-based learning circumvents the need for demonstrations by using a
 more direct signal of human preferences. This includes, for example, directly
 asking users what they want via e.g. pairwise comparisons
 [@christiano_deep_2017; @sadigh_active_2017; @biyik_batch_2018]. The main
-approach is to expression preferences via pairwise comparison. This however can
-be limited in expressivity. Another potential issue is that the expressed
-preferences may be different from the real preferences.
+approach is to express preferences via pairwise comparison. This however can be
+limited in expressivity: consider a case in which two sub-optimal but
+complimentary correct trajectories are presented. Under pairwise comparison,
+there is no way to express such granularity. Another potential issue is that the
+expressed preferences may be different from the real preferences.
 
 ## Proposed approach
 
