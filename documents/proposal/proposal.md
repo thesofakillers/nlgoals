@@ -1,6 +1,6 @@
 ---
 documentclass: article
-title: Natural Language Interfaces for Specification Learning
+title: Natural Language Interfaces and Reward Hacking in RL
 subtitle: UvA MSc AI - Thesis Proposal
 date: \today
 author: Giulio Starace - 13010840
