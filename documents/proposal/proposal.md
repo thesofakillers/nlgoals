@@ -83,9 +83,9 @@ models (LLMs) [@vaswani_attention_2017; @brown_language_2020;
 pure NLP context [@dosovitskiy_image_2021; @rombach_high-resolution_2022;
 @ramesh_hierarchical_2022], we can develop a more natural interface between
 human and machine to specify goals and or rewards. This is after-all how humans
-communicate desired outcomes to each other. There already exist many works
-leveraging the expressivity of language models in an RL context, particularly
-from the last year [@zhou_inverse_2020; @sumers_learning_2021; @jiang_vima_2022;
+communicate desired outcomes to each other. There already exist many recent
+works leveraging the expressivity of language models in an RL context
+[@zhou_inverse_2020; @sumers_learning_2021; @jiang_vima_2022;
 @shridhar_cliport_2021; @huang_inner_2022; @shridhar_perceiver-actor_2022;
 @ding_robot_2022; @yao_react_2022; @brooks_-context_2022;
 @gramopadhye_generating_2022; @yu_using_2022; @lu_neuro-symbolic_2022]. A number
