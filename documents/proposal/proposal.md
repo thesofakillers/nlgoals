@@ -1,7 +1,7 @@
 ---
 documentclass: article
 title: Natural Language Interfaces and Reward Hacking in RL
-subtitle: UvA MSc AI - Thesis Proposal
+subtitle: "UvA MSc AI - Thesis Proposal - Supervision: Niklas Höpner"
 date: \today
 author: Giulio Starace - 13010840
 bibliography:
