@@ -45,25 +45,19 @@ production and as dire as causing safety concerns [@hendrycks_unsolved_2022].
 Inverse Reinforcement Learning (IRL) [@ng_algorithms_2000;
 @ziebart_maximum_2008; @ho_generative_2016] is the problem of extracting a
 reward function given observed expert behaviour (demonstrations). While
-promising and perhaps suitable for many problems, IRL presents some limitations.
-For instance expert demonstrations are not always available and can be difficult
-to obtain. Furthermore, for many environments it is very difficult to determine
-the reward function from the demonstrations, although there is some research
-addressing this issue [@choi_inverse_2011;@amin_towards_2016]. Another
-limitation is that model performance may be limited to the performance of the
-experts from which it is learning, with additional research addressing this
-issue [@evans_learning_2015;@evans_learning_2015-1]. IRL is often also
-criticised for overlooking side-effects [@krakovna_penalizing_2019] and
-encouraging power-seeking [@turner_optimal_2021]. Even if these issues were
-addressed, IRL does not necessarily address the overarching problem, as reward
-hacking has been observed in the IRL context as well [@ibarz_reward_2018].
-Finally, one could argue that natural intelligent agents (e.g. humans) don’t
-always need expert demonstrations to learn a reward function, so this is
-indicative of a lack of generalisation.
+promising and perhaps suitable for many problems, IRL has some limitations. For
+instance expert demonstrations are not always available and can be difficult to
+obtain. Furthermore, for many environments it is very difficult to determine the
+reward function from the demonstrations [@choi_inverse_2011;@amin_towards_2016].
+Another limitation is that model performance may be limited to the performance
+of the experts from which it is learning
+[@evans_learning_2015;@evans_learning_2015-1]. IRL is often also criticised for
+overlooking side-effects [@krakovna_penalizing_2019] and encouraging
+power-seeking [@turner_optimal_2021]. Even if these issues were addressed, IRL
+does not necessarily address the overarching problem, as reward hacking has been
+observed in the IRL context as well [@ibarz_reward_2018].
 
-<!-- - [Model Mis-specification and Inverse Reinforcement Learning | Academically Interesting (wordpress.com)](https://jsteinhardt.wordpress.com/2017/02/07/model-mis-specification-and-inverse-reinforcement-learning/) -->
-
-IRL has a considerable overlap with _**imitation learning**_
+In general, IRL is considered to be a subfield of _**imitation learning**_
 [@abbeel_apprenticeship_2004], where the goal is now to predict trajectories,
 given expert demonstrations. Imitation learning faces similar limitations to
 those of IRL.
