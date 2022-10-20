@@ -32,14 +32,11 @@ behaviour due to reward hacking [@pan_effects_2022;@skalse_defining_2022].
 
 ## Why we want to solve it
 
-Relying on handcrafted reward functions can be tedious, requiring at times ample
-domain knowledge and mental effort. Furthermore, after design, the reward
-function has to be manually implemented as part of the agent’s environment.
-Finally, handcrafted reward functions may suffer from bias and human error,
-leading to subpar or undesired performance of our models. Generally, these are
-symptoms signaling difficulty in scaling and generalisation. In the case of
-undesired model performance, this has safety implications
-[@hendrycks_unsolved_2022].
+Addressing the issue of reward misspecification is important because it is one
+of the many limiting factors that make RL difficult to apply. Furthermore, due
+to reward hacking, the issue can lead to undesired behaviour. The negative
+impacts of a misbehaviour can be as simple as a model underperforming in
+production and as dire as causing safety concerns [@hendrycks_unsolved_2022].
 
 ## Current solutions and their shortcomings
 
