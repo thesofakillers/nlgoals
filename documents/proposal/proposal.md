@@ -35,7 +35,7 @@ behaviour due to reward hacking [@pan_effects_2022;@skalse_defining_2022].
 Addressing the issue of reward misspecification is important because it is one
 of the many limiting factors that make RL difficult to apply. Furthermore, due
 to reward hacking, the issue can lead to undesired behaviour. The negative
-impacts of a misbehaviour can be as simple as a model underperforming in
+impacts of misbehaviour can be as simple as a model underperforming in
 production and as dire as causing safety concerns [@hendrycks_unsolved_2022].
 
 ## Current solutions and their shortcomings
@@ -71,8 +71,9 @@ asking users what they want via e.g. pairwise comparisons
 approach is to express preferences via pairwise comparison. This however can be
 limited in expressivity: consider a case in which two sub-optimal but
 complimentary correct trajectories are presented. Under pairwise comparison,
-there is no way to express such granularity. Another potential issue is that the
-expressed preferences may be different from the real preferences.
+there is no way to express the necessary granularity in preferences for this
+example. Another potential issue is that the expressed preferences may be
+different from the real preferences.
 
 ## Proposed approach
 
@@ -93,8 +94,8 @@ of NL-RL-hybrid environments and datasets [@anderson_vision-and-language_2018;
 @liu_reinforcement_2018; @jiang_yunfan_vima_2022; @zholus_iglu_2022;
 @fan_minedojo_2022] have accompanied many of these papers in the field. These
 works however mostly focus on their contributions to planning performance,
-learning efficiency and other more common RL metrics of success. Using similar
-to techniques developed by @pan_effects_2022 and taking inspiration from the
-recent works cited above, this work hopes to explore the question: **to what
-extent can natural language interfaces curtail the issue of reward hacking in
-RL?**
+learning efficiency and other more common RL metrics of success. Using
+techniques similar to those developed by @pan_effects_2022 and taking
+inspiration from the recent works cited above, this work hopes to explore the
+question: **to what extent can natural language interfaces curtail the issue of
+reward hacking in RL?**
