@@ -26,7 +26,8 @@ University of Amsterdam. The topic has been accepted. My internal supervisor is
 Niklas Höpner of the AMLab, who has seconded my application to CHAI. Part-time
 work in the form of a literature review and brainstorming has begun in early
 November, with full-time work commencing in February and an expected completion
-date of August $25^{th}$, 2023.
+date of August $25^{th}$, 2023. There will be a month-long pause in the work in
+December due to a course I will be attending full-time.
 
 At CHAI, I hope to receive mentorship from experts in AI Safety (AIS). While my
 local supervision is of great value, the staff at my institute are not very
@@ -123,9 +124,9 @@ works leveraging the expressivity of language models in an RL context
 many of these papers in the field. These works however mostly focus on their
 contributions to planning performance, learning efficiency and other more common
 RL metrics of success. Using techniques similar to those developed by
-@pan_effects_2022 and taking inspiration from the recent works cited above, this
-work hopes to explore the question: **to what extent can natural language
-interfaces curtail the issue of reward hacking in RL?**
+@pan_effects_2022 and @lee_pebble_2021 and taking inspiration from the recent
+works cited above, this work hopes to explore the question: **to what extent can
+natural language interfaces curtail the issue of reward hacking in RL?**
 
 ## Potential outcomes and focus points
 
