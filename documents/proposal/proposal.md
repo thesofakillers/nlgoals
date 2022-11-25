@@ -23,11 +23,11 @@ header-includes:
 
 <!-- The following is the research proposal for my AI master's thesis at the -->
 <!-- University of Amsterdam. The topic has been accepted. My internal supervisor is -->
-<!-- Niklas Höpner of the AMLab, who has seconded my application to CHAI. Part-time -->
-<!-- work in the form of a literature review and brainstorming has begun in early -->
-<!-- November, with full-time work commencing in February and an expected completion -->
-<!-- date of August $25^{th}$, 2023. There will be a month-long pause in the work in -->
-<!-- December due to a course I will be attending full-time. -->
+<!-- Niklas Höpner of the AMLab, who has seconded my application. Part-time work in -->
+<!-- the form of a literature review and brainstorming has begun in early November, -->
+<!-- with full-time work commencing in February and an expected completion date of -->
+<!-- August $25^{th}$, 2023. There will be a month-long pause in the work in December -->
+<!-- due to a course I will be attending full-time. -->
 
 <!-- At CHAI, I hope to receive mentorship from experts in AI Safety (AIS). While my -->
 <!-- local supervision is of great value, the staff at my institute are not very -->
