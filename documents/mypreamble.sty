@@ -1,0 +1,89 @@
+\RequirePackage{graphicx, color}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[english]{babel}
+\RequirePackage[a4paper,margin=2cm]{geometry}
+
+% user defined
+\RequirePackage{csquotes}
+% bibliography
+\RequirePackage[natbib=true, style=authoryear]{biblatex}
+% <<< crazy thing necessary for colored authoryear citations
+% https://tex.stackexchange.com/a/1690/199033
+\DeclareCiteCommand{\cite}
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+   \printtext[bibhyperref]{\usebibmacro{cite}}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+
+\DeclareCiteCommand*{\cite}
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+   \printtext[bibhyperref]{\usebibmacro{citeyear}}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+
+\DeclareCiteCommand{\parencite}[\mkbibparens]
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+    \printtext[bibhyperref]{\usebibmacro{cite}}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+
+\DeclareCiteCommand*{\parencite}[\mkbibparens]
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+    \printtext[bibhyperref]{\usebibmacro{citeyear}}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+
+\DeclareCiteCommand{\footcite}[\mkbibfootnote]
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+  \printtext[bibhyperref]{ \usebibmacro{cite}}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+
+\DeclareCiteCommand{\footcitetext}[\mkbibfootnotetext]
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+   \printtext[bibhyperref]{\usebibmacro{cite}}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+
+\DeclareCiteCommand{\textcite}
+  {\boolfalse{cbx:parens}}
+  {\usebibmacro{citeindex}%
+   \printtext[bibhyperref]{\usebibmacro{textcite}}}
+  {\ifbool{cbx:parens}
+     {\bibcloseparen\global\boolfalse{cbx:parens}}
+     {}%
+   \multicitedelim}
+  {\usebibmacro{textcite:postnote}}
+
+% https://tex.stackexchange.com/a/25972/199033
+\DeclareCiteCommand{\textcite}
+ {\boolfalse{cbx:parens}}
+  {\usebibmacro{citeindex}%
+    \printtext[bibhyperref]{\printnames{labelname}%
+      \printtext{ (\printfield{year}\printtext{)}}}}
+ {\ifbool{cbx:parens}
+  {\bibcloseparen\global\boolfalse{cbx:parens}}
+  {}%
+ \multicitedelim}
+{\usebibmacro{textcite:postnote}}
+% >>>
+\addbibresource{../references.bib}
+
+% colors
+\RequirePackage[usenames,dvipsnames]{xcolor}
+
+% links
+\RequirePackage{hyperref}
+\definecolor{darkred}{HTML}{8b0000}
+\hypersetup{
+    colorlinks=true,
+    allcolors=darkred
+ }
+% files
+\RequirePackage{subfiles}

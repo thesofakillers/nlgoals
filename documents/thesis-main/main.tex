@@ -1,0 +1,29 @@
+\documentclass[12pt]{report}
+
+
+\usepackage{../mypreamble}
+
+\newcommand{\red}[1]{{\color{red}{#1}}}
+
+\begin{document}
+
+% preambly things
+\subfile{subfiles/titlepage}
+\pagenumbering{roman}
+\tableofcontents
+\subfile{subfiles/abstract}
+\pagenumbering{arabic}
+
+\chapter{Introduction}
+\subfile{subfiles/introduction.tex}
+
+\appendix
+\chapter{Optional appendix}
+
+\citep{abbeel_apprenticeship_2004}. Hello everyone
+
+\printbibliography
+
+
+\end{document}
+
