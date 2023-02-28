@@ -1,3 +1,6 @@
+## ignore all compiled pdfs (I will force adds the one I care about
+*.pdf
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
