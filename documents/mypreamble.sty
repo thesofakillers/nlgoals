@@ -1,89 +1,90 @@
-\RequirePackage{graphicx, color}
-\RequirePackage[utf8]{inputenc}
-\RequirePackage[english]{babel}
-\RequirePackage[a4paper,margin=2cm]{geometry}
+% \addtolength{\hoffset}{-2.25cm}
+% \addtolength{\textwidth}{4.5cm}
+% \addtolength{\voffset}{-3.25cm}
+% \addtolength{\textheight}{5cm}
+% \setlength{\parindent}{0in}
 
-% user defined
-\RequirePackage{csquotes}
-% bibliography
-\RequirePackage[natbib=true, style=authoryear]{biblatex}
-% <<< crazy thing necessary for colored authoryear citations
-% https://tex.stackexchange.com/a/1690/199033
-\DeclareCiteCommand{\cite}
-  {\usebibmacro{prenote}}
-  {\usebibmacro{citeindex}%
-   \printtext[bibhyperref]{\usebibmacro{cite}}}
-  {\multicitedelim}
-  {\usebibmacro{postnote}}
-
-\DeclareCiteCommand*{\cite}
-  {\usebibmacro{prenote}}
-  {\usebibmacro{citeindex}%
-   \printtext[bibhyperref]{\usebibmacro{citeyear}}}
-  {\multicitedelim}
-  {\usebibmacro{postnote}}
-
-\DeclareCiteCommand{\parencite}[\mkbibparens]
-  {\usebibmacro{prenote}}
-  {\usebibmacro{citeindex}%
-    \printtext[bibhyperref]{\usebibmacro{cite}}}
-  {\multicitedelim}
-  {\usebibmacro{postnote}}
-
-\DeclareCiteCommand*{\parencite}[\mkbibparens]
-  {\usebibmacro{prenote}}
-  {\usebibmacro{citeindex}%
-    \printtext[bibhyperref]{\usebibmacro{citeyear}}}
-  {\multicitedelim}
-  {\usebibmacro{postnote}}
-
-\DeclareCiteCommand{\footcite}[\mkbibfootnote]
-  {\usebibmacro{prenote}}
-  {\usebibmacro{citeindex}%
-  \printtext[bibhyperref]{ \usebibmacro{cite}}}
-  {\multicitedelim}
-  {\usebibmacro{postnote}}
-
-\DeclareCiteCommand{\footcitetext}[\mkbibfootnotetext]
-  {\usebibmacro{prenote}}
-  {\usebibmacro{citeindex}%
-   \printtext[bibhyperref]{\usebibmacro{cite}}}
-  {\multicitedelim}
-  {\usebibmacro{postnote}}
-
-\DeclareCiteCommand{\textcite}
-  {\boolfalse{cbx:parens}}
-  {\usebibmacro{citeindex}%
-   \printtext[bibhyperref]{\usebibmacro{textcite}}}
-  {\ifbool{cbx:parens}
-     {\bibcloseparen\global\boolfalse{cbx:parens}}
-     {}%
-   \multicitedelim}
-  {\usebibmacro{textcite:postnote}}
-
-% https://tex.stackexchange.com/a/25972/199033
-\DeclareCiteCommand{\textcite}
- {\boolfalse{cbx:parens}}
-  {\usebibmacro{citeindex}%
-    \printtext[bibhyperref]{\printnames{labelname}%
-      \printtext{ (\printfield{year}\printtext{)}}}}
- {\ifbool{cbx:parens}
-  {\bibcloseparen\global\boolfalse{cbx:parens}}
-  {}%
- \multicitedelim}
-{\usebibmacro{textcite:postnote}}
-% >>>
-\addbibresource{../references.bib}
-
-% colors
-\RequirePackage[usenames,dvipsnames]{xcolor}
-
-% links
-\RequirePackage{hyperref}
+\RequirePackage[labelfont=bf]{caption}
+\RequirePackage[]{subcaption}
+\RequirePackage{multirow}
+\RequirePackage[dvipsnames]{xcolor}
+\definecolor{darkblue}{rgb}{0, 0, 0.5}
 \definecolor{darkred}{HTML}{8b0000}
-\hypersetup{
-    colorlinks=true,
-    allcolors=darkred
- }
+\RequirePackage{blindtext} % Package to generate dummy text
+\RequirePackage[utf8]{inputenc} % Use UTF-8 encoding
+\RequirePackage{charter} % Use the Charter font
+\RequirePackage{microtype} % Slightly tweak font spacing for aesthetics
+\RequirePackage[english]{babel} % Language hyphenation and typographical rules
+\RequirePackage{amsthm, amsmath, amssymb, amsfonts, bbm, stmaryrd} % Mathematical typesetting
+\RequirePackage{float} % Improved interface for floating objects
+\RequirePackage[final, colorlinks=true, linkcolor=black, citecolor=darkred, urlcolor=darkred]{hyperref} % For hyperlinks in the PDF
+\RequirePackage{graphicx, multicol} % Enhanced support for graphics
+\RequirePackage{pgfplots} \pgfplotsset{compat=1.13}
+\RequirePackage{xcolor} % Driver-independent color extensions
+\RequirePackage{marvosym, wasysym} % More symbols
+\RequirePackage{rotating} % Rotation tools
+\RequirePackage{booktabs} % Enhances quality of tables
+\RequirePackage{bookmark} % helps with compiling
+%\RequirePackage[numbers,sort]{natbib}
+\RequirePackage[sort]{natbib}
+\renewcommand\cite{\citep}
+\RequirePackage{bm}
+\RequirePackage{wrapfig}
+\RequirePackage{enumitem}
+\RequirePackage{csquotes} % Context sensitive quotation facilities
+\RequirePackage[nodayofweek]{datetime} % Uses YEAR-MONTH-DAY format for dates
+\RequirePackage{acronym}
+\RequirePackage{adjustbox}
+% \RequirePackage{pifont}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\RequirePackage{nicefrac}
+\let\rfb\reflectbox
+
+\RequirePackage{fancyhdr} % Headers and footers
+\pagestyle{fancy} % All pages have headers and footers
+\fancyhead{}\renewcommand{\headrulewidth}{0pt} % Blank out the default header
+\fancyfoot[L]{} % Custom footer text
+\fancyfoot[C]{} % Custom footer text
+\fancyfoot[R]{\thepage} % Custom footer text
+
+%------------------------------------------------------------------
+
+\RequirePackage{fancyhdr}
+% Headers
+\RequirePackage{titlesec}
+\titleformat{\section}[hang]
+{\LARGE\bfseries}
+{Section \thesection.}{0.4em}{}
+\titlespacing{\section}{0pc}{0.5cm plus 0cm minus 0cm}{1cm plus .3cm minus .5cm}
+\titleformat{\subsection}[hang]
+{\fontsize{13pt}{12pt}\selectfont\bfseries}
+{\thesubsection.}{0.4em}{}
+\titlespacing{\subsection}{0pc}{0.5cm}{0.3cm}
+\titlespacing{\paragraph}{%
+  0pt}{%              left margin
+  0.6\baselineskip}{% space before (vertical)
+  0.75em}%               space after (horizontal)
+\titleformat{\paragraph}[runin]
+{\fontsize{10pt}{12pt}\selectfont\bfseries}
+{\theparagraph}{0.4em}{}
+
+% Figures
+\captionsetup{aboveskip=0.2cm,belowskip=0.2cm}
+
+\makeatletter
+\renewenvironment{abstract}{%
+  \if@twocolumn
+    \section*{\abstractname}%
+  \else %% <- here I've removed \small
+    \begin{center}%
+      {\bfseries \large\abstractname\vspace{\z@}}%  %% <- here I've added \large
+    \end{center}%
+    \quotation
+  \fi}
+{\if@twocolumn\else\endquotation\fi}
+\makeatother
+
+\RequirePackage[a4paper,margin=2cm]{geometry}
 % files
 \RequirePackage{subfiles}
