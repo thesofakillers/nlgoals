@@ -14,16 +14,18 @@
 \subfile{subfiles/abstract}
 \pagenumbering{arabic}
 
+% finally, the content
 \chapter{Introduction}
 \subfile{subfiles/introduction.tex}
 
 \appendix
 \chapter{Optional appendix}
 
-\citep{abbeel_apprenticeship_2004}. Hello everyone
+Checking that citation works \citep{agarwal_reincarnating_2022}.
+Also inline \citet{abbeel_apprenticeship_2004}.
 
-\printbibliography
-
+\bibliographystyle{../bibstyle}
+\bibliography{../references-bibtex}
 
 \end{document}
 
