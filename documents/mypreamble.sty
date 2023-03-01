@@ -50,41 +50,6 @@
 
 %------------------------------------------------------------------
 
-\RequirePackage{fancyhdr}
-% Headers
-\RequirePackage{titlesec}
-\titleformat{\section}[hang]
-{\LARGE\bfseries}
-{Section \thesection.}{0.4em}{}
-\titlespacing{\section}{0pc}{0.5cm plus 0cm minus 0cm}{1cm plus .3cm minus .5cm}
-\titleformat{\subsection}[hang]
-{\fontsize{13pt}{12pt}\selectfont\bfseries}
-{\thesubsection.}{0.4em}{}
-\titlespacing{\subsection}{0pc}{0.5cm}{0.3cm}
-\titlespacing{\paragraph}{%
-  0pt}{%              left margin
-  0.6\baselineskip}{% space before (vertical)
-  0.75em}%               space after (horizontal)
-\titleformat{\paragraph}[runin]
-{\fontsize{10pt}{12pt}\selectfont\bfseries}
-{\theparagraph}{0.4em}{}
-
-% Figures
-\captionsetup{aboveskip=0.2cm,belowskip=0.2cm}
-
-\makeatletter
-\renewenvironment{abstract}{%
-  \if@twocolumn
-    \section*{\abstractname}%
-  \else %% <- here I've removed \small
-    \begin{center}%
-      {\bfseries \large\abstractname\vspace{\z@}}%  %% <- here I've added \large
-    \end{center}%
-    \quotation
-  \fi}
-{\if@twocolumn\else\endquotation\fi}
-\makeatother
-
 \RequirePackage[a4paper,margin=2cm]{geometry}
 % files
 \RequirePackage{subfiles}
