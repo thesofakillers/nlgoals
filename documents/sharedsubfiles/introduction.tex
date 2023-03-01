@@ -2,12 +2,63 @@
 % \documentclass[../thesis-main/main.tex]{subfiles}
 \documentclass[../thesis-proposal/main.tex]{subfiles}
 \begin{document}
-\begin{markdown}
 
-### Test
+Of the three Machine Learning (ML) paradigms, Reinforcement Learning (RL) is said to be the closest
+to the kind of learning humans do \citep{sutton_reinforcement_2018}, with debates around whether RL
+alone is sufficient for solving intelligence \citep{silver_reward_2021, vamplew_scalar_2022}. While
+already well-established as a field for decades \citep{minsky_theory_1954, bellman_dynamic_1957,
+klopf_brain_1972, bryson_optimal_1996}, the recent widespread adoption of deep neural networks (NNs)
+in (un)supervised learning in vision \citep{krizhevsky_imagenet_2012, he_deep_2016,
+mildenhall_nerf_2021} and language \citep{mikolov_distributed_2013, vaswani_attention_2017,
+devlin_bert_2019, brown_language_2020} has led to similar deep learning (DL) approaches to RL,
+achieving impressive results on a wide gamut of problems \citep{mnih_playing_2013,
+silver_general_2018, openai_dota_2019, fawzi_discovering_2022}. 
 
-- Supervised learning 
-- hello
+While these academic advances are certainly impressive, RL's inherently online nature has hindered
+its integration in contexts where interacting with the environment is either expensive or dangerous,
+such as consumer robotics \citep{singh_reinforcement_2022}, healthcare
+\citep{liu_reinforcement_2020} and autonomous vehicles \citep{kiran_deep_2022}. In synchrony with
+ML's shift to more data-driven approaches, much attention is now being dedicated to
+\textit{offline}\footnote{Also known as \textit{batch} RL.} RL \citep{levine_offline_2020,
+prudencio_survey_2022}. Rather than interacting with the environment in real-time, offline RL aims
+to learn optimal control policies using a fixed dataset of previously collected interactions. Making
+use of large, diverse datasets can lead to improved generalization, and users can still choose to
+fine-tune the resulting policies online, drawing parallels with the ``pre-train first, then
+fine-tune'' trend in present-day ML.
 
-\end{markdown}
+Unfortunately, offline RL presents a series of non-trivial issues. In particular, offline RL can be
+vulnerable to \textit{distributional shift}, where the data distribution changes between training
+and deployment \citep{quinonero-candela_dataset_2008}. This issue of out-of-domain (OOD)
+generalization \citep{shen_towards_2021} is pervasive to the current paradigm of ML research
+\citep{arjovsky_out_2020}, and is generally exacerbated by the use of high-dimensional function
+approximators such as deep neural networks. One of the surprising effects of OOD misgeneralization
+is \textit{causal confusion}, where the learner wrongly identifies the causal model of the data due
+to spurious correlations \citep{de_haan_causal_2019}. The more classic  failure mode of causal
+confusion is \textit{capability misgeneralization}: the model fails to take correct/useful actions
+in deployment \citep{gupta_can_2022, tien_study_2022}. Along with \citet{shah_goal_2022},
+\citet{langosco_goal_2022} identify \textit{goal misgeneralization} as an additional, potentially
+more dangerous failure mode, where the model capably pursues the wrong goal in deployment.
+Unsurprisingly, both works suggest more diverse training data as a potential mitigation.
+
+% todo: rewrite this
+On this note, using more recent advances in natural language interfaces, \citep{gal_image_2022,
+reynolds_prompt_2021, wu_ai_2022}, and inspired by their applications beyond a pure NLP context
+\citep{dosovitskiy_image_2022, ramesh_hierarchical_2022, rombach_high-resolution_2022}, we can
+develop a more natural interface between human and machine to specify goals. This is after-all how
+humans communicate desired outcomes to each other. There already exist many recent works leveraging
+the expressivity of language models in an RL context \citep{reed_generalist_2022,
+  watkins_teachable_2021, sumers_learning_2021, zhou_inverse_2021,
+sumers_how_2022,zhang_lad_2022,deepmind_interactive_agents_team_creating_2022,kumar_using_2022,lampinen_tell_2022,lin_inferring_2022,tomlin_understanding_2022,jiang_vima_2022,sumers_distilling_2023,choi_lmpriors_2022}.
+A number of NL-RL-hybrid environments and datasets \citep{anderson_vision-and-language_2018,
+fan_minedojo_2022} have accompanied many of these papers in the field. These works however mostly
+focus on their contributions to planning performance, learning efficiency and other more common RL
+metrics of success. Taking inspiration from the recent works cited above, this work hopes to explore
+the question: \textit{how can natural language be used to address goal misgeneralization in offline
+RL?}
+% todo: state also more general question
+
+\ifSubfilesClassLoaded{%
+  \bibliographystyle{../bibstyle}
+  \bibliography{../references-bibtex}%
+}{}
 \end{document}
