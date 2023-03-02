@@ -3,7 +3,32 @@
 \documentclass[../thesis-proposal/main.tex]{subfiles}
 \begin{document}
 \subsection{Offline Reinforcement Learning}
-\subsection{Goal Misgeneralization and Causal Confusion}
-\subsection{Natural Language Models}
-\subsection{Natural Language and Reinforcement Learning}
+
+Research on Offline RL can be traced back to the work of \citet{ernst_tree-based_2005} on ``batch
+reinforcement learning'', approximating the Q-function using an ensemble of tree-based supervised
+learning methods. Contemporary work from \citet{riedmiller_neural_2005} proposes NFQ, a neural
+counterpart. \Citet{lange_batch_2012} present a first tutorial on the field, but the more modern
+incarnation is mostly spearheaded by \citet{kalashnikov_scalable_2018}, which explored utilizing
+data collected from an ensemble of robots to train a single a new Q-function from scratch without
+further interactions with the environment. Soon after, \citet{fujimoto_off-policy_2019} address the
+limitations with Batch-Constrained deep Q-learning (BCQ), constraining the learned policy to choose
+state-actions pairs that are close to those contained in the offline dataset, inspiring further
+constraint-based Offline RL methods \citep{kumar_stabilizing_2019, xu_offline_2021}. Contrastingly,
+instead of constraining the policy, \citet{kumar_conservative_2020} propose conservative Q-learning
+(CQL) which regularizes the Q-function so that out-of-distribution state-action pairs are assigned
+lower values. \Citet{yu_combo_2021} develop a practical model-based CQL variant, while
+\citet{singh_cog_2020} successfully demonstrate that CQL-based offline RL can leverage a large
+diverse prior unlabelled dataset for performance on a smaller downstream supervised task. Work in
+offline RL is typically evaluated on the D4RL \citep{fu_d4rl_2021} and RL Unplugged
+\citep{gulcehre_rl_2020} benchmarks. For further information, readers are directed to the most
+recently published surveys of the field \citep{levine_offline_2020, prudencio_survey_2022}.
+
+\subsection{Goal Misgeneralization and Causal Confusion} 
+
+\subsection{Natural Language and Reinforcement Learning} 
+
+\ifSubfilesClassLoaded{%
+  \bibliographystyle{../bibstyle}
+  \bibliography{../references-bibtex}%
+}{}
 \end{document}
