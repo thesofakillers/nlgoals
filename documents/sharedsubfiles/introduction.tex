@@ -22,9 +22,9 @@ ML's shift to more data-driven approaches, much attention is now being dedicated
 \textit{offline}\footnote{Also known as \textit{batch} RL.} RL \citep{levine_offline_2020,
 prudencio_survey_2022}. Rather than interacting with the environment in real-time, offline RL aims
 to learn optimal control policies using a fixed dataset of previously collected interactions. Making
-use of large, diverse datasets can lead to improved generalization, and users can still choose to
-fine-tune the resulting policies online, drawing parallels with the ``pre-train first, then
-fine-tune'' trend in present-day ML.
+use of large, diverse datasets can lead to improved generalization, and still affords the option to
+fine-tune the resulting policies online at a later stage, drawing parallels with the ``pre-train
+first, then fine-tune'' trend in present-day ML.
 
 Unfortunately, offline RL presents a series of non-trivial issues. In particular, offline RL can be
 vulnerable to \textit{distributional shift}, where the data distribution changes between training
@@ -40,22 +40,18 @@ in deployment \citep{gupta_can_2022, tien_study_2022}. Along with \citet{shah_go
 more dangerous failure mode, where the model capably pursues the wrong goal in deployment.
 Unsurprisingly, both works suggest more diverse training data as a potential mitigation.
 
-% todo: rewrite this
-On this note, using more recent advances in natural language interfaces, \citep{gal_image_2022,
-reynolds_prompt_2021, wu_ai_2022}, and inspired by their applications beyond a pure NLP context
-\citep{dosovitskiy_image_2022, ramesh_hierarchical_2022, rombach_high-resolution_2022}, we can
-develop a more natural interface between human and machine to specify goals. This is after-all how
-humans communicate desired outcomes to each other. There already exist many recent works leveraging
-the expressivity of language models in an RL context \citep{reed_generalist_2022,
-  watkins_teachable_2021, sumers_learning_2021, zhou_inverse_2021,
-sumers_how_2022,zhang_lad_2022,deepmind_interactive_agents_team_creating_2022,kumar_using_2022,lampinen_tell_2022,lin_inferring_2022,tomlin_understanding_2022,jiang_vima_2022,sumers_distilling_2023,choi_lmpriors_2022}.
-A number of NL-RL-hybrid environments and datasets \citep{anderson_vision-and-language_2018,
-fan_minedojo_2022} have accompanied many of these papers in the field. These works however mostly
-focus on their contributions to planning performance, learning efficiency and other more common RL
-metrics of success. Taking inspiration from the recent works cited above, this work hopes to explore
-the question: \textit{how can natural language be used to address goal misgeneralization in offline
-RL?}
-% todo: state also more general question
+In this vein, we set out to tackle this issue by proposing the use of natural language (NL) as an
+additional data modality to be integrated into our offline RL algorithms. Inspired by their
+applications beyond a pure NLP context \citep{dosovitskiy_image_2022, ramesh_hierarchical_2022,
+rombach_high-resolution_2022}, we can develop a more natural and expressive interface between human
+and machine to specify goals. This is after-all how humans communicate desired outcomes to each
+other. In short, we aim to address the question \textit{\textbf{how can natural language be used to
+address goal misgeneralization in offline RL?}} We frame this question in the larger context of goal
+specification in RL
+\citep{white_unifying_2017,liu_goal-conditioned_2022,bansal_specification-guided_2022}: \textit{When
+is a goal specification good?} \textit{What is a feasible, sensible way to specify goals?}
+\textit{Can goal specification methods be used in a complementary manner?} These are some of the
+more general questions we wish to address at least partly in this work.
 
 \ifSubfilesClassLoaded{%
   \bibliographystyle{../bibstyle}
