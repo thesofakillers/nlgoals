@@ -17,7 +17,7 @@ constraint-based Offline RL methods \citep{kumar_stabilizing_2019, xu_offline_20
 instead of constraining the policy, \citet{kumar_conservative_2020} propose conservative Q-learning
 (CQL) which regularizes the Q-function so that out-of-distribution state-action pairs are assigned
 lower values. \Citet{yu_combo_2021} develop a practical model-based CQL variant, while
-\citet{singh_cog_2020} successfully demonstrate that CQL-based offline RL can leverage a large
+\citet{singh_cog_2020} successfully demonstrate that CQL-based offline RL can leverage a large and
 diverse prior unlabelled dataset for performance on a smaller downstream supervised task. Work in
 offline RL is typically evaluated on the D4RL \citep{fu_d4rl_2021} and RL Unplugged
 \citep{gulcehre_rl_2020} benchmarks. For further information, readers are directed to the most
@@ -37,21 +37,18 @@ misgeneralization and incentive mismanagement \citep{farquhar_path-specific_2022
 failure modes, where we focus on the former of the two. \Citet{langosco_goal_2022} are the first to
 formally define goal misgeneralization based on \citet{orseau_agents_2018}'s definition of agency.
 The authors demonstrate the phenomenon in a number of RL agents trained on the Procgen
-\citep{cobbe_leveraging_2020} benchmark, proposing an increased training data diversity as a means
-of alleviating the issue. \Citet{shah_goal_2022} later generalise the definition, removing the
-assumed RL framework necessary in \citet{langosco_goal_2022}'s formalization, and demonstrating the
-issue in a variety of settings. Aside from more diverse training data, the authors suggest
+\citep{cobbe_leveraging_2020} benchmark, proposing increased training data diversity as a means of
+alleviating the issue. \Citet{shah_goal_2022} later generalise the definition, removing the assumed
+RL framework necessary in \citet{langosco_goal_2022}'s formalization, and demonstrating the issue in
+a variety of new settings. Aside from more diverse training data, the authors suggest
 uncertainty-aware models, better inductive biases and techniques targeting deception as potential
 routes for mitigation. The issue of goal misgeneralization draws parallels with \textit{reward
-hacking} \citep{pan_effects_2022, skalse_defining_2022} and \textit{reward
-tampering} \citep{everitt_reward_2021} where there is a misalignment between the designers intended
-behaviour and the algorithm's behaviour due to misspecified rewards. This misalignment makes goal
-misgeneralization of particular interest to research in
-Artificial Intelligence (AI) alignment \citep{ngo_alignment_2022} and AI safety more broadly
-\citep{hendrycks_unsolved_2022, houben_inspect_2022}.
-
-% - ngo paper
-% - maybe one or two safety citations
+hacking} \citep{pan_effects_2022, skalse_defining_2022} and \textit{reward tampering}
+\citep{everitt_reward_2021} where there is a misalignment between the designers intended behaviour
+and the algorithm's behaviour due to misspecified rewards. This misalignment makes goal
+misgeneralization of particular interest to research in Artificial Intelligence (AI) alignment
+\citep{ngo_alignment_2022} and AI safety more broadly \citep{hendrycks_unsolved_2022,
+houben_inspect_2022}.
 
 \subsection{Natural Language and Reinforcement Learning} 
 % - clip
