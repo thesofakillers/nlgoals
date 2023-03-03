@@ -23,10 +23,33 @@ offline RL is typically evaluated on the D4RL \citep{fu_d4rl_2021} and RL Unplug
 \citep{gulcehre_rl_2020} benchmarks. For further information, readers are directed to the most
 recently published surveys of the field \citep{levine_offline_2020, prudencio_survey_2022}.
 
-\subsection{Goal Misgeneralization and Causal Confusion} 
-% - causal confusion papers
-% - david krueger blogpost on causal confusion
-% - goal misgeneralization papers
+\subsection{Causal Confusion and Goal Misgeneralization} 
+
+The issue of causal confusion was first identified and defined by \citet{de_haan_causal_2019} in the
+context of imitation learning. They address the issue by learning a graph-parametrized policy for
+each possible causal graph and subsequently performing targeted interventions to select the best
+policy. \Citet{tien_study_2022} later successfully identify the same phenomenon in the context of
+preference-based \citep{christiano_deep_2017} inverse reinforcement learning
+\citep{ng_algorithms_2000}. Concurrently, \citet{gupta_can_2022} identify causal confusion in the
+more relevant context of offline RL, and explore active sampling as a means to mitigate the issue.
+While these works focus mainly on capability failures, \citet{kirk_causal_2022} also recognize goal
+misgeneralization and incentive mismanagement \citep{farquhar_path-specific_2022} as two additional
+failure modes, where we focus on the former of the two. \Citet{langosco_goal_2022} are the first to
+formally define goal misgeneralization based on \citet{orseau_agents_2018}'s definition of agency.
+The authors demonstrate the phenomenon in a number of RL agents trained on the Procgen
+\citep{cobbe_leveraging_2020} benchmark, proposing an increased training data diversity as a means
+of alleviating the issue. \Citet{shah_goal_2022} later generalise the definition, removing the
+assumed RL framework necessary in \citet{langosco_goal_2022}'s formalization, and demonstrating the
+issue in a variety of settings. Aside from more diverse training data, the authors suggest
+uncertainty-aware models, better inductive biases and techniques targeting deception as potential
+routes for mitigation. The issue of goal misgeneralization draws parallels with \textit{reward
+hacking} \citep{pan_effects_2022, skalse_defining_2022} and \textit{reward
+tampering} \citep{everitt_reward_2021} where there is a misalignment between the designers intended
+behaviour and the algorithm's behaviour due to misspecified rewards. This misalignment makes goal
+misgeneralization of particular interest to research in
+Artificial Intelligence (AI) alignment \citep{ngo_alignment_2022} and AI safety more broadly
+\citep{hendrycks_unsolved_2022, houben_inspect_2022}.
+
 % - ngo paper
 % - maybe one or two safety citations
 
