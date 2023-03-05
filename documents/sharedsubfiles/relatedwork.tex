@@ -29,7 +29,7 @@ The issue of causal confusion was first identified and defined by \citet{de_haan
 context of imitation learning. They address the issue by learning a graph-parametrized policy for
 each possible causal graph and subsequently performing targeted interventions to select the best
 policy. \Citet{tien_study_2022} later successfully identify the same phenomenon in the context of
-preference-based \citep{christiano_deep_2017} inverse reinforcement learning
+preference-based \citep{christiano_deep_2017} inverse reinforcement learning (IRL)
 \citep{ng_algorithms_2000}. Concurrently, \citet{gupta_can_2022} identify causal confusion in the
 more relevant context of offline RL, and explore active sampling as a means to mitigate the issue.
 While these works focus mainly on capability failures, \citet{kirk_causal_2022} also recognize goal
@@ -51,10 +51,45 @@ misgeneralization of particular interest to research in Artificial Intelligence 
 houben_inspect_2022}.
 
 \subsection{Natural Language and Reinforcement Learning} 
-% - clip
-% - diffusion/dall-e
-% - prompt engineering
-% - then all the RL papers
+
+Fueled by the Transformer architecture \citep{vaswani_attention_2017}, advancements in natural
+language processing \citep{vaswani_attention_2017, devlin_bert_2019, brown_language_2020} are now
+finding themselves in other domains of ML \citep{radford_learning_2021,
+rombach_high-resolution_2022, dhariwal_jukebox_2020} as the fields becomes increasingly multi-modal
+\citep{baltrusaitis_multimodal_2019, xu_multimodal_2022} and the boundaries between paradigms fade.
+Moreover, the natural language interface afforded by these models provides a means for leveraging
+expressive and flexible user input, leading to advancements in ``prompt engineering'' for in-context
+learning (ICL) \citep{dohan_language_2022, dosovitskiy_image_2022, reynolds_prompt_2021,
+wei_chain--thought_2022, hertz_prompt--prompt_2022}. On this note, recent work in RL has also
+explored the integration of natural language in existing or new RL methods
+\citep{luketina_survey_2019} and (more famously) viceversa \citep{ouyang_training_2022}. This work
+focuses on the former case. Here, DeepMind's GATO \citep{reed_generalist_2022} is the current
+reference work, leveraging a multimodal transformer to perform decision making aided by language and
+other modalities. \Citet{jiang_vima_2022}'s VIMA presents a similar approach, devoting more
+attention to the design of multimodal prompts. Moving away from purely transformer-based solutions,
+CLIPort \citep{shridhar_cliport_2021} use CLIP \citep{radford_learning_2021} and Transporter
+\citep{zeng_transporter_2021} in a two-stream architecture for language-specified manipulation tasks
+using imitation learning. More distantly, \citet{zhou_inverse_2021} attempt to address
+generalization issues when using NL goals by proposing a sample-efficient inverse reinforcement
+learning algorithm based on latent goal relabeling \citep{nair_visual_2018}. Instead of providing
+input instructions or feedback, \citet{lampinen_tell_2022} take a different approach by making their
+agents produce NL explanations as part of their output, which is then used in an additional loss
+term for learning causal structure and OOD generalization. \Citet{yang_safe_2021} focus on
+developing operationally safe RL algorithm by proposing a modular \textit{constraint interpreter}
+capable of mapping NL constraints to spatial and temporal representations of hidden states.
+\Citet{deepmind_MIA_2022} and \citet{fan_minedojo_2022} leverage contrastive vision-language
+training to address the issue of grounding language representations to the environment, while
+\citet{watkins_teachable_2021} proposes a novel bootstrapping solution for grounding.
+\Citet{sumers_learning_2021} explores reward learning using open-ended linguistic feedback. The same
+authors contribute formalizations of the type of language a modeled speaker could use for preference
+expression \citep{sumers_how_2022} and most recently by extending hindsight experience replay (HER)
+\citep{andrychowicz_hindsight_2017} to a language-conditioned setting using generative
+visual-language models (VLM) \citep{alayrac_flamingo_2022}. A number of language-annotated datasets
+are available for research in this area \citep{zholus_iglu_2022, mees_calvin_2022,
+fan_minedojo_2022, shridhar_alfred_2020, jiang_yunfan_vima_2022, liu_reinforcement_2022}. However
+the field is still clearly in early stages and has yet to settle on a particular direction. To our
+knowledge, this work is the first to investigate the effects of NL on goal misgeneralization in
+offline RL.
 
 
 \ifSubfilesClassLoaded{%
