@@ -17,7 +17,6 @@
 \RequirePackage[english]{babel} % Language hyphenation and typographical rules
 \RequirePackage{amsthm, amsmath, amssymb, amsfonts, bbm, stmaryrd} % Mathematical typesetting
 \RequirePackage{float} % Improved interface for floating objects
-\RequirePackage[final, colorlinks=true, linkcolor=black, citecolor=darkred, urlcolor=darkred]{hyperref} % For hyperlinks in the PDF
 \RequirePackage{graphicx, multicol} % Enhanced support for graphics
 \RequirePackage{pgfplots} \pgfplotsset{compat=1.13}
 \RequirePackage{xcolor} % Driver-independent color extensions
@@ -53,3 +52,10 @@
 \RequirePackage[a4paper,margin=2cm]{geometry}
 \RequirePackage{subfiles} % for splitting report into subfiles
 \RequirePackage[T1]{fontenc}  % for better font handling
+\RequirePackage{xr-hyper} % for cross-file referencing https://tex.stackexchange.com/a/244272/199033
+\hypersetup{
+  colorlinks,
+  linkcolor=black,
+  citecolor=darkred,
+  urlcolor=darkred
+}
