@@ -2,6 +2,7 @@
 *.pdf
 
 ## Core latex/pdflatex auxiliary files:
+*.out.ps
 *.aux
 *.lof
 *.log
