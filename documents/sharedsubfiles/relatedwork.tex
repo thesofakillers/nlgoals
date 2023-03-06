@@ -2,7 +2,7 @@
 % \documentclass[../thesis-main/main.tex]{subfiles}
 \documentclass[../thesis-proposal/main.tex]{subfiles}
 \begin{document}
-\subsection{Offline Reinforcement Learning}
+\section{Offline Reinforcement Learning}
 
 Research on Offline RL can be traced back to the work of \citet{ernst_tree-based_2005} on ``batch
 reinforcement learning'', approximating the Q-function using an ensemble of tree-based supervised
@@ -23,7 +23,7 @@ offline RL is typically evaluated on the D4RL \citep{fu_d4rl_2021} and RL Unplug
 \citep{gulcehre_rl_2020} benchmarks. For further information, readers are directed to the most
 recently published surveys of the field \citep{levine_offline_2020, prudencio_survey_2022}.
 
-\subsection{Causal Confusion and Goal Misgeneralization} 
+\section{Causal Confusion and Goal Misgeneralization} 
 
 The issue of causal confusion was first identified and defined by \citet{de_haan_causal_2019} in the
 context of imitation learning. They address the issue by learning a graph-parametrized policy for
@@ -50,12 +50,12 @@ misgeneralization of particular interest to research in Artificial Intelligence 
 \citep{ngo_alignment_2022} and AI safety more broadly \citep{hendrycks_unsolved_2022,
 houben_inspect_2022}.
 
-\subsection{Natural Language and Reinforcement Learning} 
+\section{Natural Language and Reinforcement Learning} 
 
 Fueled by the Transformer architecture \citep{vaswani_attention_2017}, advancements in natural
 language processing \citep{vaswani_attention_2017, devlin_bert_2019, brown_language_2020} are now
 finding themselves in other domains of ML \citep{radford_learning_2021,
-rombach_high-resolution_2022, dhariwal_jukebox_2020} as the fields becomes increasingly multi-modal
+rombach_high-resolution_2022, dhariwal_jukebox_2020} as the field becomes increasingly multi-modal
 \citep{baltrusaitis_multimodal_2019, xu_multimodal_2022} and the boundaries between paradigms fade.
 Moreover, the natural language interface afforded by these models provides a means for leveraging
 expressive and flexible user input, leading to advancements in ``prompt engineering'' for in-context
@@ -64,7 +64,7 @@ wei_chain--thought_2022, hertz_prompt--prompt_2022}. On this note, recent work i
 explored the integration of natural language in existing or new RL methods
 \citep{luketina_survey_2019} and (more famously) viceversa \citep{ouyang_training_2022}. This work
 focuses on the former case. Here, DeepMind's GATO \citep{reed_generalist_2022} is the current
-reference work, leveraging a multimodal transformer to perform decision making aided by language and
+reference work, leveraging a multimodal transformer to perform decision-making aided by language and
 other modalities. \Citet{jiang_vima_2022}'s VIMA presents a similar approach, devoting more
 attention to the design of multimodal prompts. Moving away from purely transformer-based solutions,
 CLIPort \citep{shridhar_cliport_2021} use CLIP \citep{radford_learning_2021} and Transporter
