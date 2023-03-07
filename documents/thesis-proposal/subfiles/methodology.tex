@@ -1,6 +1,4 @@
-% comment out one of the next two lines accordingly
-% \documentclass[../thesis-main/main.tex]{subfiles}
-\documentclass[../thesis-proposal/main.tex]{subfiles}
+\documentclass[../main.tex]{subfiles}
 \usepackage{parskip}
 \begin{document}
 \section{Ingredients}
@@ -40,7 +38,7 @@ environmental domain. Work is currently ongoing at the Fund for Alignment Resear
 (FAR)\footnote{\href{https://far.ai/}{https://far.ai/}} on extending this approach such that no
 fine-tuning is necessary, so that the same CLIP instance can be used on a variety of environments
 through a few prompting ``shots''\footnote{Juan Rocamonde, the external supervisor for this thesis,
-is currently working on this line of research at FAR.}. We believe that in the context of offline
+	is currently working on this line of research at FAR.}. We believe that in the context of offline
 RL, using NL priors to avoid goal misgeneralization is an intuitive solution, so we are considering
 adapting \citet{choi_lmpriors_2022}'s LMPriors algorithm to the offline RL setting. However, because
 generally there is no well established solution for NL-informed, we may ultimately try several
@@ -100,7 +98,7 @@ in our minds.
 
 
 \ifSubfilesClassLoaded{%
-	\bibliographystyle{../bibstyle}
-	\bibliography{../references-bibtex}%
+	\bibliographystyle{../../bibstyle}
+	\bibliography{../../references-bibtex}%
 }{}
 \end{document}
