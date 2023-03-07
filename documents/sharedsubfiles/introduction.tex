@@ -37,9 +37,9 @@ to spurious correlations \citep{de_haan_causal_2019}. The more classic  failure 
 confusion is \textit{capability misgeneralization}: the model fails to take correct/useful actions
 in deployment \citep{gupta_can_2022, tien_study_2022}. Along with \citet{shah_goal_2022},
 \citet{langosco_goal_2022} identify \textit{goal misgeneralization} as an additional, potentially
-more dangerous failure mode, where the model capably pursues the wrong goal in deployment. Their
-classic example goal misgeneralization is CoinRun. Here, an agent is trained with the intended goal
-of collecting coins in an obstacle-ridden environment. In testing, the agent is observed to
+more dangerous failure mode, where the model capably pursues the wrong goal in deployment. The
+classic example of goal misgeneralization is CoinRun. Here, an agent is trained with the intended
+goal of collecting coins in an obstacle-ridden environment. In testing, the agent is observed to
 misgeneralize to the unintended goal of capably navigating to the coin-barren right-hand side of the
 environment. During training, the coins were always presented on the right-hand side of the
 environment, causing the agent to erroneously learn the spurious correlation between right-hand
@@ -51,7 +51,10 @@ natural language (NL) as an additional data modality to be integrated into our o
 algorithms. Inspired by their applications beyond a pure NLP context \citep{dosovitskiy_image_2022,
 ramesh_hierarchical_2022, rombach_high-resolution_2022}, we can develop a more natural and
 expressive interface between human and machine to specify goals. This is after-all how humans
-communicate desired outcomes to each other. In short, we aim to address the following questions:
+communicate desired outcomes to each other. Furthermore, we view the expressivity of NL as
+efficiently providing compressed representation that would otherwise have to be learned through
+additional training data, whose necessary distribution can be difficult to control and know ahead of
+testing. In short, we aim to address the following questions:
 
 \begin{enumerate}
   \item How can we use natural language to address goal misgeneralization in offline RL?
