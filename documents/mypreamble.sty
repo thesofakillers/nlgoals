@@ -1,9 +1,4 @@
-% \addtolength{\hoffset}{-2.25cm}
-% \addtolength{\textwidth}{4.5cm}
-% \addtolength{\voffset}{-3.25cm}
-% \addtolength{\textheight}{5cm}
-% \setlength{\parindent}{0in}
-
+\RequirePackage[a4paper,margin=2cm]{geometry} % template margins
 \RequirePackage[labelfont=bf]{caption}
 \RequirePackage[]{subcaption}
 \RequirePackage{multirow}
@@ -23,10 +18,7 @@
 \RequirePackage{marvosym, wasysym} % More symbols
 \RequirePackage{rotating} % Rotation tools
 \RequirePackage{booktabs} % Enhances quality of tables
-\RequirePackage{bookmark} % helps with compiling
-%\RequirePackage[numbers,sort]{natbib}
 \RequirePackage[numbers, sort&compress]{natbib}
-\renewcommand\cite{\citep}
 \RequirePackage{bm}
 \RequirePackage{wrapfig}
 \RequirePackage{enumitem}
@@ -47,12 +39,12 @@
 \fancyfoot[C]{} % Custom footer text
 \fancyfoot[R]{\thepage} % Custom footer text
 
-%------------------------------------------------------------------
+%%------------------------------------------------------------------
 
-\RequirePackage[a4paper,margin=2cm]{geometry}
 \RequirePackage{subfiles} % for splitting report into subfiles
 \RequirePackage[T1]{fontenc}  % for better font handling
 \RequirePackage{xr-hyper} % for cross-file referencing https://tex.stackexchange.com/a/244272/199033
+\RequirePackage{bookmark} % extension of hyperref for more customized referencing
 \hypersetup{
   colorlinks,
   linkcolor=black,
