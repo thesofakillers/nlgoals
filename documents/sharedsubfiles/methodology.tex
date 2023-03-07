@@ -1,0 +1,58 @@
+% comment out one of the next two lines accordingly
+% \documentclass[../thesis-main/main.tex]{subfiles}
+\documentclass[../thesis-proposal/main.tex]{subfiles}
+\begin{document}
+\section{Ingredients}
+
+To answer any of the research questions outlined in Chapter \ref{chap:intro}, we will require the
+general ingredients presented in the following sub-sections:
+
+\subsection{Defining Goal Misgeneralization}
+
+Due to its simplicity and generality, we will rely on \citet{shah_goal_2022}'s definition of goal
+misgeneralization. The authors first define a \textit{misgeneralization} framework: consider the
+scenario in which we are aiming to learn some function $f^* : X \rightarrow Y$ that maps inputs $x
+\in X$ to outputs $y \in Y$. Next, consider the set of parametrized functions $\mathcal{F}_\Theta$
+implemented by some arbitrary ML model. We can select a function $f_\theta$ from this set based on
+some scoring function $s(f_\theta, \mathcal{D})$ which evaluates how well $f_\theta$ performs on the
+dataset $\mathcal{D}$. Misgeneralization can then occur when there are two parametrizations
+$\theta_1$, $\theta_2$  such that $f_{\theta_1}$ $f_{\theta_2}$ perform well on one dataset
+$\mathcal{D}_{train}$ but whose performances differ on another dataset $\mathcal{D}_{test}$.
+
+Having defined misgeneralization
+% todo define goal misgeneralization
+
+\subsection{NL-enabled Offline RL Algorithm(s)}
+% - LMPriors
+% - no well established work, so would like to try several
+
+\subsection{NL-enabled Offline RL Environments}
+% - environments
+%   - scale to more complex
+
+\subsection{Measuring Goal Misgeneralization}
+% - measuring goal misgeneralization
+
+\section{General Method}
+
+To answer question 1, we expect to simply benchmark our algorithm(s) on our environments with and
+without natural language aids. If goal misgeneralization is measured to be lower when using language
+than without, we have evidence that natural language can help in this regard, which we hypothesize
+to be the case.
+
+To answer question 2, we aim to develop seemingly-harmless but ultimately ambiguous natural language
+instructions that may be misinterpreted by the algorithm, similarly to the unreliable wish-granting
+genie from the three-wishes parable \citep{perrault_les_1865, galland_les_1717}. We hypothesize that
+such language can actually exacerbate goal misgeneralization, and intend to search for evidence of
+this by benchmarking our algorithm(s) on our environment(s) across a range of ambiguity.
+
+We have yet to develop concrete methodology for addressing question 3, and we imagine that this will
+be developed as work progresses on the first two questions and the research is better crystallized 
+in our minds.
+
+
+\ifSubfilesClassLoaded{%
+  \bibliographystyle{../bibstyle}
+  \bibliography{../references-bibtex}%
+}{}
+\end{document}
