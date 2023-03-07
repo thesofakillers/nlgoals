@@ -1,6 +1,7 @@
 % comment out one of the next two lines accordingly
 % \documentclass[../thesis-main/main.tex]{subfiles}
 \documentclass[../thesis-proposal/main.tex]{subfiles}
+\usepackage{parskip}
 \begin{document}
 \section{Ingredients}
 
@@ -12,47 +13,94 @@ general ingredients presented in the following sub-sections:
 Due to its simplicity and generality, we will rely on \citet{shah_goal_2022}'s definition of goal
 misgeneralization. The authors first define a \textit{misgeneralization} framework: consider the
 scenario in which we are aiming to learn some function $f^* : X \rightarrow Y$ that maps inputs $x
-\in X$ to outputs $y \in Y$. Next, consider the set of parametrized functions $\mathcal{F}_\Theta$
+	\in X$ to outputs $y \in Y$. Next, consider the set of parametrized functions $\mathcal{F}_\Theta$
 implemented by some arbitrary ML model. We can select a function $f_\theta$ from this set based on
 some scoring function $s(f_\theta, \mathcal{D})$ which evaluates how well $f_\theta$ performs on the
 dataset $\mathcal{D}$. Misgeneralization can then occur when there are two parametrizations
 $\theta_1$, $\theta_2$  such that $f_{\theta_1}$ $f_{\theta_2}$ perform well on one dataset
 $\mathcal{D}_{train}$ but whose performances differ on another dataset $\mathcal{D}_{test}$.
 
-Having defined misgeneralization
-% todo define goal misgeneralization
+Having defined misgeneralization, the authors rely on two additional definitions two define goal
+misgeneralization. Firstly, the authors refer to a model as \textit{capable} of some task $Z$ in
+setting $W$ if it can be quickly tuned to perfrom $Z$ in $W$. Secondly, a model's behaviour is
+\textit{consistent} with the goal of performing task $Z$ in setting $W$ if its behaviour in setting
+$W$ shows good performance on task $Z$. Goal misgeneralization then occurs if in setting $W_{test}$,
+the model is capable of the intended goal of performing task $Z_{i}$ but its behaviour is
+instead consistent with some other goal of performing task $Z_{m}$.
 
 \subsection{NL-enabled Offline RL Algorithm(s)}
-% - LMPriors
-% - no well established work, so would like to try several
 
-\subsection{NL-enabled Offline RL Environments}
-% - environments
-%   - scale to more complex
+In principle, we envision our solution architecture consisting in the combination of a grounded
+language encoder and an offline RL algorithm such as BCQ or CQL, with the environment state
+perceived visually through pixels. The language encoder is ``grounded'' in the sense that for
+a given piece of text relating to some state of the environment, the resulting text embedding is in
+a similar semantic space as the visual embedding of that state. This is most similar to the work by
+\citet{fan_minedojo_2022}, which fine-tuned CLIP \citep{radford_learning_2021} on their specific
+environmental domain. Work is currently ongoing at the Fund for Alignment Research
+(FAR)\footnote{\href{https://far.ai/}{https://far.ai/}} on extending this approach such that no
+fine-tuning is necessary, so that the same CLIP instance can be used on a variety of environments
+through a few prompting ``shots''\footnote{Juan Rocamonde, the external supervisor for this thesis,
+is currently working on this line of research at FAR.}. We believe that in the context of offline
+RL, using NL priors to avoid goal misgeneralization is an intuitive solution, so we are considering
+adapting \citet{choi_lmpriors_2022}'s LMPriors algorithm to the offline RL setting. However, because
+generally there is no well established solution for NL-informed, we may ultimately try several
+different approaches.
+
+\subsection{NL-enabled Offline RL Environments for Goal Generalization}
+
+We view goal misgeneralization as one of the consequences of causal confusion, where the learned
+causal models are erroneous due to spurious correlations in the training data. As such, each of our
+environments and tasks will be purposely constructed such that training presents spurious
+correlations between our scoring function, one or more irrelevant variable and the actually relevant
+predictive variables. Each of these will most likely be unique to the environment.
+
+Similarly to \citet{langosco_goal_2022}, we extend the Procgen~\citep{cobbe_leveraging_2020}
+benchmark environment suite for our goal misgeneralization setting. Unlike
+\citet{langosco_goal_2022} however, our extensions also include NL instructions, feedback and/or
+labels, depending on which algorithm we are considering. These NL features are algorithmically
+generated through scripted templates and potentially language models, to avoid reliance on human
+labellers which go beyond the scope of this work.
+
+For more complex environments, we may eventually move from Procgen to MineDojo
+\citep{fan_minedojo_2022}, which already presents NL annotations but may require additional
+scripting to build datasets for offline RL. In general, we expect to have a better idea of what
+environment desiderata to consider as work progresses.
 
 \subsection{Measuring Goal Misgeneralization}
-% - measuring goal misgeneralization
+
+Measuring goal misgeneralization can be tricky and is generally environment-specific. Like previous
+works \citep{langosco_goal_2022, shah_benefits_2021, de_haan_causal_2019}, we compare the
+performance (reward) with and without spurious correlations with confounding variables to measure
+the extent of goal misgeneralization. A larger drop in performance will indicate more severe goal
+misgeneralization. To distinguish this failure mode from capability misgeneralization, we will also
+track the confounding variable when it is and isn't spuriously correlated to the intended goal.
+Depending on the environment, if we note similar extents of interaction with the confounding
+variable with and without the spurious correlation, we may be able to conclude that the agent is
+still acting capably, but simply pursuing the wrong goal. As mentioned, we note that these
+quantifications are mostly environment-specific. We hope to develop a more general method of
+measuring goal misgeneralization, but like other aspects of our method, we cannot provide more
+detail to this end at the moment.
 
 \section{General Method}
 
 To answer question 1, we expect to simply benchmark our algorithm(s) on our environments with and
-without natural language aids. If goal misgeneralization is measured to be lower when using language
-than without, we have evidence that natural language can help in this regard, which we hypothesize
+without NL aids. If goal misgeneralization is measured to be lower when using language
+than without, we have evidence that NL can help in this regard, which we hypothesize
 to be the case.
 
-To answer question 2, we aim to develop seemingly-harmless but ultimately ambiguous natural language
+To answer question 2, we aim to develop seemingly-harmless but ultimately ambiguous NL
 instructions that may be misinterpreted by the algorithm, similarly to the unreliable wish-granting
 genie from the three-wishes parable \citep{perrault_les_1865, galland_les_1717}. We hypothesize that
 such language can actually exacerbate goal misgeneralization, and intend to search for evidence of
 this by benchmarking our algorithm(s) on our environment(s) across a range of ambiguity.
 
 We have yet to develop concrete methodology for addressing question 3, and we imagine that this will
-be developed as work progresses on the first two questions and the research is better crystallized 
+be developed as work progresses on the first two questions and the research is better crystallized
 in our minds.
 
 
 \ifSubfilesClassLoaded{%
-  \bibliographystyle{../bibstyle}
-  \bibliography{../references-bibtex}%
+	\bibliographystyle{../bibstyle}
+	\bibliography{../references-bibtex}%
 }{}
 \end{document}
