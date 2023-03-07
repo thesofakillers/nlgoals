@@ -10,7 +10,7 @@ general ingredients presented in the following sub-sections:
 
 \subsection{Defining Goal Misgeneralization}
 
-Due to its simplicity and generality, we will rely on \citet{shah_goal_2022}'s definition of goal
+Due to its simplicity and generality, we rely on \citet{shah_goal_2022}'s definition of goal
 misgeneralization. The authors first define a \textit{misgeneralization} framework: consider the
 scenario in which we are aiming to learn some function $f^* : X \rightarrow Y$ that maps inputs $x
 	\in X$ to outputs $y \in Y$. Next, consider the set of parametrized functions $\mathcal{F}_\Theta$
@@ -20,13 +20,13 @@ dataset $\mathcal{D}$. Misgeneralization can then occur when there are two param
 $\theta_1$, $\theta_2$  such that $f_{\theta_1}$ $f_{\theta_2}$ perform well on one dataset
 $\mathcal{D}_{train}$ but whose performances differ on another dataset $\mathcal{D}_{test}$.
 
-Having defined misgeneralization, the authors rely on two additional definitions two define goal
-misgeneralization. Firstly, the authors refer to a model as \textit{capable} of some task $Z$ in
-setting $W$ if it can be quickly tuned to perfrom $Z$ in $W$. Secondly, a model's behaviour is
-\textit{consistent} with the goal of performing task $Z$ in setting $W$ if its behaviour in setting
-$W$ shows good performance on task $Z$. Goal misgeneralization then occurs if in setting $W_{test}$,
-the model is capable of the intended goal of performing task $Z_{i}$ but its behaviour is
-instead consistent with some other goal of performing task $Z_{m}$.
+Having defined misgeneralization, the authors rely on two additional definitions. Firstly, the
+authors refer to a model as \textit{capable} of some task $Z$ in setting $W$ if it can be quickly
+tuned to perfrom $Z$ in $W$. Secondly, a model's behaviour is \textit{consistent} with the goal of
+performing task $Z$ in setting $W$ if its behaviour in setting $W$ shows good performance on task
+$Z$. Goal misgeneralization then occurs if in setting $W_{test}$, the model is capable of the
+intended goal of performing task $Z_{i}$ but its behaviour is instead consistent with some other
+goal of performing task $Z_{m}$.
 
 \subsection{NL-enabled Offline RL Algorithm(s)}
 
@@ -51,7 +51,7 @@ different approaches.
 We view goal misgeneralization as one of the consequences of causal confusion, where the learned
 causal models are erroneous due to spurious correlations in the training data. As such, each of our
 environments and tasks will be purposely constructed such that training presents spurious
-correlations between our scoring function, one or more irrelevant variable and the actually relevant
+correlations between our scoring function, one or more confounding variables and the actual
 predictive variables. Each of these will most likely be unique to the environment.
 
 Similarly to \citet{langosco_goal_2022}, we extend the Procgen~\citep{cobbe_leveraging_2020}
