@@ -63,33 +63,36 @@ learning (ICL) \citep{dohan_language_2022, dosovitskiy_image_2022, reynolds_prom
 wei_chain--thought_2022, hertz_prompt--prompt_2022}. On this note, recent work in RL has also
 explored the integration of natural language in existing or new RL methods
 \citep{luketina_survey_2019} and (more famously) viceversa \citep{ouyang_training_2022}. This work
-focuses on the former case. Here, DeepMind's GATO \citep{reed_generalist_2022} is the current
-reference work, leveraging a multimodal transformer to perform decision-making aided by language and
-other modalities. \Citet{jiang_vima_2022}'s VIMA presents a similar approach, devoting more
-attention to the design of multimodal prompts. Moving away from purely transformer-based solutions,
-CLIPort \citep{shridhar_cliport_2021} use CLIP \citep{radford_learning_2021} and Transporter
-\citep{zeng_transporter_2021} in a two-stream architecture for language-specified manipulation tasks
-using imitation learning. More distantly, \citet{zhou_inverse_2021} attempt to address
-generalization issues when using NL goals by proposing a sample-efficient inverse reinforcement
-learning algorithm based on latent goal relabeling \citep{nair_visual_2018}. Instead of providing
-input instructions or feedback, \citet{lampinen_tell_2022} take a different approach by making their
-agents produce NL explanations as part of their output, which is then used in an additional loss
-term for learning causal structure and OOD generalization. \Citet{yang_safe_2021} focus on
-developing operationally safe RL algorithm by proposing a modular \textit{constraint interpreter}
-capable of mapping NL constraints to spatial and temporal representations of hidden states.
-\Citet{deepmind_MIA_2022} and \citet{fan_minedojo_2022} leverage contrastive vision-language
-training to address the issue of grounding language representations to the environment, while
-\citet{watkins_teachable_2021} proposes a novel bootstrapping solution for grounding.
-\Citet{sumers_learning_2021} explores reward learning using open-ended linguistic feedback. The same
-authors contribute formalizations of the type of language a modeled speaker could use for preference
-expression \citep{sumers_how_2022} and most recently by extending hindsight experience replay (HER)
-\citep{andrychowicz_hindsight_2017} to a language-conditioned setting using generative
-visual-language models (VLM) \citep{alayrac_flamingo_2022}. A number of language-annotated datasets
-are available for research in this area \citep{zholus_iglu_2022, mees_calvin_2022,
-fan_minedojo_2022, shridhar_alfred_2020, jiang_yunfan_vima_2022, liu_reinforcement_2022}. However
-the field is still clearly in early stages and has yet to settle on a particular direction. To our
-knowledge, this work is the first to investigate the effects of NL on goal misgeneralization in
-offline RL.
+focuses on the former case. Here, Google's SayCan \citep{ahn_as_2022} and DeepMind's Gato
+\citep{reed_generalist_2022} are the current reference works, the first utilizing language models
+for planning robotics tasks and the latter leveraging a multimodal transformer to perform
+decision-making aided by language and other modalities. \Citet{jiang_vima_2022}'s VIMA presents
+a similar approach to Gato, devoting more attention to the design of multimodal prompts. Moving away
+from purely transformer-based solutions, CLIPort \citep{shridhar_cliport_2021} use CLIP
+\citep{radford_learning_2021} and Transporter \citep{zeng_transporter_2021} in a two-stream
+architecture for language-specified manipulation tasks using imitation learning. More distantly,
+\citet{zhou_inverse_2021} attempt to address generalization issues when using NL goals by proposing
+a sample-efficient inverse reinforcement learning algorithm based on latent goal relabeling
+\citep{nair_visual_2018}. \Citet{choi_lmpriors_2022} also tackle generalization through their
+LMPriors framework which shapes the reward \citep{ng_policy_1999} based on priors computed by
+a generative language model. Instead of providing input instructions or feedback,
+\citet{lampinen_tell_2022} take a different approach by making their agents produce NL explanations
+as part of their output, which is then used in an additional loss term for learning causal structure
+and OOD generalization. \Citet{yang_safe_2021} focus on developing operationally safe RL algorithm
+by proposing a modular \textit{constraint interpreter} capable of mapping NL constraints to spatial
+and temporal representations of hidden states. \Citet{deepmind_MIA_2022} and
+\citet{fan_minedojo_2022} leverage contrastive vision-language training to address the issue of
+grounding language representations to the environment, while \citet{watkins_teachable_2021} proposes
+a novel bootstrapping solution for grounding. \Citet{sumers_learning_2021} explores reward learning
+using open-ended linguistic feedback. The same authors contribute formalizations of the type of
+language a modeled speaker could use for preference expression \citep{sumers_how_2022} and most
+recently by extending hindsight experience replay (HER) \citep{andrychowicz_hindsight_2017} to
+a language-conditioned setting using generative visual-language models (VLM)
+\citep{alayrac_flamingo_2022}. A number of language-annotated datasets are available for research in
+this area \citep{zholus_iglu_2022, mees_calvin_2022, fan_minedojo_2022, shridhar_alfred_2020,
+jiang_yunfan_vima_2022, liu_reinforcement_2022}. However the field is still clearly in early stages
+and has yet to settle on a particular direction. To our knowledge, this work is the first to
+investigate the effects of NL on goal misgeneralization in offline RL.
 
 
 \ifSubfilesClassLoaded{%
