@@ -5,7 +5,23 @@ description = "Natural Language Goals"
 authors = ["Giulio Starace <giulio.starace@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
+diffusers = "^0.14.0"
+safetensors = "^0.3.0"
+jupyterlab = "^3.6.1"
+black = "^23.1.0"
+jupyterlab-code-formatter = "^1.5.3"
+numpy = "^1.24.2"
+matplotlib = "^3.7.1"
+ipywidgets = "^8.0.4"
+procgen = "^0.10.7"
+gym = "^0.26.2"
+gym3 = "^0.3.3"
+torch = "^2.0.0"
+transformers = "^4.27.1"
+accelerate = "^0.17.1"
+fastapi = ">=0.80"
+lightning = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 
