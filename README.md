@@ -1,6 +1,4 @@
-# NLIRS
-
-Natural Language Interfaces to Address Reward Hacking in RL
+# Natural Language for Goal Misgeneralization
 
 ## Requirements and Setup
 
