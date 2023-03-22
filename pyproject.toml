@@ -9,7 +9,7 @@ python = "^3.10"
 diffusers = "^0.14.0"
 safetensors = "^0.3.0"
 jupyterlab = "^3.6.1"
-black = "^23.1.0"
+black = {extras = ["jupyter"], version = "^23.1.0"}
 jupyterlab-code-formatter = "^1.5.3"
 numpy = "^1.24.2"
 matplotlib = "^3.7.1"
@@ -22,6 +22,7 @@ transformers = "^4.27.1"
 accelerate = "^0.17.1"
 fastapi = ">=0.80"
 lightning = "^2.0.0"
+nbdime = "^3.1.1"
 
 [tool.poetry.dev-dependencies]
 
