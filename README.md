@@ -36,10 +36,7 @@ sh gen_pip_reqs.sh
 ```plaintext
     ├── LICENSE
     ├── README.md          <- The top-level README
-    ├── data/
-    │   ├── interim/       <- Intermediate data that has been transformed.
-    │   ├── processed/     <- The final, canonical data sets for modeling.
-    │   └── raw/           <- The original, immutable data dump.
+    ├── data/              <- Datasets
     ├── checkpoints/       <- Trained and serialized models.
     ├── notebooks/         <- Jupyter notebooks.
     ├── documents/         <- documents as HTML, PDF, LaTeX, etc.
