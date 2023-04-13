@@ -5,11 +5,21 @@ description = "Natural Language Goals"
 authors = ["Giulio Starace <giulio.starace@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
+cmake = "3.18.4"
+setuptools = "<58"
+# note: you will have to install these two with pip
+pyhash = "^0.9.3"
+MulticoreTSNE = "^0.1"
+# the rest should work with poetry
+opencv-python = "<4.7"
+tacto = { git = "https://github.com/thesofakillers/tacto.git" }
+calvin-env = { git = "https://github.com/mees/calvin_env.git" }
+calvin = { git = "https://github.com/mees/calvin.git", subdirectory = "calvin_models" }
 diffusers = "^0.14.0"
 safetensors = "^0.3.0"
 jupyterlab = "^3.6.1"
-black = {extras = ["jupyter"], version = "^23.1.0"}
+black = { extras = ["jupyter"], version = "^23.1.0" }
 jupyterlab-code-formatter = "^1.5.3"
 numpy = "^1.24.2"
 matplotlib = "^3.7.1"
@@ -17,14 +27,11 @@ ipywidgets = "^8.0.4"
 procgen = "^0.10.7"
 gym = "^0.26.2"
 gym3 = "^0.3.3"
-torch = "^2.0.0"
 transformers = "^4.27.1"
 accelerate = "^0.17.1"
 fastapi = ">=0.80"
 lightning = "^2.0.0"
 nbdime = "^3.1.1"
-
-[tool.poetry.dev-dependencies]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

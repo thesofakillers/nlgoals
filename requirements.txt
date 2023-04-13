@@ -206,3 +206,5 @@ ypy-websocket==0.8.2 ; python_version >= "3.10" and python_version < "4.0"
 zipp==3.15.0 ; python_version >= "3.10" and python_version < "4.0"
 # local package
 -e .
+# local package
+-e .
