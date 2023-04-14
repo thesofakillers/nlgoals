@@ -16,8 +16,6 @@ procgen = "^0.10.7"
 gym = "^0.26.2"
 gym3 = "^0.3.3"
 transformers = "^4.27.1"
-fastapi = ">=0.80"
-lightning = "^2.0.0"
 fonttools = "!=4.39.1"
 
 [tool.poetry.group.dev.dependencies]
