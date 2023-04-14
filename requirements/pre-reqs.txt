@@ -1,0 +1,2 @@
+setuptools==57.5.0
+cmake==3.18.4

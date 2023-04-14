@@ -7,11 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
+# # note: you will have to install these two with pip
 cmake = "3.18.4"
 setuptools = "<58"
-# note: you will have to install these two with pip
-pyhash = "^0.9.3"
-MulticoreTSNE = "^0.1"
 # the rest should work with poetry
 matplotlib = "^3.7.1"
 procgen = "^0.10.7"
@@ -31,9 +29,10 @@ nbdime = "^3.1.1"
 
 [tool.poetry.group.calvin.dependencies]
 opencv-python = "<4.7"
-tacto = { git = "https://github.com/thesofakillers/tacto.git" }
-calvin-env = { git = "https://github.com/mees/calvin_env.git" }
-calvin = { git = "https://github.com/mees/calvin.git", subdirectory = "calvin_models" }
+tacto = { git = "https://github.com/thesofakillers/tacto.git", branch = 'main' }
+calvin-env = { git = "https://github.com/mees/calvin_env.git", rev = '797142c588' }
+calvin = { git = "https://github.com/mees/calvin.git", branch = 'main', subdirectory = "calvin_models" }
+numba = "^0.56.4"
 
 [tool.poetry.group.diffusion.dependencies]
 diffusers = "^0.14.0"
