@@ -3,6 +3,7 @@ name = "nlgoals"
 version = "0.2.0"
 description = "Natural Language Goals"
 authors = ["Giulio Starace <giulio.starace@gmail.com>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -12,7 +13,6 @@ setuptools = "<58"
 pyhash = "^0.9.3"
 MulticoreTSNE = "^0.1"
 # the rest should work with poetry
-numpy = "^1.24.2"
 matplotlib = "^3.7.1"
 procgen = "^0.10.7"
 gym = "^0.26.2"
@@ -20,6 +20,7 @@ gym3 = "^0.3.3"
 transformers = "^4.27.1"
 fastapi = ">=0.80"
 lightning = "^2.0.0"
+fonttools = "!=4.39.1"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.6.1"
@@ -40,5 +41,5 @@ accelerate = "^0.17.1"
 safetensors = "^0.3.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
