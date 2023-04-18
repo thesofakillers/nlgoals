@@ -16,14 +16,14 @@ First, install the pre-requirements[^1]:
 pip install -r requirements/pre-reqs.txt
 ```
 
-For [poetry](https://python-poetry.org/) users, getting setup is as easy as
+For [poetry](https://python-poetry.org/) users, getting setup is then as easy as
 running
 
 ```terminal
 poetry install
 ```
 
-We also provide a `requirements.txt` files for
+We also provide `requirements.txt` files for
 [pip](https://pypi.org/project/pip/) users who do not wish to use poetry. We
 provide a [requirements-minimal.txt](requirements/requirements-minimal.txt) file
 and a [requirements-complete.txt](requirements/requirements-complete.txt) file
