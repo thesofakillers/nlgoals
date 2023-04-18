@@ -17,6 +17,7 @@ gym = "^0.26.2"
 gym3 = "^0.3.3"
 transformers = "^4.27.1"
 fonttools = "!=4.39.1"
+seaborn = "^0.12.2"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.6.1"
