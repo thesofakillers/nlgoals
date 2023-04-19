@@ -1,8 +1,11 @@
-# Dataset
+# CALVIN
+
+> Note: this is README is a modified version of
+> [the original](https://github.com/mees/calvin/blob/4b35b135259f66a2d1b2dc8d3d50875cc5396604/dataset/README.md)
+> to better fit this repository
 
 The CALVIN dataset comes with 6 hours of teleoperated play data in each of the 4
-environments. You can use [this script](scripts/visualize_dataset.py) to
-visualize the dataset.
+environments.
 
 ## Download
 
@@ -13,7 +16,6 @@ debug dataset:
 GB):
 
 ```bash
-$ cd $CALVIN_ROOT/dataset
 $ sh download_data.sh D
 ```
 
@@ -21,33 +23,29 @@ $ sh download_data.sh D
 (517 GB)
 
 ```bash
-$ cd $CALVIN_ROOT/dataset
 $ sh download_data.sh ABC
 ```
 
 **3.** [Split ABCD->D](http://calvin.cs.uni-freiburg.de/dataset/task_ABCD_D.zip)
 (656 GB)
 
-```bash
-$ cd $CALVIN_ROOT/dataset
-$ sh download_data.sh ABCD
+```terminal
+sh download_data.sh ABCD
 ```
 
 **4.**
 [Small debug dataset](http://calvin.cs.uni-freiburg.de/dataset/calvin_debug_dataset.zip)
 (1.3 GB)
 
-```bash
-$ cd $CALVIN_ROOT/dataset
-$ sh download_data.sh debug
+```terminal
+sh download_data.sh debug
 ```
 
 YOu can verify the integrity of the downloaded zips with the following commands:
 
-```bash
-$ cd $CALVIN_ROOT/dataset
-$ wget http://calvin.cs.uni-freiburg.de/dataset/sha256sum.txt
-$ sha256sum --check --ignore-missing sha256sum.txt
+```terminal
+wget http://calvin.cs.uni-freiburg.de/dataset/sha256sum.txt
+sha256sum --check --ignore-missing sha256sum.txt
 ```
 
 ## Language Embeddings
@@ -56,8 +54,7 @@ Since Sep 16 2022, additional language embeddings are part of the dataset on the
 server. If you downloaded the dataset before, you can manually download the
 embeddings by running
 
-```
-cd $CALVIN_ROOT/dataset
+```terminal
 sh download_lang_embeddings.sh D | ABC | ABCD
 ```
 
@@ -172,16 +169,3 @@ the task id, the sequence indexes.
 The `embeddings.npy` file is only present on the validation folder, this file
 contains the embeddings used only during the Rollouts (test inference) to
 condition the policy.
-
-## Visualize Language Annotations
-
-We provide a script to generate a video that visualizes the language annotations
-of the recorded play data. By default we visualize the first 100 sequences, but
-feel free to more sequences (just change this
-[line](https://github.com/mees/calvin/blob/main/calvin_models/calvin_agent/utils/visualize_annotations.py#L57)).
-A example video is.
-
-```
-cd $CALVIN_ROOT/calvin_models/calvin_agent
-python utils/visualize_annotations.py datamodule.root_data_dir=$CALVIN_ROOT/dataset/task_D_D/ datamodule/observation_space=lang_rgb_static
-```
