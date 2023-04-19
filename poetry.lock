@@ -1749,6 +1749,42 @@ files = [
 dev = ["hypothesis"]
 
 [[package]]
+name = "jsonargparse"
+version = "4.20.1"
+description = "Implement minimal boilerplate CLIs derived from type hints and parse from command line, config files and environment variables."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "jsonargparse-4.20.1-py3-none-any.whl", hash = "sha256:416f173b37644745cc5b18bd14c5a6459b37bb085a4a76f6bfed91dd18fe8745"},
+    {file = "jsonargparse-4.20.1.tar.gz", hash = "sha256:3000f06db29f094ff360b020a766fb634f9786b68715e1563d376db51c1f4801"},
+]
+
+[package.dependencies]
+PyYAML = ">=3.13"
+
+[package.extras]
+all = ["argcomplete (>=2.0.0)", "docstring-parser (>=0.15)", "fsspec (>=0.8.4)", "jsonnet (>=0.13.0)", "jsonnet-binary (>=0.17.0)", "jsonschema (>=3.2.0)", "omegaconf (>=2.1.1)", "reconplogger (>=4.4.0)", "requests (>=2.18.4)", "ruyaml (>=0.20.0)", "typeshed-client (>=2.1.0)", "typing-extensions (>=3.10.0.0)"]
+argcomplete = ["argcomplete (>=2.0.0)"]
+dev = ["Sphinx (>=1.7.9)", "autodocsumm (>=0.1.10)", "coverage (>=4.5.1)", "mypy (>=0.701)", "pre-commit (>=2.19.0)", "pycodestyle (>=2.5.0)", "pylint (>=2.15.6)", "responses (>=0.12.0)", "sphinx-autodoc-typehints (>=1.19.5)", "sphinx-rtd-theme (>=0.4.3)", "tox (>=3.25.0)", "types-PyYAML (>=6.0.11)", "types-requests (>=2.28.9)"]
+doc = ["Sphinx (>=1.7.9)", "autodocsumm (>=0.1.10)", "sphinx-autodoc-typehints (>=1.19.5)", "sphinx-rtd-theme (>=0.4.3)"]
+fsspec = ["fsspec (>=0.8.4)"]
+jsonnet = ["jsonnet (>=0.13.0)", "jsonnet-binary (>=0.17.0)"]
+jsonschema = ["jsonschema (>=3.2.0)"]
+maintainer = ["bump2version (>=0.5.11)"]
+mypy = ["mypy (>=0.701)", "types-PyYAML (>=6.0.11)"]
+omegaconf = ["omegaconf (>=2.1.1)"]
+pylint = ["pylint (>=2.15.6)"]
+reconplogger = ["reconplogger (>=4.4.0)"]
+ruyaml = ["ruyaml (>=0.20.0)"]
+signatures = ["docstring-parser (>=0.15)", "typeshed-client (>=2.1.0)"]
+test = ["coverage (>=4.5.1)", "responses (>=0.12.0)", "types-PyYAML (>=6.0.11)", "types-requests (>=2.28.9)"]
+test-no-urls = ["coverage (>=4.5.1)"]
+types-pyyaml = ["types-PyYAML (>=6.0.11)"]
+typing-extensions = ["typing-extensions (>=3.10.0.0)"]
+urls = ["requests (>=2.18.4)"]
+
+[[package]]
 name = "jsonpointer"
 version = "2.3"
 description = "Identify specific nodes in a JSON document (RFC 6901)"
@@ -5559,4 +5595,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "c8632eb279506e9f0ef5cab2286fa2f31796b91f8007b1cb9388ff640bcce817"
+content-hash = "e5fa0d2f8c6746a816a0f18b20dc80794955ef4d0a2e959cbb0d0efe8aae722b"
