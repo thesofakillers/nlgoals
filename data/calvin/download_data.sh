@@ -29,28 +29,28 @@ fi
 if [ "$1" = "D" ]; then
 
   echo "Downloading task_D_D ..."
-  wget http://calvin.cs.uni-freiburg.de/dataset/task_D_D.zip -P "$DOWNLOAD_DIR"
+  wget -c http://calvin.cs.uni-freiburg.de/dataset/task_D_D.zip -P "$DOWNLOAD_DIR"
   unzip "$DOWNLOAD_DIR/task_D_D.zip" -d "$DOWNLOAD_DIR"
   echo "saved folder: $DOWNLOAD_DIR/task_D_D"
 
 elif [ "$1" = "ABC" ]; then
 
   echo "Downloading task_ABC_D ..."
-  wget http://calvin.cs.uni-freiburg.de/dataset/task_ABC_D.zip -P "$DOWNLOAD_DIR"
+  wget -c http://calvin.cs.uni-freiburg.de/dataset/task_ABC_D.zip -P "$DOWNLOAD_DIR"
   unzip "$DOWNLOAD_DIR/task_ABC_D.zip" -d "$DOWNLOAD_DIR"
   echo "saved folder: $DOWNLOAD_DIR/task_ABC_D"
 
 elif [ "$1" = "ABCD" ]; then
 
   echo "Downloading task_ABCD_D ..."
-  wget http://calvin.cs.uni-freiburg.de/dataset/task_ABCD_D.zip -P "$DOWNLOAD_DIR"
+  wget -c http://calvin.cs.uni-freiburg.de/dataset/task_ABCD_D.zip -P "$DOWNLOAD_DIR"
   unzip "$DOWNLOAD_DIR/task_ABCD_D.zip" -d "$DOWNLOAD_DIR"
   echo "saved folder: $DOWNLOAD_DIR/task_ABCD_D"
 
 elif [ "$1" = "debug" ]; then
 
   echo "Downloading debug dataset ..."
-  wget http://calvin.cs.uni-freiburg.de/dataset/calvin_debug_dataset.zip -P "$DOWNLOAD_DIR"
+  wget -c http://calvin.cs.uni-freiburg.de/dataset/calvin_debug_dataset.zip -P "$DOWNLOAD_DIR"
   unzip "$DOWNLOAD_DIR/calvin_debug_dataset.zip" -d "$DOWNLOAD_DIR"
   echo "saved folder: $DOWNLOAD_DIR/calvin_debug_dataset"
 
