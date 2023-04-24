@@ -3,7 +3,7 @@ import jsonargparse
 
 import calvin_agent.datasets.calvin_data_module as CALVIN
 
-from nlgoals.models.clipt import CLIPT, CLIPTOptions
+from nlgoals.models.clipt import CLIPT
 from nlgoals.trainer import TrainerConfig
 
 
