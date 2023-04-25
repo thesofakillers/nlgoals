@@ -1,10 +1,9 @@
 """Training of CLIPh: Contrastive Language Image Pretraining for Trajectories"""
 import jsonargparse
 
-import calvin_agent.datasets.calvin_data_module as CALVIN
-
 from nlgoals.models.clipt import CLIPT
 from nlgoals.trainer import TrainerConfig
+from nlgoals.data.calvin import CALVIN
 
 
 def train(args):
@@ -26,6 +25,7 @@ if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
     parser.add_class_arguments(CLIPT, "clipt")
+    parser.add_class_arguments(CALVIN, "data")
     parser.add_argument("--trainer", type=TrainerConfig, default=TrainerConfig())
     args = parser.parse_args()
     print(args)
