@@ -54,7 +54,10 @@ class CALVIN(Dataset):
             allow_pickle=True,
         ).item()
         self.num_frames = num_frames
-        self.frame_keys = frame_keys
+        self.frame_keys = (
+            frame_keys if frame_keys is not None else [k.value for k in FrameKey]
+        )
+        self.parse_frame_keys = frame_keys is not None
 
     def __len__(self) -> int:
         return len(self.lang_annotations["info"]["indx"])
@@ -85,7 +88,7 @@ class CALVIN(Dataset):
             for key in frame:
                 if key not in frames:
                     frames[key] = np.empty((self.num_frames, *frame[key].shape))
-                frames[i] = frame[key]
+                frames[key][i] = frame[key]
 
         return frames
 
@@ -94,7 +97,7 @@ class CALVIN(Dataset):
         frame_idx_str = "{:0>7}".format(frame_idx)
         frame_file = np.load(os.path.join(self.path, f"episode_{frame_idx_str}.npz"))
 
-        if self.frame_keys is None:
+        if not self.parse_frame_keys:
             return dict(frame_file)
         else:
             frame = {}
