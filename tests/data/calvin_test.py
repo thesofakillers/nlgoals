@@ -7,15 +7,20 @@ from nlgoals.data.calvin import CALVIN
 
 
 @pytest.fixture
-def frame_keys():
+def calvin():
+    data_dir = "data/calvin/calvin_debug_dataset/"
+    split = "training"
     frame_keys = ["rgb_static", "actions", "rel_actions"]
-    return frame_keys
+    num_frames = 5
+    dataset = CALVIN(data_dir, split, num_frames, frame_keys)
+    return dataset
 
 
 @pytest.fixture
-def calvin(frame_keys):
+def calvin_allframes():
     data_dir = "data/calvin/calvin_debug_dataset/"
     split = "training"
+    frame_keys = None
     num_frames = 5
     dataset = CALVIN(data_dir, split, num_frames, frame_keys)
     return dataset
@@ -30,24 +35,32 @@ def test_getitem(calvin):
     item = calvin[0]
     assert isinstance(item, dict)
 
-    expected_keys = ["lang_ann", "task"] + calvin.frame_keys
-    assert all(k in item for k in expected_keys)
+    expected_keys = set(["lang_ann", "task"] + calvin.frame_keys)
+    assert (
+        set(item.keys()) == expected_keys
+    ), f"Key mismatch: item: {item.keys()}, expected: {expected_keys}"
 
 
-def test_dataloading(calvin):
+@pytest.mark.parametrize(
+    "dataset", [pytest.lazy_fixture("calvin"), pytest.lazy_fixture("calvin_allframes")]
+)
+def test_dataloading(dataset):
     batch_size = 4
-    dataloader = DataLoader(calvin, batch_size=batch_size, drop_last=True)
+    dataloader = DataLoader(dataset, batch_size=batch_size, drop_last=True)
 
     for batch in dataloader:
         assert isinstance(batch, dict)
 
-        expected_keys = ["lang_ann", "task"] + calvin.frame_keys
-        assert all(k in batch for k in expected_keys)
+        expected_keys = set(["lang_ann", "task"] + dataset.frame_keys)
+        assert (
+            set(batch.keys()) == expected_keys
+        ), f"Key mismatch: batch: {batch.keys()}, expected: {expected_keys}"
 
-        for frame_key in calvin.frame_keys:
+        for frame_key in dataset.frame_keys:
+            print(frame_key, batch[frame_key].shape)
             assert frame_key in batch
             assert isinstance(batch[frame_key], torch.Tensor)
-            assert batch[frame_key].shape[1] == calvin.num_frames
+            assert batch[frame_key].shape[1] == dataset.num_frames
             assert (
                 batch[frame_key].shape[0] == batch_size
             ), f"{frame_key}'s shape is {batch[frame_key].shape}"
