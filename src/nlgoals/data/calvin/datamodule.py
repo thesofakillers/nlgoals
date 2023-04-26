@@ -1,12 +1,11 @@
 """Lightning DataModule for the Calvin dataset."""
 import os
-from typing import Dict, Optional, List
+from typing import Optional, List, Any
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, random_split
 import torch
 
-from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.data.calvin.utils import FrameKey
 from nlgoals.data.calvin.dataset import CALVIN
 
@@ -23,17 +22,7 @@ class CALVINDM(pl.LightningDataModule):
         seed: int = 42,
         num_workers: int = 18,
         frame_keys: Optional[List[FrameKey]] = ["rgb_static"],
-        transform_name: Optional[TransformName] = ["clipt-prepare"],
-        transform_kwargs: Optional[Dict] = {
-            "image_col": "rgb_static",
-            "input_ids_col": "text_input_ids",
-            "attn_mask_col": "text_attn_mask",
-            "clip_transform_kwargs": {
-                "clip_model": "laion/CLIP-ViT-B-16-laion2B-s34B-b88K",
-                "image_cols": ["rgb_static"],
-                "text_col": "lang_ann",
-            },
-        },
+        transform: Optional[Any] = None,
     ):
         """
         Args:
@@ -44,6 +33,7 @@ class CALVINDM(pl.LightningDataModule):
             val_split: fraction of the training set to use for validation
             frame_keys: list of keys to include for each frame.
                 By default, all keys are included.
+            transform: instance of transform to apply to each frame
         """
         super().__init__()
         self.data_dir = data_dir
@@ -53,8 +43,7 @@ class CALVINDM(pl.LightningDataModule):
         self.seed = seed
         self.frame_keys = frame_keys
         self.num_workers = num_workers
-        self.transform_name = transform_name
-        self.transform_kwargs = transform_kwargs
+        self.transform = transform
 
     def prepare_data(self) -> None:
         """Checks that the data is downloaded"""
@@ -85,8 +74,7 @@ class CALVINDM(pl.LightningDataModule):
                 "training",
                 self.num_frames,
                 self.frame_keys,
-                self.transform_name,
-                self.transform_kwargs,
+                self.transform,
             )
 
             generator = torch.Generator().manual_seed(self.seed)
@@ -103,8 +91,7 @@ class CALVINDM(pl.LightningDataModule):
                 "validation",
                 self.num_frames,
                 self.frame_keys,
-                self.transform_name,
-                self.transform_kwargs,
+                self.transform,
             )
             self.frame_keys = self.test_dataset.frame_keys
 

@@ -1,12 +1,11 @@
 """Datasets and DataModules for CALVIN: https://github.com/mees/calvin"""
 import os
 import enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 import numpy as np
 from torch.utils.data import Dataset
 
-from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.data.calvin.utils import FrameKey
 
 
@@ -27,8 +26,7 @@ class CALVIN(Dataset):
         split: CALVINSplit,
         num_frames: int,
         frame_keys: Optional[List[FrameKey]] = None,
-        transform_name: Optional[TransformName] = None,
-        transform_kwargs: Optional[Dict] = None,
+        transform: Optional[Any] = None,
     ):
         """
         Args:
@@ -52,11 +50,7 @@ class CALVIN(Dataset):
             frame_keys if frame_keys is not None else [k.value for k in FrameKey]
         )
         self.parse_frame_keys = frame_keys is not None
-        self.transform = (
-            None
-            if transform_name is None
-            else TRANSFORM_MAP[transform_name](**transform_kwargs)
-        )
+        self.transform = transform
 
     def __len__(self) -> int:
         return len(self.lang_annotations["info"]["indx"])
