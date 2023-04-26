@@ -68,33 +68,36 @@ class CALVINDM(pl.LightningDataModule):
                 else:
                     print("Data found.")
 
-    def setup(self, stage=None):
+    def setup(self, stage: Optional[str] = None):
         """Initializes and splits datasets, for use by DataLoaders"""
-        self.test_dataset = CALVIN(
-            self.data_dir,
-            "validation",
-            self.num_frames,
-            self.frame_keys,
-            self.transform_name,
-            self.transform_kwargs,
-        )
-        temp_train_dataset = CALVIN(
-            self.data_dir,
-            "training",
-            self.num_frames,
-            self.frame_keys,
-            self.transform_name,
-            self.transform_kwargs,
-        )
+        if stage == "fit" or stage is None:
+            temp_train_dataset = CALVIN(
+                self.data_dir,
+                "training",
+                self.num_frames,
+                self.frame_keys,
+                self.transform_name,
+                self.transform_kwargs,
+            )
 
-        generator = torch.Generator().manual_seed(self.seed)
-        self.train_dataset, self.val_dataset = random_split(
-            temp_train_dataset,
-            [1 - self.val_split, self.val_split],
-            generator=generator,
-        )
-        # these get properly parsed in the dataset, move them here for easier access
-        self.frame_keys = self.train_dataset.frame_keys
+            generator = torch.Generator().manual_seed(self.seed)
+            self.train_dataset, self.val_dataset = random_split(
+                temp_train_dataset,
+                [1 - self.val_split, self.val_split],
+                generator=generator,
+            )
+            # these get properly parsed in the dataset, move them here for easier access
+            self.frame_keys = self.train_dataset.frame_keys
+        elif stage == "test" or stage is None:
+            self.test_dataset = CALVIN(
+                self.data_dir,
+                "validation",
+                self.num_frames,
+                self.frame_keys,
+                self.transform_name,
+                self.transform_kwargs,
+            )
+            self.frame_keys = self.test_dataset.frame_keys
 
     def train_dataloader(self):
         return DataLoader(
