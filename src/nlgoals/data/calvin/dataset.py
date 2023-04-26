@@ -6,6 +6,8 @@ from typing import Dict, List, Optional
 import numpy as np
 from torch.utils.data import Dataset
 
+from nlgoals.data.utils import TRANSFORM_MAP
+
 
 class FrameKey(enum.Enum):
     actions = "actions"
@@ -37,6 +39,8 @@ class CALVIN(Dataset):
         split: CALVINSplit,
         num_frames: int,
         frame_keys: Optional[List[FrameKey]] = None,
+        transform_name: Optional[str] = None,
+        **transform_kwargs,
     ):
         """
         Args:
@@ -58,6 +62,11 @@ class CALVIN(Dataset):
             frame_keys if frame_keys is not None else [k.value for k in FrameKey]
         )
         self.parse_frame_keys = frame_keys is not None
+        self.transform = (
+            None
+            if transform_name is None
+            else TRANSFORM_MAP[transform_name](**transform_kwargs)
+        )
 
     def __len__(self) -> int:
         return len(self.lang_annotations["info"]["indx"])
@@ -68,11 +77,16 @@ class CALVIN(Dataset):
 
         frames = self._get_frames_item(idx)
 
-        return {
+        item = {
             "lang_ann": lang_ann,
             "task": task,
             **frames,
         }
+
+        if self.transform is not None:
+            item = self.transform(item)
+
+        return item
 
     def _get_frames_item(self, idx: int) -> Dict[str, np.ndarray]:
         """Note: frame_idx is different from item idx"""
