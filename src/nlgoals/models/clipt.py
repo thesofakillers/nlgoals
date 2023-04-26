@@ -146,8 +146,9 @@ class CLIPT(pl.LightningModule):
         raise NotImplementedError
 
     def configure_optimizers(self):
-        # todo
-        pass
+        params_to_update = filter(lambda p: p.requires_grad, self.parameters())
+        optimizer = torch.optim.Adam(params_to_update, lr=5e-5)
+        return optimizer
 
 
 if __name__ == "__main__":
