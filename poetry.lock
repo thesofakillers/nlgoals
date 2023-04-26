@@ -45,7 +45,7 @@ files = [
 name = "aiohttp"
 version = "3.8.4"
 description = "Async http client/server framework (asyncio)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -154,7 +154,7 @@ speedups = ["Brotli", "aiodns", "cchardet"]
 name = "aiosignal"
 version = "1.3.1"
 description = "aiosignal: a list of registered asynchronous callbacks"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -328,7 +328,7 @@ test = ["astroid", "pytest"]
 name = "async-timeout"
 version = "4.0.2"
 description = "Timeout context manager for asyncio programs"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -340,7 +340,7 @@ files = [
 name = "attrs"
 version = "22.2.0"
 description = "Classes Without Boilerplate"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -1123,7 +1123,7 @@ files = [
 name = "frozenlist"
 version = "1.3.3"
 description = "A list-like structure which implements collections.abc.MutableSequence"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1207,7 +1207,7 @@ files = [
 name = "fsspec"
 version = "2023.4.0"
 description = "File-system specification"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -2274,7 +2274,7 @@ test = ["codecov (==2.1.12)", "coverage (==6.5.0)", "pre-commit (==2.20.0)", "py
 name = "lightning-utilities"
 version = "0.8.0"
 description = "PyTorch Lightning Sample project."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2686,7 +2686,7 @@ test = ["scikit-learn", "scipy"]
 name = "multidict"
 version = "6.0.4"
 description = "multidict implementation"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3181,7 +3181,7 @@ testing = ["pytest", "pytest-cov"]
 name = "nvidia-cublas-cu11"
 version = "11.10.3.66"
 description = "CUBLAS native runtime libraries"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3"
 files = [
@@ -3197,7 +3197,7 @@ wheel = "*"
 name = "nvidia-cuda-nvrtc-cu11"
 version = "11.7.99"
 description = "NVRTC native runtime libraries"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3"
 files = [
@@ -3214,7 +3214,7 @@ wheel = "*"
 name = "nvidia-cuda-runtime-cu11"
 version = "11.7.99"
 description = "CUDA Runtime native Libraries"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3"
 files = [
@@ -3230,7 +3230,7 @@ wheel = "*"
 name = "nvidia-cudnn-cu11"
 version = "8.5.0.96"
 description = "cuDNN runtime libraries"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3"
 files = [
@@ -3661,7 +3661,7 @@ wcwidth = "*"
 name = "protobuf"
 version = "3.20.3"
 description = "Protocol Buffers"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -4018,7 +4018,7 @@ files = [
 name = "pytorch-lightning"
 version = "1.8.6"
 description = "PyTorch Lightning is the lightweight PyTorch wrapper for ML researchers. Scale your models. Write less boilerplate."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -4879,7 +4879,7 @@ doc = ["reno", "sphinx", "tornado (>=4.5)"]
 name = "tensorboardx"
 version = "2.6"
 description = "TensorBoardX lets you watch Tensors Flow without Tensorflow"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -5042,7 +5042,7 @@ files = [
 name = "torch"
 version = "1.13.1"
 description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7.0"
 files = [
@@ -5083,7 +5083,7 @@ opt-einsum = ["opt-einsum (>=3.3)"]
 name = "torchmetrics"
 version = "0.11.4"
 description = "PyTorch native Metrics"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -5482,7 +5482,7 @@ test = ["websockets"]
 name = "wheel"
 version = "0.40.0"
 description = "A built-package format for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -5585,7 +5585,7 @@ files = [
 name = "yarl"
 version = "1.8.2"
 description = "Yet another URL library"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -5708,4 +5708,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "9166fea4448a6fd7fe68d74795123b28e819bcdd97503b52a8a0270883f6bfbb"
+content-hash = "ce4a1f249ee66b9173939cacdabe5a7b52c8ba5c4baa6df2e562c637c5f31c94"

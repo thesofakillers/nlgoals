@@ -19,6 +19,7 @@ transformers = "^4.27.1"
 fonttools = "!=4.39.1"
 seaborn = "^0.12.2"
 jsonargparse = "^4.20.1"
+pytorch-lightning = "<2"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.6.1"
