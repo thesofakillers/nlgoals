@@ -6,6 +6,8 @@ import pytorch_lightning as pl
 import transformers
 import numpy as np
 
+from nlgoals.losses.contrastive import clip_contrastive_loss
+
 
 class CLIPT(pl.LightningModule):
     """
@@ -38,8 +40,10 @@ class CLIPT(pl.LightningModule):
         # "temperature parameter which controls the range of the logits in the softmax,
         # τ , is directly optimized during training as a log-parameterized
         # multiplicative scalar"
+        # "learnable temperature parameter τ was initialized to the equivalent of 0.07"
         # https://github.com/mlfoundations/open_clip/blob/3b081484c360569179e270016b5549b7686d42ab/src/open_clip/model.py#L202
         self.temperature = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+        self.max_temp_value = 100
 
     def forward(
         self,
@@ -105,22 +109,41 @@ class CLIPT(pl.LightningModule):
         visual_traj_emb = self.traj_encoder(image_embs_vec)
         return visual_traj_emb
 
-    def training_step(self, batch: Dict[str, torch.Tensor]):
+    def _fit_step(self, batch: Dict[str, torch.Tensor], phase: str) -> torch.Tensor:
         """
         Args:
             batch: dict with keys "images", "text_input_ids", "text_attn_mask"
-            batch_idx: index of batch
+            phase: either 'train' or 'val'
+
+        Returns:
+            loss: loss for this batch
         """
-        visual_traj_emb, text_traj_emb = self.forward(**batch)
-        # todo: contrastive loss
+        model_outputs = self.forward(**batch)
+        loss = clip_contrastive_loss(
+            model_outputs["visual_traj_emb"],
+            model_outputs["text_traj_emb"],
+            model_outputs["temperature"],
+        )
+        self.log(f"{phase}_loss", loss)
+        return loss
+
+    def training_step(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
+        loss = self._fit_step(batch, phase="train")
+        return loss
 
     def validation_step(self, batch: Dict[str, torch.Tensor]):
-        # todo
-        pass
+        self._fit_step(batch, phase="val")
+
+    def on_train_batch_end(self, outputs, batch, batch_idx):
+        # "clipped to prevent scaling the logits by more than 100 "
+        #  https://github.com/mlfoundations/open_clip/blob/3b081484c360569179e270016b5549b7686d42ab/src/training/train.py#L175-L177
+        with torch.no_grad():
+            # in place operation
+            self.temperature.clamp_(0, np.log(self.max_temp_value))
 
     def test_step(self, batch: Dict[str, torch.Tensor]):
-        # todo
-        pass
+        # What metric do we evaluate on?
+        raise NotImplementedError
 
     def configure_optimizers(self):
         # todo
