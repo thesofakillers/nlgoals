@@ -14,8 +14,15 @@ class CLIPTPrepare:
         image_col: str,
         input_ids_col: str,
         attn_mask_col: str,
-        clip_transform_kwargs: Dict,
+        **clip_transform_kwargs,
     ):
+        """
+        Args:
+            image_col: which of the columns to use as the 'image' col
+            input_ids_col: which of the columns to use as the 'text_input_ids' col
+            attn_mask_col: which of the columns to use as the 'text_attn_mask' col
+            clip_transform_kwargs: kwargs to pass to CLIPTransform transform
+        """
         self.clip_transform = CLIPTransform(**clip_transform_kwargs)
         self.image_col = image_col
         self.input_ids_col = input_ids_col
@@ -37,6 +44,12 @@ class CLIPTransform:
     """
 
     def __init__(self, clip_model: str, image_cols: List[str], text_col: str):
+        """
+        Args:
+            clip_model: which CLIP model to use
+            image_cols: which of the columns to process as images
+            text_col: which one of the columns to process as text
+        """
         self.image_cols = set(image_cols)
         self.text_col = text_col
         self.clip_processor = transformers.CLIPProcessor.from_pretrained(clip_model)
