@@ -53,6 +53,13 @@ if __name__ == "__main__":
     parser.add_argument("--trainer", type=TrainerConfig, default=TrainerConfig())
     parser.add_argument("--seed", type=int, default=42)
     parser.link_arguments("seed", "data.seed", apply_on="parse")
+    parser.link_arguments("data.num_frames", "clipt.num_frames", apply_on="parse")
+    # todo: fix this mess
+    parser.link_arguments(
+        "clipt.clip_model",
+        "data.transform_kwargs.clip_transform_kwargs.clip_model",
+        apply_on="parse",
+    )
 
     args = parser.parse_args()
 

@@ -16,15 +16,24 @@ class CALVINDM(pl.LightningDataModule):
 
     def __init__(
         self,
-        data_dir: str,
-        num_frames: int,
-        batch_size: int,
-        val_split: float,
-        seed: int,
-        num_workers: int,
-        frame_keys: Optional[List[FrameKey]] = None,
-        transform_name: Optional[TransformName] = None,
-        transform_kwargs: Optional[Dict] = None,
+        data_dir: str = "./data/calvin/task_D_D/",
+        num_frames: int = 2,
+        batch_size: int = 32,
+        val_split: float = 0.1,
+        seed: int = 42,
+        num_workers: int = 18,
+        frame_keys: Optional[List[FrameKey]] = ["rgb_static"],
+        transform_name: Optional[TransformName] = ["clipt-prepare"],
+        transform_kwargs: Optional[Dict] = {
+            "image_col": "rgb_static",
+            "input_ids_col": "text_input_ids",
+            "attn_mask_col": "text_attn_mask",
+            "clip_transform_kwargs": {
+                "clip_model": "laion/CLIP-ViT-B-16-laion2B-s34B-b88K",
+                "image_cols": ["rgb_static"],
+                "text_col": "lang_ann",
+            },
+        },
     ):
         """
         Args:

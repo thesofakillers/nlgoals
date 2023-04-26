@@ -14,7 +14,13 @@ class CLIPT(pl.LightningModule):
     Contrastive Language–Image Pre-training for Trajectories (CLIPT)
     """
 
-    def __init__(self, clip_model: str, num_frames: int, freeze_clip: bool, **kwargs):
+    def __init__(
+        self,
+        clip_model: str = "laion/CLIP-ViT-B-16-laion2B-s34B-b88K",
+        num_frames: int = 2,
+        freeze_clip: bool = True,
+        **kwargs,
+    ):
         """
         Initializes CLIP, traj_encoder, parses attribute
 
