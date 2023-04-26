@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 import numpy as np
 from torch.utils.data import Dataset
 
-from nlgoals.data.utils import TRANSFORM_MAP, TransformName
+from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.data.calvin.utils import FrameKey
 
 

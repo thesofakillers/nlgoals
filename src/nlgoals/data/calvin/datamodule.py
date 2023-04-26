@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader, random_split
 import torch
 
-from nlgoals.data.utils import TRANSFORM_MAP, TransformName
+from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.data.calvin.utils import FrameKey
 from nlgoals.data.calvin.dataset import CALVIN
 
