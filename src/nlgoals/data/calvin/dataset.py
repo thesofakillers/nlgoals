@@ -6,20 +6,8 @@ from typing import Dict, List, Optional
 import numpy as np
 from torch.utils.data import Dataset
 
-from nlgoals.data.utils import TRANSFORM_MAP
-
-
-class FrameKey(enum.Enum):
-    actions = "actions"
-    rel_actions = "rel_actions"
-    robot_obs = "robot_obs"
-    scene_obs = "scene_obs"
-    rgb_static = "rgb_static"
-    rgb_gripper = "rgb_gripper"
-    rgb_tactile = "rgb_tactile"
-    depth_static = "depth_static"
-    depth_gripper = "depth_gripper"
-    depth_tactile = "depth_tactile"
+from nlgoals.data.utils import TRANSFORM_MAP, TransformName
+from nlgoals.data.calvin.utils import FrameKey
 
 
 class CALVINSplit(enum.Enum):
@@ -39,8 +27,8 @@ class CALVIN(Dataset):
         split: CALVINSplit,
         num_frames: int,
         frame_keys: Optional[List[FrameKey]] = None,
-        transform_name: Optional[str] = None,
-        **transform_kwargs,
+        transform_name: Optional[TransformName] = None,
+        transform_kwargs: Optional[Dict] = None,
     ):
         """
         Args:
@@ -49,6 +37,8 @@ class CALVIN(Dataset):
             num_frames: number of frames to include in each trajectory
             frame_keys: list of keys to include for each frame.
                 By default, all keys are included.
+            transform_name: name of the transform to apply to each item (Optional)
+            transform_kwargs: kwargs to pass to the transform
         """
         self.path = os.path.join(data_dir, split)
         assert os.path.exists(self.path), f"Path {self.path} does not exist."

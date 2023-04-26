@@ -1,3 +1,4 @@
+import enum
 from typing import List, Dict
 
 import transformers
@@ -39,3 +40,5 @@ class CLIPTransform:
 
 
 TRANSFORM_MAP: Dict[str, object] = {"clip-transform": CLIPTransform}
+transform_names = TRANSFORM_MAP.keys()
+TransformName = enum.Enum("TransformNames", zip(transform_names, transform_names))
