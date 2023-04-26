@@ -213,7 +213,7 @@ trio = ["trio (>=0.16,<0.22)"]
 name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -725,7 +725,7 @@ files = [
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -992,7 +992,7 @@ training = ["Jinja2", "accelerate (>=0.11.0)", "datasets", "tensorboard"]
 name = "docker-pycreds"
 version = "0.4.0"
 description = "Python bindings for the docker credentials store API"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -1247,7 +1247,7 @@ tqdm = ["tqdm"]
 name = "gitdb"
 version = "4.0.10"
 description = "Git Object Database"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1262,7 +1262,7 @@ smmap = ">=3.0.1,<6"
 name = "gitpython"
 version = "3.1.31"
 description = "GitPython is a Python library used to interact with Git repositories"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3407,7 +3407,7 @@ files = [
 name = "pathtools"
 version = "0.1.2"
 description = "File system general utilities"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -3693,7 +3693,7 @@ files = [
 name = "psutil"
 version = "5.9.4"
 description = "Cross-platform lib for process and system monitoring in Python."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 files = [
@@ -4625,7 +4625,7 @@ files = [
 name = "sentry-sdk"
 version = "1.19.1"
 description = "Python client for Sentry (https://sentry.io)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -4667,7 +4667,7 @@ tornado = ["tornado (>=5)"]
 name = "setproctitle"
 version = "1.3.2"
 description = "A Python module to customize the process title"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -4780,7 +4780,7 @@ files = [
 name = "smmap"
 version = "5.0.0"
 description = "A pure Python implementation of a sliding window memory map manager"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -5380,14 +5380,14 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "wandb"
-version = "0.14.2"
+version = "0.15.0"
 description = "A CLI and library for interacting with the Weights and Biases API."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "wandb-0.14.2-py3-none-any.whl", hash = "sha256:99bdb40587c3300d97ca4bb464c0dd1ac9608dbd5fbd06e19083a197469c1268"},
-    {file = "wandb-0.14.2.tar.gz", hash = "sha256:27ff1f78c247b313608e199dd0c784e84e56f305b2d58b0eda938dcc1f4c2460"},
+    {file = "wandb-0.15.0-py3-none-any.whl", hash = "sha256:d828e2972fdd647b844b62aea30b6bbf09de8bb1ec3eca2f504fc9ab4dc67bf3"},
+    {file = "wandb-0.15.0.tar.gz", hash = "sha256:b896d4043b45407d09a43ba5348da0b1b9f425a2591f45307f633d3b88d26ebf"},
 ]
 
 [package.dependencies]
@@ -5708,4 +5708,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "ce4a1f249ee66b9173939cacdabe5a7b52c8ba5c4baa6df2e562c637c5f31c94"
+content-hash = "0a8377f0f6849903dce3e7b246d89804b5f734080fafb167663cafd61e2d64f2"
