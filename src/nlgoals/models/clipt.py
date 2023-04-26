@@ -1,21 +1,31 @@
-from typing import Tuple
+from typing import Union, Dict
 
 import torch
 import torch.nn as nn
+import pytorch_lightning as pl
 import transformers
+import numpy as np
 
 
-class CLIPT(nn.Module):
+class CLIPT(pl.LightningModule):
     """
     Contrastive Language–Image Pre-training for Trajectories (CLIPT)
     """
 
-    def __init__(self, clip_model: str, num_frames: int, **kwargs):
+    def __init__(self, clip_model: str, num_frames: int, freeze_clip: bool, **kwargs):
         """
         Initializes CLIP, traj_encoder, parses attribute
+
+        Args:
+            clip_model: name of CLIP model to use
+            num_frames: number of frames expected in input
+            freeze_clip: whether to freeze CLIP model
         """
         super().__init__(**kwargs)
         self.clip_model = transformers.CLIPModel.from_pretrained(clip_model)
+        if freeze_clip:
+            for param in self.clip_model.parameters():
+                param.requires_grad = False
         self.emb_dim = self.clip_model.config.projection_dim
         self.num_frames = num_frames
         # MLP (n_images x emb_dim) -> (emb_dim) with ReLU activation in between
@@ -25,12 +35,18 @@ class CLIPT(nn.Module):
             nn.Linear(self.emb_dim, self.emb_dim),
         )
 
+        # "temperature parameter which controls the range of the logits in the softmax,
+        # τ , is directly optimized during training as a log-parameterized
+        # multiplicative scalar"
+        # https://github.com/mlfoundations/open_clip/blob/3b081484c360569179e270016b5549b7686d42ab/src/open_clip/model.py#L202
+        self.temperature = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+
     def forward(
         self,
         images: torch.Tensor,
         text_input_ids: torch.Tensor,
         text_attn_mask: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Dict[str, Union[torch.Tensor, torch.nn.parameter.Parameter]]:
         """
         Combines images and embeds them into visual trajectory embedding
         Embeds text into text trajectory embedding
@@ -41,12 +57,19 @@ class CLIPT(nn.Module):
             attention_mask: (batch_size, max_seq_len) (1 for tokens, 0 for padding)
 
         Returns:
-            visual_traj_emb: (batch_size, emb_dim)
-            text_traj_emb: (batch_size, emb_dim)
+            dictionary of
+                visual_traj_emb: (batch_size, emb_dim)
+                text_traj_emb: (batch_size, emb_dim)
+                temperature: ()
         """
-        text_traj_emb = self.encode_text_traj(text_input_ids, text_attn_mask)
         visual_traj_emb = self.encode_visual_traj(images)
-        return visual_traj_emb, text_traj_emb
+        text_traj_emb = self.encode_text_traj(text_input_ids, text_attn_mask)
+
+        return {
+            "visual_traj_emb": visual_traj_emb,
+            "text_traj_emb": text_traj_emb,
+            "temperature": self.temperature,
+        }
 
     def encode_text_traj(
         self, text_input_ids: torch.Tensor, text_attn_mask: torch.Tensor
@@ -81,6 +104,27 @@ class CLIPT(nn.Module):
         # (batch_size, emb_dim)
         visual_traj_emb = self.traj_encoder(image_embs_vec)
         return visual_traj_emb
+
+    def training_step(self, batch: Dict[str, torch.Tensor]):
+        """
+        Args:
+            batch: dict with keys "images", "text_input_ids", "text_attn_mask"
+            batch_idx: index of batch
+        """
+        visual_traj_emb, text_traj_emb = self.forward(**batch)
+        # todo: contrastive loss
+
+    def validation_step(self, batch: Dict[str, torch.Tensor]):
+        # todo
+        pass
+
+    def test_step(self, batch: Dict[str, torch.Tensor]):
+        # todo
+        pass
+
+    def configure_optimizers(self):
+        # todo
+        pass
 
 
 if __name__ == "__main__":
