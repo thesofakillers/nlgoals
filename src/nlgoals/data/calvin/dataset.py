@@ -27,6 +27,7 @@ class CALVIN(Dataset):
         num_frames: int,
         frame_keys: Optional[List[FrameKey]] = None,
         transform: Optional[Any] = None,
+        **kwargs,
     ):
         """
         Args:
@@ -56,8 +57,8 @@ class CALVIN(Dataset):
         return len(self.lang_annotations["info"]["indx"])
 
     def __getitem__(self, idx) -> Dict:
-        lang_ann = self.lang_annotations["language"]["ann"]
-        task = self.lang_annotations["language"]["task"]
+        lang_ann = self.lang_annotations["language"]["ann"][idx]
+        task = self.lang_annotations["language"]["task"][idx]
 
         frames = self._get_frames_item(idx)
 
