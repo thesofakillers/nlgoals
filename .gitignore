@@ -1,6 +1,7 @@
 # user-defined
 notebooks/*sandbox.ipynb
 /slurm/outputs/
+/slurm/.secrets
 /data/
 /checkpoints/
 
