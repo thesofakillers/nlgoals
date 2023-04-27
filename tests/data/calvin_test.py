@@ -3,7 +3,7 @@ import pytest
 from torch.utils.data import DataLoader
 import torch
 
-from nlgoals.data.calvin import CALVIN
+from nlgoals.data.calvin.dataset import CALVIN
 
 
 @pytest.fixture
