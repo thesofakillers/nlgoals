@@ -49,12 +49,13 @@ def train(args):
         **args.trainer.checkpoint.as_dict()
     )
     trainer = pl.Trainer(
-        callbacks=[early_stopping, checkpoint_callback],
-        logger=logger,
         max_epochs=args.trainer.max_epochs,
-        devices=args.trainer.devices,
         accelerator=args.trainer.accelerator,
+        devices=args.trainer.devices,
+        enable_progress_bar=args.trainer.enable_progress_bar,
         deterministic=True,
+        logger=logger,
+        callbacks=[early_stopping, checkpoint_callback],
     )
 
     trainer.fit(model, calvin_dm)

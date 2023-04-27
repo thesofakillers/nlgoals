@@ -33,6 +33,6 @@ class TrainerConfig:
     max_epochs: int = 50
     accelerator: Accelerator = "auto"
     devices: int = 1
+    enable_progress_bar: bool = False
     logging: LoggingConfig = LoggingConfig()
     checkpoint: CheckpointConfig = CheckpointConfig()
-    enable_progress_bar: bool = False
