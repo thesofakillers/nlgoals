@@ -73,8 +73,8 @@ class CLIPTransform:
                 proc_text = self.clip_processor(
                     text=input_text, return_tensors="pt", padding=True
                 )
-                proc_output["text_input_ids"] = proc_text.input_ids
-                proc_output["text_attn_mask"] = proc_text.attention_mask
+                proc_output["text_input_ids"] = proc_text.input_ids.squeeze(dim=0)
+                proc_output["text_attn_mask"] = proc_text.attention_mask.squeeze(dim=0)
             else:
                 proc_output[col] = unproc_input[col]
 

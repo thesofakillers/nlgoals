@@ -19,22 +19,25 @@ def train(args):
     """
     pl.seed_everything(args.seed, workers=True)
 
-    if args.transform_name is not None:
-        data_transform = TRANSFORM_MAP[args.data.transform_name](
+    # disable tokenizer parallelism because we have multiple workers
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+    if args.data.transform_name is not None:
+        data_transform = TRANSFORM_MAP[args.data.transform_name.value](
             **args.data.transform_kwargs
         )
     else:
         data_transform = None
     calvin_dm = CALVINDM(**args.data.as_dict(), transform=data_transform)
 
-    model = CLIPT(**args.clipts.as_dict())
+    model = CLIPT(**args.clipt.as_dict())
 
     script_host = "slurm" if "SLURM_JOB_ID" in os.environ else "local"
     logger = pl.loggers.WandbLogger(
-        job_type="train",
+        job_type="train" if not args.debug else "debug",
         entity="giulio-uva",
         project="nlgoals",
-        mode="disabled" if args.trainer.logging.disable else "online",
+        mode="disabled" if not args.trainer.logging.enable else "online",
         group=script_host,
         config=args,
         log_model=False,
@@ -76,7 +79,8 @@ if __name__ == "__main__":
     parser.link_arguments(
         "clipt.clip_model", "data.transform_kwargs.clip_model", apply_on="parse"
     )
+    parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
 
-    print(args)
+    train(args)

@@ -16,7 +16,7 @@ class CLIPT(pl.LightningModule):
 
     def __init__(
         self,
-        clip_model: str = "laion/CLIP-ViT-B-16-laion2B-s34B-b88K",
+        clip_model: str = "laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
         num_frames: int = 2,
         freeze_clip: bool = True,
         **kwargs,
@@ -124,6 +124,7 @@ class CLIPT(pl.LightningModule):
         Returns:
             loss: loss for this batch
         """
+        # import pdb; pdb.set_trace()
         model_outputs = self.forward(**batch)
         loss = clip_contrastive_loss(
             model_outputs["visual_traj_emb"],
@@ -133,11 +134,13 @@ class CLIPT(pl.LightningModule):
         self.log(f"{phase}_loss", loss)
         return loss
 
-    def training_step(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
+    def training_step(
+        self, batch: Dict[str, torch.Tensor], batch_idx: int
+    ) -> torch.Tensor:
         loss = self._fit_step(batch, phase="train")
         return loss
 
-    def validation_step(self, batch: Dict[str, torch.Tensor]):
+    def validation_step(self, batch: Dict[str, torch.Tensor], batch_idx: int):
         self._fit_step(batch, phase="val")
 
     def on_train_batch_end(self, outputs, batch, batch_idx):
@@ -147,7 +150,7 @@ class CLIPT(pl.LightningModule):
             # in place operation
             self.temperature.clamp_(0, np.log(self.max_temp_value))
 
-    def test_step(self, batch: Dict[str, torch.Tensor]):
+    def test_step(self, batch: Dict[str, torch.Tensor], batch_idx: int):
         # What metric do we evaluate on?
         raise NotImplementedError
 

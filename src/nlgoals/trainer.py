@@ -4,11 +4,12 @@ Trainer config and class
 import os
 from typing import Union
 from dataclasses import dataclass
+import enum
 
 
 @dataclass
 class LoggingConfig:
-    disable: bool = False
+    enable: bool = True
 
 
 @dataclass
@@ -19,10 +20,19 @@ class CheckpointConfig:
     mode: str = "min"
 
 
+class Accelerator(str, enum.Enum):
+    cpu = "cpu"
+    gpu = "gpu"
+    tpu = "tpu"
+    ipu = "ipu"
+    auto = "auto"
+
+
 @dataclass
 class TrainerConfig:
     max_epochs: int = 50
-    accelerator: Union["cpu", "gpu", "tpu", "ipu", "auto"] = "auto"
+    accelerator: Accelerator = "auto"
     devices: int = 1
     logging: LoggingConfig = LoggingConfig()
     checkpoint: CheckpointConfig = CheckpointConfig()
+    enable_progress_bar: bool = False

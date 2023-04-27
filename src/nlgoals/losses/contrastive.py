@@ -1,6 +1,6 @@
 """Contrastive Losses"""
 import torch
-import torch.functional as F
+import torch.nn.functional as F
 
 
 def clip_contrastive_loss(

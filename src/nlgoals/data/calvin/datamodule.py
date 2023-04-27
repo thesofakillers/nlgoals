@@ -23,6 +23,7 @@ class CALVINDM(pl.LightningDataModule):
         num_workers: int = 18,
         frame_keys: Optional[List[FrameKey]] = ["rgb_static"],
         transform: Optional[Any] = None,
+        **kwargs,
     ):
         """
         Args:
@@ -84,7 +85,7 @@ class CALVINDM(pl.LightningDataModule):
                 generator=generator,
             )
             # these get properly parsed in the dataset, move them here for easier access
-            self.frame_keys = self.train_dataset.frame_keys
+            self.frame_keys = temp_train_dataset.frame_keys
         elif stage == "test" or stage is None:
             self.test_dataset = CALVIN(
                 self.data_dir,
@@ -107,7 +108,7 @@ class CALVINDM(pl.LightningDataModule):
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
-            shuffle=True,
+            shuffle=False,
             num_workers=self.num_workers,
         )
 
