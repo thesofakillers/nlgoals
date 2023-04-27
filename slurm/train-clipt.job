@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=CLIPT
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=4:00:00
+#SBATCH --mem-per-gpu=40G
+#SBATCH --output=slurm/outputs/clipt_train_%A.out
+
+source "./slurm/.secrets"
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+srun python -u src/nlgoals/run/train-clipt.py
