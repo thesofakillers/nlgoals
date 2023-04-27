@@ -17,7 +17,7 @@ def train(args):
     Instantiates model
     Trains model using contrastive loss between image traj and text pairs
     """
-    pl.seed_everything(args.seed)
+    pl.seed_everything(args.seed, workers=True)
 
     if args.transform_name is not None:
         data_transform = TRANSFORM_MAP[args.data.transform_name](
@@ -42,14 +42,18 @@ def train(args):
     early_stopping = pl.callbacks.early_stopping.EarlyStopping(
         monitor="val_loss", mode="min"
     )
-
+    checkpoint_callback = pl.callbacks.ModelCheckpoint(
+        **args.trainer.checkpoint.as_dict()
+    )
     trainer = pl.Trainer(
-        callbacks=[early_stopping],
+        callbacks=[early_stopping, checkpoint_callback],
         logger=logger,
         max_epochs=args.trainer.max_epochs,
         devices=args.trainer.devices,
         accelerator=args.trainer.accelerator,
+        deterministic=True,
     )
+
     trainer.fit(model, calvin_dm)
 
 
