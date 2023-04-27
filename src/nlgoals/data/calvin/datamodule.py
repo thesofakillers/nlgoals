@@ -124,25 +124,28 @@ class CALVINDM(pl.LightningDataModule):
             collate_fn=self._collate_fn,
         )
 
-    def _collate_fn(
-        self, batch: Dict[str, Union[List[torch.Tensor], torch.Tensor]]
-    ) -> Dict[str, torch.Tensor]:
+    @staticmethod
+    def _collate_fn(batch: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:
         """
         Takes care of padding token_ids and attn_mask so that we can batch
 
         Args:
-            batch: batch of data from the dataset, with keys 'images', 'text_input_ids'
-            and 'text_attn_mask'. The latter two are lists that need to be padded.
+            batch: list of items, where each item has keys 'images', 'text_input_ids'
+            and 'text_attn_mask'.
 
         Returns:
             batch: batch of data with padded text_input_ids and text_attn_mask as
             tensors
         """
-        # for now, pad_value is hardcoded -- better would be to derive it from tokenizer
-        batch["text_input_ids"] = pad_sequence(
-            batch["text_input_ids"], batch_first=True, padding_value=49407
+        # first reshape from list of dicts into a dict of lists
+        batch_dict = {key: [item[key] for item in batch] for key in batch[0]}
+        # the pad values are hardcoded for now, should use the tokenizer.pad_token_id at some point
+        batch_dict["text_input_ids"] = pad_sequence(
+            batch_dict["text_input_ids"], batch_first=True, padding_value=49407
         )
-        batch["text_attn_mask"] = pad_sequence(
-            batch["text_attn_mask"], batch_first=True, padding_value=0
+        batch_dict["text_attn_mask"] = pad_sequence(
+            batch_dict["text_attn_mask"], batch_first=True, padding_value=0
         )
-        return batch
+        batch_dict["images"] = torch.stack(batch_dict["images"], dim=0)
+        # ready
+        return batch_dict
