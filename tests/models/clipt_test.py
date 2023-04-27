@@ -29,7 +29,9 @@ def clipt():
 def test_forward(clipt):
     model, _, _, images, text_input_ids, text_attn_mask, _ = clipt
 
-    visual_traj_emb, text_traj_emb = model(images, text_input_ids, text_attn_mask)
+    output = model(images, text_input_ids, text_attn_mask)
+
+    visual_traj_emb, text_traj_emb = output["visual_traj_emb"], output["text_traj_emb"]
 
     assert visual_traj_emb.shape == (2, 512)
     assert text_traj_emb.shape == (2, 512)
@@ -49,8 +51,8 @@ def test_training(clipt):
 
     optimizer.zero_grad()
 
-    visual_traj_emb, text_traj_emb = model(images, text_input_ids, text_attn_mask)
-    loss = criterion(visual_traj_emb, targets)
+    output = model(images, text_input_ids, text_attn_mask)
+    loss = criterion(output['visual_traj_emb'], targets)
     loss.backward()
     optimizer.step()
 
