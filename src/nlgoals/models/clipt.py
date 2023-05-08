@@ -2,6 +2,7 @@ from typing import Union, Dict
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import pytorch_lightning as pl
 import transformers
 import numpy as np
@@ -12,6 +13,9 @@ from nlgoals.losses.contrastive import clip_contrastive_loss
 class CLIPT(pl.LightningModule):
     """
     Contrastive Language–Image Pre-training for Trajectories (CLIPT)
+
+    Many design decisions following from
+    https://github.com/mlfoundations/open_clip
     """
 
     def __init__(
@@ -73,8 +77,10 @@ class CLIPT(pl.LightningModule):
                 text_traj_emb: (batch_size, emb_dim)
                 temperature: ()
         """
-        visual_traj_emb = self.encode_visual_traj(images)
-        text_traj_emb = self.encode_text_traj(text_input_ids, text_attn_mask)
+        visual_traj_emb = self.encode_visual_traj(images, normalize=True)
+        text_traj_emb = self.encode_text_traj(
+            text_input_ids, text_attn_mask, normalize=True
+        )
 
         return {
             "visual_traj_emb": visual_traj_emb,
@@ -83,10 +89,18 @@ class CLIPT(pl.LightningModule):
         }
 
     def encode_text_traj(
-        self, text_input_ids: torch.Tensor, text_attn_mask: torch.Tensor
+        self,
+        text_input_ids: torch.Tensor,
+        text_attn_mask: torch.Tensor,
+        normalize: bool = False,
     ) -> torch.Tensor:
         """
         Takes an input of text and encodes it into a text trajectory embedding
+
+        Args:
+            text_input_ids: (batch_size, max_seq_len) tokenized text
+            attention_mask: (batch_size, max_seq_len) (1 for tokens, 0 for padding)
+            normalize: whether to normalize the text trajectory embeddings
 
         Returns:
             text_traj_emb: (batch_size, emb_dim)
@@ -94,11 +108,17 @@ class CLIPT(pl.LightningModule):
         text_traj_emb = self.clip_model.get_text_features(
             input_ids=text_input_ids, attention_mask=text_attn_mask
         )
-        return text_traj_emb
+        return F.normalize(text_traj_emb, dim=-1) if normalize else text_traj_emb
 
-    def encode_visual_traj(self, images: torch.Tensor) -> torch.Tensor:
+    def encode_visual_traj(
+        self, images: torch.Tensor, normalize: bool = False
+    ) -> torch.Tensor:
         """
         Takes an input of images and encodes them into a visual trajectory embedding
+
+        Args:
+            images: (batch_size, num_frames, 3, H, W) RGB pixel values
+            normalize: whether to normalize the visual trajectory embeddings
 
         Returns:
             visual_traj_emb: (batch_size, emb_dim)
@@ -114,7 +134,8 @@ class CLIPT(pl.LightningModule):
         image_embs_vec = torch.flatten(image_embs, start_dim=1)
         # (batch_size, emb_dim)
         visual_traj_emb = self.traj_encoder(image_embs_vec)
-        return visual_traj_emb
+        # apply normalization if specified
+        return F.normalize(visual_traj_emb, dim=-1) if normalize else visual_traj_emb
 
     def _fit_step(self, batch: Dict[str, torch.Tensor], phase: str) -> torch.Tensor:
         """
