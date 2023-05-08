@@ -18,7 +18,7 @@ class CALVINDM(pl.LightningDataModule):
         self,
         data_dir: str = "./data/calvin/task_D_D/",
         num_frames: int = 2,
-        batch_size: int = 1024,
+        batch_size: int = 64,
         val_split: float = 0.1,
         seed: int = 42,
         num_workers: int = 18,
