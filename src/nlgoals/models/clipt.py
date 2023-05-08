@@ -30,6 +30,7 @@ class CLIPT(pl.LightningModule):
             freeze_clip: whether to freeze CLIP model
         """
         super().__init__(**kwargs)
+        self.save_hyperparameters()
         self.clip_model = transformers.CLIPModel.from_pretrained(clip_model)
         if freeze_clip:
             for param in self.clip_model.parameters():
