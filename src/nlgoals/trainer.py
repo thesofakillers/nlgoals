@@ -36,3 +36,4 @@ class TrainerConfig:
     enable_progress_bar: bool = False
     logging: LoggingConfig = LoggingConfig()
     checkpoint: CheckpointConfig = CheckpointConfig()
+    log_every_n_steps: int = 1

@@ -56,6 +56,7 @@ def train(args):
         deterministic=True,
         logger=logger,
         callbacks=[early_stopping, checkpoint_callback],
+        log_every_n_steps=args.trainer.log_every_n_steps,
     )
 
     trainer.fit(model, calvin_dm)
