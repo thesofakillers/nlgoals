@@ -100,7 +100,7 @@ def compute_matrices(dataloader, model, device):
     return similarity_matrix, probability_matrix
 
 
-def visualize(similarity_matrix, probability_matrix, save_path):
+def visualize(similarity_matrix, probability_matrix, indices, save_path):
     print("Plotting...")
     f, (ax1, ax2) = plt.subplots(1, 2, dpi=300, figsize=(16, 9), sharey=True)
 
@@ -109,6 +109,8 @@ def visualize(similarity_matrix, probability_matrix, save_path):
         ax=ax1,
         square=True,
         cbar_kws={"orientation": "horizontal", "location": "top"},
+        xticklabels=indices,
+        yticklabels=indices,
     )
     ax1.set_title("Softmaxed Probability")
     ax1.set_ylabel("Text Embeddings idxs")
@@ -118,6 +120,8 @@ def visualize(similarity_matrix, probability_matrix, save_path):
         ax=ax2,
         square=True,
         cbar_kws={"orientation": "horizontal", "location": "top"},
+        xticklabels=indices,
+        yticklabels=indices,
     )
     ax2.set_title("Similarity")
 
@@ -134,13 +138,14 @@ def main(args):
         dataloader, model, args.device
     )
     # sample from matrices:
-    sample_idxs = torch.randint(
-        low=0, high=similarity_matrix.shape[0], size=(args.sample_size,)
-    )
+    sample_idxs = torch.randperm(similarity_matrix.size(0))[: args.sample_size]
+
     similarity_matrix = similarity_matrix[sample_idxs][:, sample_idxs]
     probability_matrix = probability_matrix[sample_idxs][:, sample_idxs]
 
-    visualize(similarity_matrix, probability_matrix, args.save_path)
+    visualize(
+        similarity_matrix, probability_matrix, sample_idxs.cpu().numpy(), args.save_path
+    )
 
 
 if __name__ == "__main__":
