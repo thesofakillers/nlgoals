@@ -36,7 +36,7 @@ def setup_dataloader(args):
     calvin.prepare_data()
     calvin.setup(stage=args.split)
 
-    if args.split == 'debug':
+    if args.split == "debug":
         dataloader = calvin.val_debug_dataloader()
     else:
         dataloader = calvin.test_dataloader()
@@ -71,17 +71,18 @@ def setup(args):
     return dataloader, model
 
 
-def compute_matrices(dataloader, model):
+def compute_matrices(dataloader, model, device):
     print("Computing matrices...")
     traj_vecs = []
     text_vecs = []
 
+    model.to(device)
     model.eval()
 
     with torch.no_grad():
         for batch in tqdm(dataloader, total=len(dataloader)):
             for key in batch:
-                batch[key] = batch[key].to(args.device)
+                batch[key] = batch[key].to(device)
 
             traj_vecs.append(model.encode_visual_traj(batch["images"], normalize=True))
             text_vecs.append(
@@ -100,7 +101,7 @@ def compute_matrices(dataloader, model):
 
 
 def visualize(similarity_matrix, probability_matrix, save_path):
-    print('Plotting...')
+    print("Plotting...")
     f, (ax1, ax2) = plt.subplots(1, 2, dpi=300, figsize=(16, 9), sharey=True)
 
     ax1 = sns.heatmap(
@@ -122,14 +123,16 @@ def visualize(similarity_matrix, probability_matrix, save_path):
 
     plt.savefig(save_path, bbox_inches="tight", pad_inches=0)
 
-    print('Done.')
+    print("Done.")
 
 
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     args.device = device
     dataloader, model = setup(args)
-    similarity_matrix, probability_matrix = compute_matrices(dataloader, model)
+    similarity_matrix, probability_matrix = compute_matrices(
+        dataloader, model, args.device
+    )
     visualize(similarity_matrix, probability_matrix, args.save_path)
 
 
@@ -159,7 +162,10 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=1024, help="Batch size")
     parser.add_argument("--num-workers", type=int, default=18, help="Number of workers")
     parser.add_argument(
-        "--save-path", type=str, default="outputs/clipt-eval.pdf", help="Path to save figure"
+        "--save-path",
+        type=str,
+        default="outputs/clipt-eval.pdf",
+        help="Path to save figure",
     )
     parser.add_argument(
         "--split", default="test", choices=["test", "debug"], help="Split to use"
