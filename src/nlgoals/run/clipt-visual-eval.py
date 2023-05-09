@@ -105,7 +105,7 @@ def visualize(similarity_matrix, probability_matrix, save_path):
     f, (ax1, ax2) = plt.subplots(1, 2, dpi=300, figsize=(16, 9), sharey=True)
 
     ax1 = sns.heatmap(
-        probability_matrix.detach().numpy(),
+        probability_matrix.detach().cpu().numpy(),
         ax=ax1,
         square=True,
         cbar_kws={"orientation": "horizontal", "location": "top"},
@@ -114,7 +114,7 @@ def visualize(similarity_matrix, probability_matrix, save_path):
     ax1.set_ylabel("Text Embeddings idxs")
 
     ax2 = sns.heatmap(
-        similarity_matrix.detach().numpy(),
+        similarity_matrix.detach().cpu().numpy(),
         ax=ax2,
         square=True,
         cbar_kws={"orientation": "horizontal", "location": "top"},
