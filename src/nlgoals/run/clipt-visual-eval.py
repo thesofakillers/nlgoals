@@ -109,19 +109,19 @@ def visualize(similarity_matrix, probability_matrix, indices, save_path):
         ax=ax1,
         square=True,
         cbar_kws={"orientation": "horizontal", "location": "top"},
-        xticklabels=indices,
-        yticklabels=indices,
+        xticklabels=False if len(indices)>50 else indices,
+        yticklabels=False if len(indices)>50 else indices,
     )
     ax1.set_title("Softmaxed Probability")
-    ax1.set_ylabel("Text Embeddings idxs")
+    ax1.set_ylabel("Text Embeddings")
 
     ax2 = sns.heatmap(
         similarity_matrix.detach().cpu().numpy(),
         ax=ax2,
         square=True,
         cbar_kws={"orientation": "horizontal", "location": "top"},
-        xticklabels=indices,
-        yticklabels=indices,
+        xticklabels=False if len(indices)>50 else indices,
+        yticklabels=False if len(indices)>50 else indices,
     )
     ax2.set_title("Similarity")
 
