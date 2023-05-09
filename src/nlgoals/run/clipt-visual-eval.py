@@ -133,6 +133,13 @@ def main(args):
     similarity_matrix, probability_matrix = compute_matrices(
         dataloader, model, args.device
     )
+    # sample from matrices:
+    sample_idxs = torch.randint(
+        low=0, high=similarity_matrix.shape[0], size=(args.sample_size,)
+    )
+    similarity_matrix = similarity_matrix[sample_idxs][:, sample_idxs]
+    probability_matrix = probability_matrix[sample_idxs][:, sample_idxs]
+
     visualize(similarity_matrix, probability_matrix, args.save_path)
 
 
@@ -169,6 +176,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--split", default="test", choices=["test", "debug"], help="Split to use"
+    )
+    parser.add_argument(
+        "--sample-size",
+        default=256,
+        help="how many samples to use for the plot",
+        type=int,
     )
 
     args = parser.parse_args()
