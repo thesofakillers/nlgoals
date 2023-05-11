@@ -144,7 +144,7 @@ def main(args):
     )
     # sample from matrices:
     sample_idxs = (
-        torch.randperm(similarity_matrix.size(0))[: args.sample_size + 1].cpu().numpy()
+        torch.randperm(similarity_matrix.size(0))[: args.sample_size].cpu().numpy()
     )
 
     similarity_matrix = (
@@ -173,23 +173,27 @@ def main(args):
     ) as f:
         np.save(f, probability_matrix)
 
-    sim_matrix_acc = calc_accuracy(similarity_matrix)
-    prob_matrix_acc = calc_accuracy(probability_matrix)
+    acc_top_1 = calc_accuracy_top_k(probability_matrix, 1)
+    acc_top_3 = calc_accuracy_top_k(probability_matrix, 3)
+    acc_top_5 = calc_accuracy_top_k(probability_matrix, 5)
+    acc_top_10 = calc_accuracy_top_k(probability_matrix, 10)
     # print with 3 decimal places
-    print(f"Similarity Matrix Accuracy: {sim_matrix_acc:.3f}")
-    print(f"Probability Matrix Accuracy: {prob_matrix_acc:.3f}")
+    print(f"Accuracy@1: {acc_top_1:.3f}")
+    print(f"Accuracy@3: {acc_top_3:.3f}")
+    print(f"Accuracy@5: {acc_top_5:.3f}")
+    print(f"Accuracy@10: {acc_top_10:.3f}")
 
 
-def calc_accuracy(similarity_matrix):
+def calc_accuracy_top_k(similarity_matrix, k=5):
     """
     What percentage of samples peak on the diagonal?
     """
     num_samples = similarity_matrix.shape[0]
     num_correct = 0
     for i in range(num_samples):
-        if np.argmax(similarity_matrix[i]) == i:
+        top_k_idxs = np.argsort(similarity_matrix[i])[-k:]
+        if i in top_k_idxs:
             num_correct += 1
-
     return num_correct / num_samples
 
 
