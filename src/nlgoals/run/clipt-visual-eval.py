@@ -3,6 +3,7 @@ import os
 
 import jsonargparse
 import torch
+import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -100,32 +101,36 @@ def compute_matrices(dataloader, model, device):
     return similarity_matrix, probability_matrix
 
 
-def visualize(similarity_matrix, probability_matrix, indices, save_path):
+def visualize(similarity_matrix, probability_matrix, indices, save_dir):
     print("Plotting...")
     f, (ax1, ax2) = plt.subplots(1, 2, dpi=300, figsize=(16, 9), sharey=True)
 
     ax1 = sns.heatmap(
-        probability_matrix.detach().cpu().numpy(),
+        probability_matrix,
         ax=ax1,
         square=True,
         cbar_kws={"orientation": "horizontal", "location": "top"},
-        xticklabels=False if len(indices)>50 else indices,
-        yticklabels=False if len(indices)>50 else indices,
+        xticklabels=False if len(indices) > 50 else indices,
+        yticklabels=False if len(indices) > 50 else indices,
     )
     ax1.set_title("Softmaxed Probability")
     ax1.set_ylabel("Text Embeddings")
 
     ax2 = sns.heatmap(
-        similarity_matrix.detach().cpu().numpy(),
+        similarity_matrix,
         ax=ax2,
         square=True,
         cbar_kws={"orientation": "horizontal", "location": "top"},
-        xticklabels=False if len(indices)>50 else indices,
-        yticklabels=False if len(indices)>50 else indices,
+        xticklabels=False if len(indices) > 50 else indices,
+        yticklabels=False if len(indices) > 50 else indices,
     )
     ax2.set_title("Similarity")
 
-    plt.savefig(save_path, bbox_inches="tight", pad_inches=0)
+    plt.savefig(
+        os.path.join(save_dir, f"clipt-eval-{similarity_matrix.shape[0]}.pdf"),
+        bbox_inches="tight",
+        pad_inches=0,
+    )
 
     print("Done.")
 
@@ -138,14 +143,54 @@ def main(args):
         dataloader, model, args.device
     )
     # sample from matrices:
-    sample_idxs = torch.randperm(similarity_matrix.size(0))[: args.sample_size]
-
-    similarity_matrix = similarity_matrix[sample_idxs][:, sample_idxs]
-    probability_matrix = probability_matrix[sample_idxs][:, sample_idxs]
-
-    visualize(
-        similarity_matrix, probability_matrix, sample_idxs.cpu().numpy(), args.save_path
+    sample_idxs = (
+        torch.randperm(similarity_matrix.size(0))[: args.sample_size + 1].cpu().numpy()
     )
+
+    similarity_matrix = (
+        similarity_matrix[sample_idxs][:, sample_idxs].detach().cpu().numpy()
+    )
+
+    probability_matrix = (
+        probability_matrix[sample_idxs][:, sample_idxs].detach().cpu().numpy()
+    )
+
+    visualize(similarity_matrix, probability_matrix, sample_idxs, args.save_dir)
+
+    # save the matrices
+    with open(
+        os.path.join(
+            args.save_dir, f"similarity-matrix-{similarity_matrix.shape[0]}.npy"
+        ),
+        "wb",
+    ) as f:
+        np.save(f, similarity_matrix)
+    with open(
+        os.path.join(
+            args.save_dir, f"probability-matrix-{probability_matrix.shape[0]}.npy"
+        ),
+        "wb",
+    ) as f:
+        np.save(f, probability_matrix)
+
+    sim_matrix_acc = calc_accuracy(similarity_matrix)
+    prob_matrix_acc = calc_accuracy(probability_matrix)
+    # print with 3 decimal places
+    print(f"Similarity Matrix Accuracy: {sim_matrix_acc:.3f}")
+    print(f"Probability Matrix Accuracy: {prob_matrix_acc:.3f}")
+
+
+def calc_accuracy(similarity_matrix):
+    """
+    What percentage of samples peak on the diagonal?
+    """
+    num_samples = similarity_matrix.shape[0]
+    num_correct = 0
+    for i in range(num_samples):
+        if np.argmax(similarity_matrix[i]) == i:
+            num_correct += 1
+
+    return num_correct / num_samples
 
 
 if __name__ == "__main__":
@@ -174,9 +219,9 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=1024, help="Batch size")
     parser.add_argument("--num-workers", type=int, default=18, help="Number of workers")
     parser.add_argument(
-        "--save-path",
+        "--save-dir",
         type=str,
-        default="outputs/clipt-eval.pdf",
+        default="outputs/",
         help="Path to save figure",
     )
     parser.add_argument(
