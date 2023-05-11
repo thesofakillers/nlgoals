@@ -2,6 +2,7 @@
 import os
 
 import jsonargparse
+from jsonargparse.optionals import typing_extensions_import
 import torch
 import numpy as np
 from tqdm import tqdm
@@ -97,12 +98,13 @@ def compute_matrices(dataloader, model, device):
 
         similarity_matrix = text_tensor @ traj_tensor.T
         probability_matrix = similarity_matrix.softmax(dim=1)
+
     print("Done.")
-    return similarity_matrix, probability_matrix
+    return similarity_matrix, probability_matrix, traj_tensor, text_tensor
 
 
-def visualize(similarity_matrix, probability_matrix, indices, save_dir):
-    print("Plotting...")
+def visualize_matrices(similarity_matrix, probability_matrix, indices, save_dir):
+    print("Plotting matrices")
     f, (ax1, ax2) = plt.subplots(1, 2, dpi=300, figsize=(16, 9), sharey=True)
 
     ax1 = sns.heatmap(
@@ -126,10 +128,53 @@ def visualize(similarity_matrix, probability_matrix, indices, save_dir):
     )
     ax2.set_title("Similarity")
 
+    f.set_tight_layout(True)
     plt.savefig(
         os.path.join(save_dir, f"clipt-eval-{similarity_matrix.shape[0]}.pdf"),
         bbox_inches="tight",
         pad_inches=0,
+    )
+
+
+def visualize_similarity_histograms(
+    similarity_matrix, traj_tensor, text_tensor, save_dir
+):
+    print("Plotting histograms...")
+    f, (ax1, ax2, ax3) = plt.subplots(1, 3, dpi=300, figsize=(16, 6), sharey=True)
+
+    traj_self_similarity = traj_tensor @ traj_tensor.T
+    text_self_similarity = text_tensor @ text_tensor.T
+
+    ax1.hist(similarity_matrix.flatten())
+    ax1.set_title("Traj-Text Similarity")
+    ax1.set_xlabel("Similarity")
+
+    ax2.hist(traj_self_similarity.flatten())
+    ax2.set_title("Traj-Traj Similarity")
+    ax2.set_xlabel("Similarity")
+
+    ax3.hist(text_self_similarity.flatten())
+    ax3.set_title("Text-Text Similarity")
+    ax3.set_xlabel("Similarity")
+
+    ax1.set_ylabel("Count")
+
+    f.set_tight_layout(True)
+    plt.savefig(
+        os.path.join(save_dir, f"similarity-hists-{similarity_matrix.shape[0]}.pdf"),
+        bbox_inches="tight",
+        pad_inches=0,
+    )
+
+
+def visualize(
+    similarity_matrix, probability_matrix, traj_tensor, text_tensor, indices, save_dir
+):
+    print("Plotting...")
+    visualize_matrices(similarity_matrix, probability_matrix, indices, save_dir)
+
+    visualize_similarity_histograms(
+        similarity_matrix, traj_tensor, text_tensor, save_dir
     )
 
     print("Done.")
@@ -139,9 +184,10 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     args.device = device
     dataloader, model = setup(args)
-    similarity_matrix, probability_matrix = compute_matrices(
+    similarity_matrix, probability_matrix, traj_tensor, text_tensor = compute_matrices(
         dataloader, model, args.device
     )
+
     # sample from matrices:
     sample_idxs = (
         torch.randperm(similarity_matrix.size(0))[: args.sample_size].cpu().numpy()
@@ -155,9 +201,19 @@ def main(args):
         probability_matrix[sample_idxs][:, sample_idxs].detach().cpu().numpy()
     )
 
-    visualize(similarity_matrix, probability_matrix, sample_idxs, args.save_dir)
+    traj_tensor = traj_tensor[sample_idxs].detach().cpu().numpy()
+    text_tensor = text_tensor[sample_idxs].detach().cpu().numpy()
 
-    # save the matrices
+    visualize(
+        similarity_matrix,
+        probability_matrix,
+        traj_tensor,
+        text_tensor,
+        sample_idxs,
+        args.save_dir,
+    )
+
+    # save the matrices and the tensors
     with open(
         os.path.join(
             args.save_dir, f"similarity-matrix-{similarity_matrix.shape[0]}.npy"
@@ -172,26 +228,38 @@ def main(args):
         "wb",
     ) as f:
         np.save(f, probability_matrix)
+    with open(
+        os.path.join(args.save_dir, f"traj-tensor-{traj_tensor.shape[0]}.npy"), "wb"
+    ) as f:
+        np.save(f, traj_tensor)
+    with open(
+        os.path.join(args.save_dir, f"text-tensor-{text_tensor.shape[0]}.npy"), "wb"
+    ) as f:
+        np.save(f, text_tensor)
 
     acc_top_1 = calc_accuracy_top_k(probability_matrix, 1)
     acc_top_3 = calc_accuracy_top_k(probability_matrix, 3)
     acc_top_5 = calc_accuracy_top_k(probability_matrix, 5)
     acc_top_10 = calc_accuracy_top_k(probability_matrix, 10)
+    acc_top_20 = calc_accuracy_top_k(probability_matrix, 20)
+    acc_top_50 = calc_accuracy_top_k(probability_matrix, 50)
     # print with 3 decimal places
     print(f"Accuracy@1: {acc_top_1:.3f}")
     print(f"Accuracy@3: {acc_top_3:.3f}")
     print(f"Accuracy@5: {acc_top_5:.3f}")
     print(f"Accuracy@10: {acc_top_10:.3f}")
+    print(f"Accuracy@10: {acc_top_20:.3f}")
+    print(f"Accuracy@10: {acc_top_50:.3f}")
 
 
-def calc_accuracy_top_k(similarity_matrix, k=5):
+def calc_accuracy_top_k(matrix, k=5):
     """
     What percentage of samples peak on the diagonal?
     """
-    num_samples = similarity_matrix.shape[0]
+    num_samples = matrix.shape[0]
     num_correct = 0
     for i in range(num_samples):
-        top_k_idxs = np.argsort(similarity_matrix[i])[-k:]
+        top_k_idxs = np.argsort(matrix[i])[-k:]
         if i in top_k_idxs:
             num_correct += 1
     return num_correct / num_samples
