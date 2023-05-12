@@ -29,10 +29,11 @@ class CALVINDM(pl.LightningDataModule):
         """
         Args:
             data_dir: path to the directory containing the data
-            split: one of 'training', 'validation'
             num_frames: number of frames to include in each trajectory
             batch_size: batch size for the dataloaders
             val_split: fraction of the training set to use for validation
+            seed: seed for the random split of the training set
+            num_workers: number of workers for the dataloaders
             frame_keys: list of keys to include for each frame.
                 By default, all keys are included.
             transform: instance of transform to apply to each frame
