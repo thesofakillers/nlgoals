@@ -12,6 +12,7 @@ import seaborn as sns
 from nlgoals.data.transforms import CLIPTPrepare
 from nlgoals.data.calvin.datamodule import CALVINDM
 from nlgoals.models.clipt import CLIPT
+from nlgoals.utils import calc_accuracy_top_k
 
 
 def setup_dataloader(args):
@@ -250,19 +251,6 @@ def main(args):
     print(f"Accuracy@10: {acc_top_10:.3f}")
     print(f"Accuracy@10: {acc_top_20:.3f}")
     print(f"Accuracy@10: {acc_top_50:.3f}")
-
-
-def calc_accuracy_top_k(matrix, k=5):
-    """
-    What percentage of samples peak on the diagonal?
-    """
-    num_samples = matrix.shape[0]
-    num_correct = 0
-    for i in range(num_samples):
-        top_k_idxs = np.argsort(matrix[i])[-k:]
-        if i in top_k_idxs:
-            num_correct += 1
-    return num_correct / num_samples
 
 
 if __name__ == "__main__":
