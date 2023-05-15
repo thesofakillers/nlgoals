@@ -21,6 +21,8 @@ seaborn = "^0.12.2"
 jsonargparse = "^4.20.1"
 pytorch-lightning = "<2"
 wandb = "^0.15.0"
+datasets = "^2.12.0"
+numpy = "<1.24"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.6.1"
