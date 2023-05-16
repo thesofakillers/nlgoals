@@ -1,5 +1,6 @@
 import enum
 
+
 class FrameKey(enum.Enum):
     actions = "actions"
     rel_actions = "rel_actions"

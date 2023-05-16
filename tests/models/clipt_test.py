@@ -52,7 +52,7 @@ def test_training(clipt):
     optimizer.zero_grad()
 
     output = model(images, text_input_ids, text_attn_mask)
-    loss = criterion(output['visual_traj_emb'], targets)
+    loss = criterion(output["visual_traj_emb"], targets)
     loss.backward()
     optimizer.step()
 

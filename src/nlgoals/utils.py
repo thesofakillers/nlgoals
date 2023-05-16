@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def calc_accuracy_top_k(matrix, k=5):
     """
     What percentage of samples peak on the diagonal?
