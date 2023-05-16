@@ -16,32 +16,45 @@ class CALVINSplit(enum.Enum):
 
 
 class CALVINTextDataset(Dataset):
-    """Dataset that gets all the text annotations for a given trajectory of CALVIN"""
+    """Dataset that gets all the text annotations in CALVIN"""
 
-    # TODO
+    def __init__(self, data_dir: str, split: CALVINSplit, **kwargs):
+        """
+        Args:
+            data_dir: path to the data directory
+            split: which split to use
+        """
+        split = split.value if isinstance(split, CALVINSplit) else split
+        self.path = os.path.join(data_dir, split)
+        assert os.path.exists(self.path), f"Path {self.path} does not exist."
 
-    def __init__(
-        self, data_dir: str, split: CALVINSplit, transform: Optional[Any], **kwargs
-    ):
-        pass
+        self.lang_ann = np.load(
+            os.path.join(self.path, "lang_annotations", "auto_lang_ann.npy"),
+            allow_pickle=True,
+        ).item()
 
     def __len__(self) -> int:
-        return len(self.lang_annotations["info"]["indx"])
+        return len(self.lang_ann["info"]["indx"])
+
+    def __getitem__(self, index) -> Dict:
+        sample = {}
+        sample["lang_ann"] = self.lang_ann["language"]["ann"][index]
+        sample["task_id"] = self.lang_ann["language"]["task"][index]
+        return sample
 
 
 class CALVINFrameDataset(Dataset):
-    """
-    Dataset that gets individual frames in CALVIN
-
-    Args:
-        data_dir: path to the data directory
-        split: which split to use
-        annotated_only: whether to only use frames that have lang_annotations
-    """
+    """Dataset that gets individual frames in CALVIN"""
 
     def __init__(
         self, data_dir: str, split: CALVINSplit, annotated_only: bool = False, **kwargs
     ):
+        """
+        Args:
+            data_dir: path to the data directory
+            split: which split to use
+            annotated_only: whether to only use frames that have lang_annotations
+        """
         split = split.value if isinstance(split, CALVINSplit) else split
         self.path = os.path.join(data_dir, split)
         assert os.path.exists(self.path), f"Path {self.path} does not exist."
