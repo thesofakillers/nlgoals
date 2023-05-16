@@ -43,7 +43,9 @@ def text_main(args):
             inputs.attention_mask = inputs.attention_mask.to(device)
 
             # (b x emb_dim)
-            embs = model.get_text_features(**inputs)
+            embs = model.get_text_features(
+                input_ids=inputs.input_ids, attention_mask=inputs.attention_mask
+            )
             all_embs.append(embs.cpu().numpy())
 
     # num_anns x emb_dim
@@ -103,8 +105,12 @@ def frame_main(args):
                 frame_file = np.load(file_path)
                 frame_dict = dict(frame_file)
                 # then add the embs
-                frame_dict[f"{clip_model_name}_rgb_static"] = rgb_static_embs[i]
-                frame_dict[f"{clip_model_name}_rgb_gripper"] = rgb_gripper_embs[i]
+                frame_dict[f"{clip_model_name}_rgb_static"] = (
+                    rgb_static_embs[i].cpu().numpy()
+                )
+                frame_dict[f"{clip_model_name}_rgb_gripper"] = (
+                    rgb_gripper_embs[i].cpu().numpy()
+                )
                 # then save back to file, compressed
                 np.savez_compressed(file_path, **frame_dict)
 
