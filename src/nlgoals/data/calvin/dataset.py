@@ -47,19 +47,33 @@ class CALVINFrameDataset(Dataset):
     """Dataset that gets individual frames in CALVIN"""
 
     def __init__(
-        self, data_dir: str, split: CALVINSplit, annotated_only: bool = False, **kwargs
+        self,
+        data_dir: str,
+        split: CALVINSplit,
+        annotated_only: bool = False,
+        num_frames: Optional[int] = None,
+        **kwargs,
     ):
         """
         Args:
             data_dir: path to the data directory
             split: which split to use
             annotated_only: whether to only use frames that have lang_annotations
+            num_frames: Number of frames to use. If None, use all frames.
+                only relevant when annotated_only is True
         """
         split = split.value if isinstance(split, CALVINSplit) else split
         self.path = os.path.join(data_dir, split)
         assert os.path.exists(self.path), f"Path {self.path} does not exist."
 
         self._dataset_len = None
+        self.num_frames = num_frames
+
+        # fmt: off
+        self.orig_columns = [ "actions", "rel_actions", "robot_obs", "scene_obs",
+                             "rgb_static", "rgb_gripper", "rgb_tactile", "depth_static",
+                             "depth_gripper", "depth_tactile", ]
+        # fmt: on
 
         self.item_list = self._build_item_list(annotated_only)
 
@@ -84,12 +98,15 @@ class CALVINFrameDataset(Dataset):
             item_list = [
                 os.path.join(self.path, f"episode_{str(idx).zfill(7)}.npz")
                 for start_end in self.lang_anns["info"]["indx"]
+                # backwards in case num_frames is 1, in which case we use last frame
                 for idx in np.linspace(
-                    start_end[0],
                     start_end[1],
-                    start_end[1] - start_end[0] + 1,
+                    start_end[0],
+                    start_end[1] - start_end[0] + 1
+                    if self.num_frames is None
+                    else self.num_frames,
                     dtype=int,
-                )
+                )[::-1]
             ]
         return item_list
 
@@ -100,7 +117,7 @@ class CALVINFrameDataset(Dataset):
 
     def __getitem__(self, index: int) -> Dict:
         frame_file = np.load(self.item_list[index])
-        frame_dict = dict(frame_file)
+        frame_dict = {k: frame_file[k] for k in self.orig_columns}
         # for saving
         frame_dict["frame_id"] = self.item_list[index][-11:-4]
         return frame_dict
