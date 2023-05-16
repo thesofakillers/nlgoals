@@ -2,6 +2,7 @@
 import os
 import enum
 from typing import Dict, List, Optional, Any
+import re
 
 import numpy as np
 from torch.utils.data import Dataset
@@ -12,6 +13,84 @@ from nlgoals.data.calvin.utils import FrameKey
 class CALVINSplit(enum.Enum):
     training: str = "training"
     valididation: str = "validation"
+
+
+class CALVINTextDataset(Dataset):
+    """Dataset that gets all the text annotations for a given trajectory of CALVIN"""
+
+    # TODO
+
+    def __init__(
+        self, data_dir: str, split: CALVINSplit, transform: Optional[Any], **kwargs
+    ):
+        pass
+
+    def __len__(self) -> int:
+        return len(self.lang_annotations["info"]["indx"])
+
+
+class CALVINFrameDataset(Dataset):
+    """
+    Dataset that gets individual frames in CALVIN
+
+    Args:
+        data_dir: path to the data directory
+        split: which split to use
+        annotated_only: whether to only use frames that have lang_annotations
+    """
+
+    def __init__(
+        self, data_dir: str, split: CALVINSplit, annotated_only: bool = False, **kwargs
+    ):
+        split = split.value if isinstance(split, CALVINSplit) else split
+        self.path = os.path.join(data_dir, split)
+        assert os.path.exists(self.path), f"Path {self.path} does not exist."
+
+        self._dataset_len = None
+
+        self.item_list = self._build_item_list(annotated_only)
+
+    def _build_item_list(self, annotated_only: bool) -> List[str]:
+        """
+        Build a list of all the paths to the frames in the dataset
+        """
+        if not annotated_only:
+            pattern = r"episode_\d{7}\.npz"
+            item_list = sorted(
+                [
+                    os.path.join(self.path, f)
+                    for f in os.listdir(self.path)
+                    if re.match(pattern, f)
+                ]
+            )
+        else:
+            self.lang_anns = np.load(
+                os.path.join(self.path, "lang_annotations", "auto_lang_ann.npy"),
+                allow_pickle=True,
+            ).item()
+            item_list = [
+                os.path.join(self.path, f"episode_{str(idx).zfill(7)}.npz")
+                for start_end in self.lang_anns["info"]["indx"]
+                for idx in np.linspace(
+                    start_end[0],
+                    start_end[1],
+                    start_end[1] - start_end[0] + 1,
+                    dtype=int,
+                )
+            ]
+        return item_list
+
+    def __len__(self) -> int:
+        if self._dataset_len is None:
+            self._dataset_len = len(self.item_list)
+        return self._dataset_len
+
+    def __getitem__(self, index: int) -> Dict:
+        frame_file = np.load(self.item_list[index])
+        frame_dict = dict(frame_file)
+        # for saving
+        frame_dict["frame_id"] = self.item_list[index][-11:-4]
+        return frame_dict
 
 
 class CALVIN(Dataset):
