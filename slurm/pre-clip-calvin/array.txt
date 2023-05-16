@@ -1,0 +1,4 @@
+frame --dataset.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D --dataset.split=training --dataset.annotated_only=true
+frame --dataset.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D --dataset.split=validation --dataset.annotated_only=true
+text --dataset.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D --dataset.split=training
+text --dataset.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D --dataset.split=validation
