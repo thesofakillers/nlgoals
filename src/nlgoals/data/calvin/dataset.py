@@ -12,7 +12,7 @@ from nlgoals.data.calvin.utils import FrameKey
 
 class CALVINSplit(enum.Enum):
     training: str = "training"
-    valididation: str = "validation"
+    validation: str = "validation"
 
 
 class CALVINTextDataset(Dataset):
