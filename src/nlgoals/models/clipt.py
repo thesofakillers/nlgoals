@@ -1,4 +1,4 @@
-from typing import Union, Dict
+from typing import Optional, Union, Dict
 
 import torch
 import torch.nn as nn
@@ -20,8 +20,9 @@ class CLIPT(pl.LightningModule):
 
     def __init__(
         self,
-        clip_model: str = "laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
+        clip_model_name: str = "laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
         num_frames: int = 2,
+        precomputed_clip: bool = False,
         freeze_clip: bool = True,
         **kwargs,
     ):
@@ -29,16 +30,19 @@ class CLIPT(pl.LightningModule):
         Initializes CLIP, traj_encoder, parses attribute
 
         Args:
-            clip_model: name of CLIP model to use
+            clip_model_name: name of CLIP model to use
             num_frames: number of frames expected in input
+            precomputed_clip: whether to expect precomputed clip embeddings
             freeze_clip: whether to freeze CLIP model
+                if `precomputed_clip` is True, this is ignored
         """
         super().__init__(**kwargs)
         self.save_hyperparameters()
-        self.clip_model = transformers.CLIPModel.from_pretrained(clip_model)
-        if freeze_clip:
-            for param in self.clip_model.parameters():
-                param.requires_grad = False
+        self.clip_model_name = clip_model_name
+        self.precomputed_clip = precomputed_clip
+
+        self._setup_clip(freeze_clip)
+
         self.emb_dim = self.clip_model.config.projection_dim
         self.num_frames = num_frames
         # MLP (n_images x emb_dim) -> (emb_dim) with ReLU activation in between
@@ -56,20 +60,24 @@ class CLIPT(pl.LightningModule):
         self.temperature = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
         self.max_temp_value = 100
 
+    def _setup_clip(self, freeze_clip: bool):
+        if self.precomputed_clip:
+            self.clip_model = None
+        else:
+            self.clip_model = transformers.CLIPModel.from_pretrained(clip_model_name)
+            if freeze_clip:
+                for param in self.clip_model.parameters():
+                    param.requires_grad = False
+
     def forward(
-        self,
-        images: torch.Tensor,
-        text_input_ids: torch.Tensor,
-        text_attn_mask: torch.Tensor,
+        self, batch: Dict[str, torch.Tensor]
     ) -> Dict[str, Union[torch.Tensor, torch.nn.parameter.Parameter]]:
         """
         Combines images and embeds them into visual trajectory embedding
         Embeds text into text trajectory embedding
 
         Args:
-            images: (batch_size, num_frames, 3, H, W) RGB pixel values
-            text_input_ids: (batch_size, max_seq_len) tokenized text
-            attention_mask: (batch_size, max_seq_len) (1 for tokens, 0 for padding)
+            batch: Dictionary of tensors handled by prepare_{}_inputs funcs
 
         Returns:
             dictionary of
@@ -77,10 +85,11 @@ class CLIPT(pl.LightningModule):
                 text_traj_emb: (batch_size, emb_dim)
                 temperature: ()
         """
-        visual_traj_emb = self.encode_visual_traj(images, normalize=True)
-        text_traj_emb = self.encode_text_traj(
-            text_input_ids, text_attn_mask, normalize=True
-        )
+        visual_inputs = self.prepare_visual_inputs(self, batch)
+        visual_traj_emb = self.encode_visual_traj(**visual_inputs, normalize=True)
+
+        textual_inputs = self.prepare_textual_inputs(self, batch)
+        text_traj_emb = self.encode_text_traj(**textual_inputs, normalize=True)
 
         return {
             "visual_traj_emb": visual_traj_emb,
@@ -88,10 +97,31 @@ class CLIPT(pl.LightningModule):
             "temperature": self.temperature,
         }
 
+    def prepare_textual_inputs(
+        self, batch: Dict[str, torch.Tensor]
+    ) -> Dict[str, torch.Tensor]:
+        textual_inputs = {}
+        if self.precomputed_clip:
+            textual_inputs["text_traj_emb"] = batch["text_traj_emb"]
+        else:
+            textual_inputs["text_input_ids"] = batch["text_input_ids"]
+            textual_inputs["text_attn_mask"] = batch["text_attn_mask"]
+        return textual_inputs
+
+    def prepare_visual_inputs(
+        self, batch: Dict[str, torch.Tensor]
+    ) -> Dict[str, torch.Tensor]:
+        visual_inputs = {}
+        if self.precomputed_clip:
+            visual_inputs["image_embs"] = batch["image_embs"]
+        else:
+            visual_inputs["images"] = batch["images"]
+
     def encode_text_traj(
         self,
-        text_input_ids: torch.Tensor,
-        text_attn_mask: torch.Tensor,
+        text_input_ids: Optional[torch.Tensor] = None,
+        text_attn_mask: Optional[torch.Tensor] = None,
+        text_traj_emb: Optional[torch.Tensor] = None,
         normalize: bool = False,
     ) -> torch.Tensor:
         """
@@ -100,36 +130,54 @@ class CLIPT(pl.LightningModule):
         Args:
             text_input_ids: (batch_size, max_seq_len) tokenized text
             attention_mask: (batch_size, max_seq_len) (1 for tokens, 0 for padding)
+            text_traj_emb: (batch_size, emb_dim) Pre-computed CLIP embedding of text.
+                if provided, text_input_ids and text_attn_mask are ignored
             normalize: whether to normalize the text trajectory embeddings
 
         Returns:
             text_traj_emb: (batch_size, emb_dim)
         """
-        text_traj_emb = self.clip_model.get_text_features(
-            input_ids=text_input_ids, attention_mask=text_attn_mask
-        )
+        assert text_traj_emb is not None or (
+            text_input_ids is not None and text_attn_mask is not None
+        ), "Must provide either text_emb or text_input_ids and text_attn_mask"
+
+        if text_traj_emb is None:
+            text_traj_emb = self.clip_model.get_text_features(
+                input_ids=text_input_ids, attention_mask=text_attn_mask
+            )
         return F.normalize(text_traj_emb, dim=-1) if normalize else text_traj_emb
 
     def encode_visual_traj(
-        self, images: torch.Tensor, normalize: bool = False
+        self,
+        images: Optional[torch.Tensor] = None,
+        image_embs: Optional[torch.Tensor] = None,
+        normalize: bool = False,
     ) -> torch.Tensor:
         """
         Takes an input of images and encodes them into a visual trajectory embedding
 
         Args:
             images: (batch_size, num_frames, 3, H, W) RGB pixel values
+            image_embs: (batch_size, num_frames, emb_dim) Pre-computed CLIP embeddings
+                if provided, images is ignored
             normalize: whether to normalize the visual trajectory embeddings
 
         Returns:
             visual_traj_emb: (batch_size, emb_dim)
         """
-        # (num_frames, B, emb_dim), then we permute to get (B, num_frames, emb_dim)
-        image_embs = torch.stack(
-            [
-                self.clip_model.get_image_features(pixel_values=images[:, i, :, :, :])
-                for i in range(self.num_frames)
-            ]
-        ).permute(1, 0, 2)
+        assert (
+            images is not None or image_embs is not None
+        ), "Must provide either images or image_embs"
+        if image_embs is None:
+            # (num_frames, B, emb_dim), then we permute to get (B, num_frames, emb_dim)
+            image_embs = torch.stack(
+                [
+                    self.clip_model.get_image_features(
+                        pixel_values=images[:, i, :, :, :]
+                    )
+                    for i in range(self.num_frames)
+                ]
+            ).permute(1, 0, 2)
         # (batch_size, num_frames x emb_dim)
         image_embs_vec = torch.flatten(image_embs, start_dim=1)
         # (batch_size, emb_dim)
