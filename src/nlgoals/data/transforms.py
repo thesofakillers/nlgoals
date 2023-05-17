@@ -43,16 +43,16 @@ class CLIPTransform:
     Transforms for CLIP: tokenizing text, resizing, rescaling images
     """
 
-    def __init__(self, clip_model: str, image_cols: List[str], text_col: str):
+    def __init__(self, clip_model_name: str, image_cols: List[str], text_col: str):
         """
         Args:
-            clip_model: which CLIP model to use
+            clip_model_name: which CLIP model to use
             image_cols: which of the columns to process as images
             text_col: which one of the columns to process as text
         """
         self.image_cols = set(image_cols)
         self.text_col = text_col
-        self.clip_processor = transformers.CLIPProcessor.from_pretrained(clip_model)
+        self.clip_processor = transformers.CLIPProcessor.from_pretrained(clip_model_name)
 
     def __call__(self, unproc_input: Dict) -> Dict:
         """

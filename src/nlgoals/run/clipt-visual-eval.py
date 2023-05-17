@@ -20,7 +20,7 @@ def setup_dataloader(args):
         image_col="rgb_static",
         input_ids_col="text_input_ids",
         attn_mask_col="text_attn_mask",
-        clip_model=args.clip_name,
+        clip_model_name=args.clip_name,
         image_cols=["rgb_static"],
         text_col="lang_ann",
     )
@@ -49,7 +49,7 @@ def setup_dataloader(args):
 
 def setup_model(args):
     clipt = CLIPT(
-        clip_model="laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
+        clip_model_name="laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
         num_frames=2,
         freeze_clip=True,
     )
