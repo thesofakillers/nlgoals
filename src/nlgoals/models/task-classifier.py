@@ -1,4 +1,4 @@
-from typing import Tuple, Union, Dict
+from typing import Tuple, Union, Dict, Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -45,9 +45,14 @@ class TaskClassificationHead(nn.Module):
 
 
 class TaskClassifier(pl.LightningModule):
+    """
+    PL Module consisting of pre-trained Trajectory Encoder + Classifier Head.
+    Only the classifier head is trained.
+    """
+
     def __init__(
         self,
-        traj_encoder: Union[nn.Module, pl.LightningModule],
+        traj_encoder_kwargs: Dict,
         num_tasks: int,
         hidden_layers: Tuple[int] = (128, 64),
     ):
@@ -55,12 +60,12 @@ class TaskClassifier(pl.LightningModule):
         Parses the traj_encoder, creates the relative classifier
 
         Args:
-            traj_encoder: An instance of a pretrained trajectory encoder
+            traj_encoder_kwargs: kwargs for the trajectory encoder
             num_tasks: number of tasks to classify
             hidden_layers: tuple of hidden layer sizes
         """
-        self.set_traj_encoder(traj_encoder)
-        self.traj_emb_dim = traj_encoder.emb_dim
+        self.traj_encoder = CLIPT(**traj_encoder_kwargs)
+        self.set_traj_encoder(self.traj_encoder)
 
         self.classifier_head = TaskClassificationHead(
             self.traj_emb_dim, num_tasks, hidden_layers
@@ -73,6 +78,8 @@ class TaskClassifier(pl.LightningModule):
         # and freeze it
         for param in self.traj_encoder.parameters():
             param.requires_grad = False
+
+        self.traj_emb_dim = self.traj_encoder.emb_dim
 
     def forward(self, batch, traj_type: str) -> torch.Tensor:
         """
@@ -141,3 +148,14 @@ class TaskClassifier(pl.LightningModule):
         params_to_update = filter(lambda p: p.requires_grad, self.parameters())
         optimizer = torch.optim.Adam(params_to_update, lr=1e-3)
         return optimizer
+
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]):
+        """
+        The traj encoder is trained separately, so we already have
+        access to its checkpoint and there is no need to save it again.
+
+        Note, when loading the model from checkpoint:
+            - set strict to False
+            - you will have to manually load the traj_encoder and call `set_traj_encoder`
+        """
+        del checkpoint["state_dict"]["traj_encoder"]

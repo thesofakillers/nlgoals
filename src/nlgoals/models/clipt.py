@@ -1,4 +1,4 @@
-from typing import Optional, Union, Dict
+from typing import Optional, Union, Dict, Any
 
 import torch
 import torch.nn as nn
@@ -63,11 +63,18 @@ class CLIPT(pl.LightningModule):
     def _setup_clip(self, freeze_clip: bool):
         if self.precomputed_clip:
             self.clip_model = None
+            self.freeze_clip = True
         else:
-            self.clip_model = transformers.CLIPModel.from_pretrained(clip_model_name)
-            if freeze_clip:
-                for param in self.clip_model.parameters():
-                    param.requires_grad = False
+            self.freeze_clip = freeze_clip
+            self.set_clip()
+
+    def set_clip(self):
+        """Function is public to allow users to set the CLIP model after init"""
+        self.precomputed_clip = False
+        self.clip_model = transformers.CLIPModel.from_pretrained(self.clip_model_name)
+        if self.freeze_clip:
+            for param in self.clip_model.parameters():
+                param.requires_grad = False
 
     def forward(
         self, batch: Dict[str, torch.Tensor]
@@ -228,6 +235,18 @@ class CLIPT(pl.LightningModule):
         params_to_update = filter(lambda p: p.requires_grad, self.parameters())
         optimizer = torch.optim.Adam(params_to_update, lr=5e-5)
         return optimizer
+
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]):
+        """
+        If freeze_clip, we don't fine-tune CLIP, so we can save a lot of space
+        by not saving the CLIP model state_dict
+
+        Note, when loading the model from checkpoint:
+            - set strict to False
+            - you will have to manually load the CLIP model state_dict if necessary
+        """
+        if self.freeze_clip:
+            del checkpoint["state_dict"]["clip_model"]
 
 
 if __name__ == "__main__":
