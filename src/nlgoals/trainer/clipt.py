@@ -1,4 +1,6 @@
+import os
 from dataclasses import dataclass
+
 from nlgoals.trainer.utils import Accelerator
 
 
