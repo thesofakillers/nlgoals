@@ -1,3 +1,4 @@
+from argparse import Namespace
 from typing import Optional, Union, Dict, Any
 
 import torch
@@ -62,7 +63,10 @@ class CLIPT(pl.LightningModule):
 
     def _setup_clip(self, freeze_clip: bool):
         if self.precomputed_clip:
-            self.clip_model = None
+            self.clip_model = Namespace()
+            self.clip_model.config = transformers.PretrainedConfig.from_pretrained(
+                self.clip_model_name
+            )
             self.freeze_clip = True
         else:
             self.freeze_clip = freeze_clip
