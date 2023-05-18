@@ -33,9 +33,12 @@ def train(args):
         data_transform = None
     # datamodule
     calvin_dm = CALVINDM(**args.data.as_dict(), transform=data_transform)
+    calvin_dm.prepare_data()
+    calvin_dm.setup(stage="fit")
     # model
     model = TaskClassifier(
-        traj_encoder_kwargs=args.clipt.as_dict(), **args.task_classifier.as_dict()
+        traj_encoder_kwargs=args.clipt.as_dict(),
+        num_tasks=len(calvin_dm.id_to_task) ** args.task_classifier.as_dict(),
     )
     if args.clipt_checkpoint is not None:
         clipt_state_dict = torch.load(args.clipt_checkpoint)["state_dict"]
@@ -77,7 +80,7 @@ if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
     parser.add_class_arguments(
-        TaskClassifier, "task_classifier", skip={"traj_encoder_kwargs"}
+        TaskClassifier, "task_classifier", skip={"traj_encoder_kwargs", "num_tasks"}
     )
     parser.add_class_arguments(CLIPT, "clipt")
     parser.add_argument("--clipt-checkpoint", type=str, required=False)

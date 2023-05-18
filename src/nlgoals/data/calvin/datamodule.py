@@ -57,9 +57,12 @@ class CALVINDM(pl.LightningDataModule):
         self.frame_keys = frame_keys
         self.num_workers = num_workers
         self.transform = transform
+        self.is_setup = False
 
     def prepare_data(self) -> None:
         """Checks that the data is downloaded"""
+        if self.is_setup:
+            return
         missing_data_error = FileNotFoundError(
             f"Complete Data not found at {self.data_dir}."
             " Please follow the download instructions in `data/calvin/README.md`."
@@ -81,6 +84,8 @@ class CALVINDM(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         """Initializes and splits datasets, for use by DataLoaders"""
+        if self.is_setup:
+            return
         if stage == "fit" or stage is None:
             temp_train_dataset = CALVIN(
                 self.data_dir,
@@ -99,6 +104,8 @@ class CALVINDM(pl.LightningDataModule):
             )
             # these get properly parsed in the dataset, move them here for easier access
             self.frame_keys = temp_train_dataset.frame_keys
+            self.id_to_task = temp_train_dataset.id_to_task
+            self.task_to_id = temp_train_dataset.task_to_id
         elif stage == "test" or stage is None:
             self.test_dataset = CALVIN(
                 self.data_dir,
@@ -109,6 +116,9 @@ class CALVINDM(pl.LightningDataModule):
                 self.transform,
             )
             self.frame_keys = self.test_dataset.frame_keys
+            self.id_to_task = self.test_dataset.id_to_task
+            self.task_to_id = self.test_dataset.task_to_id
+        self.is_setup = True
 
     def train_dataloader(self):
         return DataLoader(
