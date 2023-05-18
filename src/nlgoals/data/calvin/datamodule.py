@@ -22,9 +22,11 @@ class CALVINDM(pl.LightningDataModule):
         val_split: float = 0.1,
         seed: int = 42,
         num_workers: int = 18,
-        custom_collate: bool = True,
-        lang_key: str = "ann",
-        frame_keys: Optional[str] = ["rgb_static"],
+        custom_collate: bool = False,
+        lang_key: str = "laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
+        frame_keys: Optional[List[str]] = [
+            "laion/CLIP-ViT-L-14-laion2B-s32B-b82K_rgb_static"
+        ],
         transform: Optional[Any] = None,
         **kwargs,
     ):
