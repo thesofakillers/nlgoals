@@ -38,7 +38,8 @@ def train(args):
     # model
     model = TaskClassifier(
         traj_encoder_kwargs=args.clipt.as_dict(),
-        num_tasks=len(calvin_dm.id_to_task) ** args.task_classifier.as_dict(),
+        num_tasks=len(calvin_dm.id_to_task),
+        **args.task_classifier.as_dict()
     )
     if args.clipt_checkpoint is not None:
         clipt_state_dict = torch.load(args.clipt_checkpoint)["state_dict"]
