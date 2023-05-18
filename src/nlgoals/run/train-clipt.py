@@ -1,10 +1,10 @@
-"""Training of CLIPh: Contrastive Language Image Pretraining for Trajectories"""
+"""Training of CLIPT: Contrastive Language Image Pretraining for Trajectories"""
 import jsonargparse
 import os
 
 import pytorch_lightning as pl
-from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 
+from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.models.clipt import CLIPT
 from nlgoals.trainer import TrainerConfig
 from nlgoals.data.calvin.datamodule import CALVINDM
@@ -17,11 +17,10 @@ def train(args):
     Instantiates model
     Trains model using contrastive loss between image traj and text pairs
     """
+    # determinism
     pl.seed_everything(args.seed, workers=True)
-
     # disable tokenizer parallelism because we have multiple workers
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
     # transforms
     transform_config = CLIPT_PREPARE_CONFIG[args.data.transform_variant]
     transform_config["mode"] = args.data.transform_variant
@@ -31,10 +30,11 @@ def train(args):
         )
     else:
         data_transform = None
+    # datamodule
     calvin_dm = CALVINDM(**args.data.as_dict(), transform=data_transform)
-
+    # model
     model = CLIPT(**args.clipt.as_dict())
-
+    # trainer
     script_host = "slurm" if "SLURM_JOB_ID" in os.environ else "local"
     logger = pl.loggers.WandbLogger(
         job_type="train" if not args.debug else "debug",
