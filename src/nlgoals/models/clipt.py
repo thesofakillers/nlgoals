@@ -22,7 +22,7 @@ class CLIPT(pl.LightningModule):
         self,
         clip_model_name: str = "laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
         num_frames: int = 2,
-        precomputed_clip: bool = False,
+        precomputed_clip: bool = True,
         freeze_clip: bool = True,
         **kwargs,
     ):
@@ -249,7 +249,7 @@ class CLIPT(pl.LightningModule):
             - set strict to False
             - you will have to manually load the CLIP model state_dict if necessary
         """
-        if self.freeze_clip:
+        if self.freeze_clip and "clip_model" in checkpoint["state_dict"]:
             del checkpoint["state_dict"]["clip_model"]
 
 
