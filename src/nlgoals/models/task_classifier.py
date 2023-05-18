@@ -10,7 +10,10 @@ from nlgoals.models.clipt import CLIPT
 
 class TaskClassificationHead(nn.Module):
     def __init__(
-        self, input_dim: int, output_dim: int, hidden_layers: Tuple[int] = (128, 64)
+        self,
+        input_dim: int,
+        output_dim: int,
+        hidden_layers: Tuple[int, ...] = (128, 64),
     ):
         """
         Args:
@@ -54,7 +57,7 @@ class TaskClassifier(pl.LightningModule):
         self,
         traj_encoder_kwargs: Dict,
         num_tasks: int,
-        hidden_layers: Tuple[int] = (128, 64),
+        hidden_layers: Tuple[int, ...] = (128, 64),
     ):
         """
         Parses the traj_encoder, creates the relative classifier
