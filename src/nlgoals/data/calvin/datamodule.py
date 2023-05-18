@@ -107,28 +107,6 @@ class CALVINDM(pl.LightningDataModule):
                 self.transform,
             )
             self.frame_keys = self.test_dataset.frame_keys
-        if stage == "debug":
-            # change self.data_dir s.t., replacing last dir with "calvin_debug_dataset"
-            self.data_dir = os.path.join(
-                os.path.dirname(self.data_dir), "calvin_debug_dataset"
-            )
-
-            self.train_debug_dataset = CALVIN(
-                self.data_dir,
-                "training",
-                self.num_frames,
-                self.lang_key,
-                self.frame_keys,
-                self.transform,
-            )
-            self.val_debug_dataset = CALVIN(
-                self.data_dir,
-                "validation",
-                self.num_frames,
-                self.lang_key,
-                self.frame_keys,
-                self.transform,
-            )
 
     def train_dataloader(self):
         return DataLoader(
@@ -151,24 +129,6 @@ class CALVINDM(pl.LightningDataModule):
     def test_dataloader(self):
         return DataLoader(
             self.test_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            collate_fn=self._get_collate_fn(),
-        )
-
-    def train_debug_dataloader(self):
-        return DataLoader(
-            self.train_debug_dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            collate_fn=self._get_collate_fn(),
-        )
-
-    def val_debug_dataloader(self):
-        return DataLoader(
-            self.val_debug_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
