@@ -85,6 +85,10 @@ class CLIPT(pl.LightningModule):
 
         Args:
             batch: Dictionary of tensors handled by prepare_{}_inputs funcs
+            batch keys are either
+                'images', 'text_input_ids', 'text_attn_mask', 'task_id'
+                or
+                'image_embs', 'lang_emb', 'task_id'
 
         Returns:
             dictionary of
@@ -109,7 +113,7 @@ class CLIPT(pl.LightningModule):
     ) -> Dict[str, torch.Tensor]:
         textual_inputs = {}
         if self.precomputed_clip:
-            textual_inputs["text_traj_emb"] = batch["text_traj_emb"]
+            textual_inputs["text_traj_emb"] = batch["lang_emb"]
         else:
             textual_inputs["text_input_ids"] = batch["text_input_ids"]
             textual_inputs["text_attn_mask"] = batch["text_attn_mask"]

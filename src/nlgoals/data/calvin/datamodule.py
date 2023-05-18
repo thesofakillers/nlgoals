@@ -22,7 +22,9 @@ class CALVINDM(pl.LightningDataModule):
         val_split: float = 0.1,
         seed: int = 42,
         num_workers: int = 18,
-        frame_keys: Optional[List[FrameKey]] = ["rgb_static"],
+        custom_collate: bool = True,
+        lang_key: str = "ann",
+        frame_keys: Optional[str] = ["rgb_static"],
         transform: Optional[Any] = None,
         **kwargs,
     ):
@@ -34,6 +36,10 @@ class CALVINDM(pl.LightningDataModule):
             val_split: fraction of the training set to use for validation
             seed: seed for the random split of the training set
             num_workers: number of workers for the dataloaders
+            lang_key: which key to use for the language annotation.
+                If not 'ann', `lang_key` is used for specifying
+                pre-computed clip embeddings. E.g. the `lang_key` 'foo'
+                will load embeddings from lang_annotations['clip_emb']['foo']
             frame_keys: list of keys to include for each frame.
                 By default, all keys are included.
             transform: instance of transform to apply to each frame
@@ -44,6 +50,8 @@ class CALVINDM(pl.LightningDataModule):
         self.batch_size = batch_size
         self.val_split = val_split
         self.seed = seed
+        self.custom_collate = custom_collate
+        self.lang_key = lang_key
         self.frame_keys = frame_keys
         self.num_workers = num_workers
         self.transform = transform
@@ -76,6 +84,7 @@ class CALVINDM(pl.LightningDataModule):
                 self.data_dir,
                 "training",
                 self.num_frames,
+                self.lang_key,
                 self.frame_keys,
                 self.transform,
             )
@@ -93,6 +102,7 @@ class CALVINDM(pl.LightningDataModule):
                 self.data_dir,
                 "validation",
                 self.num_frames,
+                self.lang_key,
                 self.frame_keys,
                 self.transform,
             )
@@ -105,8 +115,9 @@ class CALVINDM(pl.LightningDataModule):
 
             self.train_debug_dataset = CALVIN(
                 self.data_dir,
-                "validation",
+                "training",
                 self.num_frames,
+                self.lang_key,
                 self.frame_keys,
                 self.transform,
             )
@@ -114,6 +125,7 @@ class CALVINDM(pl.LightningDataModule):
                 self.data_dir,
                 "validation",
                 self.num_frames,
+                self.lang_key,
                 self.frame_keys,
                 self.transform,
             )
@@ -124,7 +136,7 @@ class CALVINDM(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            collate_fn=self._collate_fn,
+            collate_fn=self._get_collate_fn(),
         )
 
     def val_dataloader(self):
@@ -133,7 +145,7 @@ class CALVINDM(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-            collate_fn=self._collate_fn,
+            collate_fn=self._get_collate_fn(),
         )
 
     def test_dataloader(self):
@@ -142,7 +154,7 @@ class CALVINDM(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-            collate_fn=self._collate_fn,
+            collate_fn=self._get_collate_fn(),
         )
 
     def train_debug_dataloader(self):
@@ -151,7 +163,7 @@ class CALVINDM(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            collate_fn=self._collate_fn,
+            collate_fn=self._get_collate_fn(),
         )
 
     def val_debug_dataloader(self):
@@ -160,8 +172,12 @@ class CALVINDM(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-            collate_fn=self._collate_fn,
+            collate_fn=self._get_collate_fn(),
         )
+
+    def _get_collate_fn(self):
+        collate_fn = self._collate_fn if self.custom_collate else None
+        return collate_fn
 
     @staticmethod
     def _collate_fn(batch: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:

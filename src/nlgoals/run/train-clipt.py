@@ -8,7 +8,7 @@ from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.models.clipt import CLIPT
 from nlgoals.trainer import TrainerConfig
 from nlgoals.data.calvin.datamodule import CALVINDM
-from nlgoals.data.calvin.transform_configs import CLIPTPrepareForCALVIN
+from nlgoals.data.calvin.transform_configs import CLIPT_PREPARE_CONFIG
 
 
 def train(args):
@@ -22,9 +22,12 @@ def train(args):
     # disable tokenizer parallelism because we have multiple workers
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+    # transforms
+    transform_config = CLIPT_PREPARE_CONFIG[args.data.transform_variant]
+    transform_config["mode"] = args.data.transform_variant
     if args.data.transform_name is not None:
         data_transform = TRANSFORM_MAP[args.data.transform_name.value](
-            **args.data.transform_kwargs
+            **transform_config
         )
     else:
         data_transform = None
@@ -68,19 +71,22 @@ if __name__ == "__main__":
     parser.add_class_arguments(CLIPT, "clipt")
 
     parser.add_class_arguments(CALVINDM, "data", skip={"transform"})
+
+    # transforms
     parser.add_argument(
         "--data.transform_name", type=TransformName, default="clipt-prepare"
     )
-    parser.add_dataclass_arguments(CLIPTPrepareForCALVIN, "data.transform_kwargs")
+    parser.add_argument(
+        "--data.transform_variant",
+        type=str,
+        default="without_clip",
+    )
 
     parser.add_dataclass_arguments(TrainerConfig, "trainer")
     parser.add_argument("--seed", type=int, default=42)
 
     parser.link_arguments("seed", "data.seed", apply_on="parse")
     parser.link_arguments("data.num_frames", "clipt.num_frames", apply_on="parse")
-    parser.link_arguments(
-        "clipt.clip_model", "data.transform_kwargs.clip_model", apply_on="parse"
-    )
     parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()

@@ -133,8 +133,9 @@ class CALVIN(Dataset):
         self,
         data_dir: str,
         split: CALVINSplit,
-        num_frames: int,
-        frame_keys: Optional[List[FrameKey]] = None,
+        num_frames: 2,
+        lang_key: str = "ann",
+        frame_keys: Optional[List[FrameKey]] = ["rgb_static"],
         transform: Optional[Any] = None,
         **kwargs,
     ):
@@ -143,10 +144,13 @@ class CALVIN(Dataset):
             data_dir: path to the directory containing the data
             split: one of 'training', 'validation'
             num_frames: number of frames to include in each trajectory
+            lang_key: which key to use for the language annotation.
+                If not 'ann', `lang_key` is used for specifying
+                pre-computed clip embeddings. E.g. the `lang_key` 'foo'
+                will load embeddings from lang_annotations['clip_emb']['foo']
             frame_keys: list of keys to include for each frame.
                 By default, all keys are included.
-            transform_name: name of the transform to apply to each item (Optional)
-            transform_kwargs: kwargs to pass to the transform
+            transform: transform to apply to each frame
         """
         self.path = os.path.join(data_dir, split)
         assert os.path.exists(self.path), f"Path {self.path} does not exist."
@@ -156,24 +160,47 @@ class CALVIN(Dataset):
             allow_pickle=True,
         ).item()
         self.num_frames = num_frames
+        self.lang_key = lang_key
         self.frame_keys = (
             frame_keys if frame_keys is not None else [k.value for k in FrameKey]
         )
         self.parse_frame_keys = frame_keys is not None
         self.transform = transform
+        # fmt: off
+        self.id_to_task = ( "close_drawer", "lift_blue_block_drawer",
+                           "lift_blue_block_slider", "lift_blue_block_table",
+                           "lift_pink_block_drawer", "lift_pink_block_slider",
+                           "lift_pink_block_table", "lift_red_block_drawer",
+                           "lift_red_block_slider", "lift_red_block_table",
+                           "move_slider_left", "move_slider_right", "open_drawer",
+                           "place_in_drawer", "place_in_slider", "push_blue_block_left",
+                           "push_blue_block_right", "push_into_drawer",
+                           "push_pink_block_left", "push_pink_block_right",
+                           "push_red_block_left", "push_red_block_right",
+                           "rotate_blue_block_left", "rotate_blue_block_right",
+                           "rotate_pink_block_left", "rotate_pink_block_right",
+                           "rotate_red_block_left", "rotate_red_block_right",
+                           "stack_block", "turn_off_led", "turn_off_lightbulb",
+                           "turn_on_led", "turn_on_lightbulb", "unstack_block")
+        # fmt: on
+        self.task_to_id = {v: k for k, v in enumerate(self.id_to_task)}
 
     def __len__(self) -> int:
         return len(self.lang_annotations["info"]["indx"])
 
     def __getitem__(self, idx) -> Dict:
-        lang_ann = self.lang_annotations["language"]["ann"][idx]
+        if self.lang_key == "ann":
+            lang_ann = self.lang_annotations["language"][self.lang_key][idx]
+        else:
+            lang_ann = self.lang_annotations["clip_emb"][self.lang_key][idx]
         task = self.lang_annotations["language"]["task"][idx]
+        task_id = self.task_to_id[task]
 
         frames = self._get_frames_item(idx)
 
         item = {
             "lang_ann": lang_ann,
-            "task": task,
+            "task_id": task_id,
             **frames,
         }
 

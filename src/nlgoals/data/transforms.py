@@ -4,9 +4,11 @@ from typing import List, Dict
 import transformers
 
 
-class CLIPTPrepare:
+class CLIPTPrepareWithCLIP:
     """
-    prepares data for the CLIPT model
+    prepares data for the CLIPT model, assuming CLIP needs to be run on the data
+
+    Resulting batch will have keys 'images', 'text_input_ids', 'text_attn_mask', 'task_id'
     """
 
     def __init__(
@@ -14,6 +16,7 @@ class CLIPTPrepare:
         image_col: str,
         input_ids_col: str,
         attn_mask_col: str,
+        task_col: str,
         **clip_transform_kwargs,
     ):
         """
@@ -21,21 +24,78 @@ class CLIPTPrepare:
             image_col: which of the columns to use as the 'image' col
             input_ids_col: which of the columns to use as the 'text_input_ids' col
             attn_mask_col: which of the columns to use as the 'text_attn_mask' col
+            task_col: which of the column to use as the 'task_id' col
             clip_transform_kwargs: kwargs to pass to CLIPTransform transform
         """
         self.clip_transform = CLIPTransform(**clip_transform_kwargs)
         self.image_col = image_col
         self.input_ids_col = input_ids_col
         self.attn_mask_col = attn_mask_col
+        self.task_col = task_col
 
-    def __call__(self, unproc_input: Dict) -> Dict:
-        unprep_input = self.clip_transform(unproc_input)
+    def __call__(self, unprep_input: Dict) -> Dict:
+        proc_input = self.clip_transform(unprep_input)
         prep_input = {
-            "images": unprep_input[self.image_col],
-            "text_input_ids": unprep_input[self.input_ids_col],
-            "text_attn_mask": unprep_input[self.attn_mask_col],
+            "images": proc_input[self.image_col],
+            "text_input_ids": proc_input[self.input_ids_col],
+            "text_attn_mask": proc_input[self.attn_mask_col],
+            "task_id": unprep_input[self.task_col],
         }
         return prep_input
+
+
+class CLIPTPrepareWithoutCLIP:
+    """
+    prepares data for the CLIPT model, assuming CLIP has already been run
+    and we already have the embeddings
+
+    Resulting batch will have keys 'image_embs', 'lang_emb', 'task_id'
+    """
+
+    def __init__(
+        self, image_col: str, text_col: str, task_col: str, clip_model_name: str
+    ):
+        """
+        Args:
+            image_col: which of the columns to use as the 'image_embs' col
+            text_col: which of the columns to use as the 'lang_emb' col
+            task_col: which of the column to use as the 'task_id' col
+            clip_model_name: name of the CLIP model the precomputed embeddings come from
+        """
+        self.image_col = f"{clip_model_name}_{image_col}"
+        self.text_col = text_col
+        self.task_col = task_col
+
+    def __call__(self, unprep_input: Dict) -> Dict:
+        prep_input = {
+            "image_embs": unprep_input[self.image_col],
+            "lang_emb": unprep_input[self.text_col],
+            "task_id": unprep_input[self.task_col],
+        }
+        return prep_input
+
+
+class CLIPTPrepare:
+    """
+    prepares data for the CLIPT model
+    """
+
+    def __init__(self, mode: str, **mode_kwargs: Dict):
+        assert mode in {
+            "without_clip",
+            "with_clip",
+        }, f"mode {mode} not supported. Must be one of 'precomputed' or 'with_clip'"
+        self.mode = mode
+
+        mode2modeclass = {
+            "without_clip": CLIPTPrepareWithoutCLIP,
+            "with_clip": CLIPTPrepareWithCLIP,
+        }
+
+        self.transform = mode2modeclass[mode](**mode_kwargs)
+
+    def __call__(self, unprep_input: Dict) -> Dict:
+        return self.transform(unprep_input)
 
 
 class CLIPTransform:
@@ -52,7 +112,9 @@ class CLIPTransform:
         """
         self.image_cols = set(image_cols)
         self.text_col = text_col
-        self.clip_processor = transformers.CLIPProcessor.from_pretrained(clip_model_name)
+        self.clip_processor = transformers.CLIPProcessor.from_pretrained(
+            clip_model_name
+        )
 
     def __call__(self, unproc_input: Dict) -> Dict:
         """
