@@ -10,7 +10,7 @@ from nlgoals.data.calvin.transform_configs import CLIPT_PREPARE_CONFIG
 from nlgoals.data.calvin.datamodule import CALVINDM
 from nlgoals.models.task_classifier import TaskClassifier
 from nlgoals.models.clipt import CLIPT
-from nlgoals.trainer import TrainerConfig
+from nlgoals.trainer.task_classifier import TrainerConfig
 
 
 def train(args):
@@ -54,7 +54,7 @@ def train(args):
         log_model=False,
     )
     early_stopping = pl.callbacks.early_stopping.EarlyStopping(
-        monitor="val_loss", mode="min"
+        monitor="textual/val_accuracy", mode="max"
     )
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         **args.trainer.checkpoint.as_dict()

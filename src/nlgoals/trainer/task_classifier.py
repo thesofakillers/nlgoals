@@ -1,10 +1,6 @@
-"""
-Trainer config and class
-"""
-import os
-from typing import Union
+
 from dataclasses import dataclass
-import enum
+from nlgoals.trainer.utils import Accelerator
 
 
 @dataclass
@@ -14,18 +10,10 @@ class LoggingConfig:
 
 @dataclass
 class CheckpointConfig:
-    filename: str = "clipt"
-    dirpath: str = os.path.join("checkpoints", "clipt")
-    monitor: str = "val_loss"
-    mode: str = "min"
-
-
-class Accelerator(str, enum.Enum):
-    cpu = "cpu"
-    gpu = "gpu"
-    tpu = "tpu"
-    ipu = "ipu"
-    auto = "auto"
+    filename: str = "task_classifier"
+    dirpath: str = os.path.join("checkpoints", "task_classifier")
+    monitor: str = "textual/val_accuracy"
+    mode: str = "max"
 
 
 @dataclass
