@@ -19,6 +19,12 @@ def train(args):
     Instantiates model
     Trains model on CrossEntropyLoss
     """
+    # device
+    if args.trainer.accelerator == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    else:
+        device = args.trainer.accelerator
+    # determinism
     pl.seed_everything(args.seed, workers=True)
     # disable tokenizer parallelism because we have multiple workers
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -42,7 +48,9 @@ def train(args):
         **args.task_classifier.as_dict()
     )
     if args.clipt_checkpoint is not None:
-        clipt_state_dict = torch.load(args.clipt_checkpoint)["state_dict"]
+        clipt_state_dict = torch.load(args.clipt_checkpoint, map_location=device)[
+            "state_dict"
+        ]
         clipt = CLIPT(**args.clipt.as_dict())
         clipt.load_state_dict(clipt_state_dict, strict=False)
         model.set_traj_encoder(clipt)
