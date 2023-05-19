@@ -67,6 +67,8 @@ class TaskClassifier(pl.LightningModule):
             num_tasks: number of tasks to classify
             hidden_layers: tuple of hidden layer sizes
         """
+        super().__init__()
+        self.save_hyperparameters()
         self.traj_encoder = CLIPT(**traj_encoder_kwargs)
         self.set_traj_encoder(self.traj_encoder)
 
