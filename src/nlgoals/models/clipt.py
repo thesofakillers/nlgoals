@@ -194,6 +194,7 @@ class CLIPT(pl.LightningModule):
                     for i in range(self.num_frames)
                 ]
             ).permute(1, 0, 2)
+        image_embs = image_embs.to(torch.float32)
         # (batch_size, num_frames x emb_dim)
         image_embs_vec = torch.flatten(image_embs, start_dim=1)
         # (batch_size, emb_dim)
