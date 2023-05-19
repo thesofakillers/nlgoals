@@ -163,4 +163,6 @@ class TaskClassifier(pl.LightningModule):
             - set strict to False
             - you will have to manually load the traj_encoder and call `set_traj_encoder`
         """
-        del checkpoint["state_dict"]["traj_encoder"]
+        for key in list(checkpoint["state_dict"].keys()):
+            if key.startswith("traj_encoder"):
+                del checkpoint["state_dict"][key]
