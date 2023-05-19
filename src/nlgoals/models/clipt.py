@@ -131,6 +131,7 @@ class CLIPT(pl.LightningModule):
             visual_inputs["image_embs"] = batch["image_embs"]
         else:
             visual_inputs["images"] = batch["images"]
+        return visual_inputs
 
     def encode_text_traj(
         self,
