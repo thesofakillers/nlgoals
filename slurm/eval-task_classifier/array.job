@@ -21,8 +21,6 @@ source activate nlgoals
 HPARAMS_FILE=slurm/train-task_classifier/array.txt
 
 srun python -u src/nlgoals/run/eval-task_classifier.py \
-  --checkpoint_path=checkpoints/task_classifier/task_classifier.ckpt \
-  --clipt-checkpoint=checkpoints/clipt/clipt-v1.ckpt \
   --data.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D/ \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
 
