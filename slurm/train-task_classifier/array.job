@@ -5,7 +5,7 @@
 #SBATCH --job-name=TaskClassifier
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=0:05:00
+#SBATCH --time=0:10:00
 #SBATCH --mem-per-gpu=120G
 #SBATCH --array=1-4%4
 #SBATCH --output=slurm/outputs/task_classifier_train_%A_%a.out
