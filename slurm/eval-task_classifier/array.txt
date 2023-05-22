@@ -1,0 +1,4 @@
+--seed=1 --clipt-checkpoint=checkpoints/clipt/clipt-v1.ckpt --checkpoint_path=checkpoints/task_classifier/task_classifier-s1.ckpt
+--seed=2 --clipt-checkpoint=checkpoints/clipt/clipt-v1.ckpt --checkpoint_path=checkpoints/task_classifier/task_classifier-s2.ckpt
+--seed=3 --clipt-checkpoint=checkpoints/clipt/clipt-v1.ckpt --checkpoint_path=checkpoints/task_classifier/task_classifier-s3.ckpt
+--seed=4 --clipt-checkpoint=checkpoints/clipt/clipt-v1.ckpt --checkpoint_path=checkpoints/task_classifier/task_classifier-s4.ckpt
