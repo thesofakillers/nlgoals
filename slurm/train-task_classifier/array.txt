@@ -1,0 +1,4 @@
+--clipt-checkpoint=checkpoints/clipt/clipt-v1.ckpt --seed==1
+--clipt-checkpoint=checkpoints/clipt/clipt-v1.ckpt --seed==2
+--clipt-checkpoint=checkpoints/clipt/clipt-v1.ckpt --seed==3
+--clipt-checkpoint=checkpoints/clipt/clipt-v1.ckpt --seed==4
