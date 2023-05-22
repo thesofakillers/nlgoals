@@ -45,7 +45,7 @@ def train(args):
     model = TaskClassifier(
         traj_encoder_kwargs=args.clipt.as_dict(),
         num_tasks=len(calvin_dm.id_to_task),
-        **args.task_classifier.as_dict()
+        **args.task_classifier.as_dict(),
     )
     if args.clipt_checkpoint is not None:
         clipt_state_dict = torch.load(args.clipt_checkpoint, map_location=device)[
@@ -64,10 +64,13 @@ def train(args):
         group=script_host,
         config=args,
         log_model=False,
-        tags=['task_classifier']
+        tags=["task_classifier"],
     )
     early_stopping = pl.callbacks.early_stopping.EarlyStopping(
         monitor="textual/val_accuracy", mode="max"
+    )
+    args.trainer.checkpoint.filename = (
+        f"{args.trainer.checkpoint.filename}-s{args.seed}"
     )
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         **args.trainer.checkpoint.as_dict()

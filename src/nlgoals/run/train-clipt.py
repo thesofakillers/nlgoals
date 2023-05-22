@@ -49,6 +49,9 @@ def train(args):
     early_stopping = pl.callbacks.early_stopping.EarlyStopping(
         monitor="val_loss", mode="min"
     )
+    args.trainer.checkpoint.filename = (
+        f"{args.trainer.checkpoint.filename}-s{args.seed}"
+    )
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         **args.trainer.checkpoint.as_dict()
     )
