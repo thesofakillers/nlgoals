@@ -23,6 +23,7 @@ class GCBC(pl.LightningModule):
         proprio_encoder_kwargs: Dict,
         hidden_dim: int,
         out_dim: int,
+        mixture_size: int,
     ) -> None:
         """
         Args:
@@ -36,6 +37,7 @@ class GCBC(pl.LightningModule):
                 for reference
             hidden_dim: Hidden dimension of the GRU
             out_dim: Dimensionality of the output
+            mixture_size: Number of distributions in the DLML mixture
         """
         super().__init__()
         self.save_hyperparameters()
@@ -53,9 +55,11 @@ class GCBC(pl.LightningModule):
         )
         self.gru = nn.GRU(gru_in_dim, hidden_dim, batch_first=True)
 
-        self.mean_linear = nn.Linear()
-        self.log_scale_linear = nn.Linear()
-        self.mixture_logits_linear = nn.Linear()
+        total_out_dim = out_dim * mixture_size
+
+        self.mean_linear = nn.Linear(hidden_dim, total_out_dim)
+        self.log_scale_linear = nn.Linear(hidden_dim, total_out_dim)
+        self.mixture_logits_linear = nn.Linear(hidden_dim, total_out_dim)
 
     def set_traj_encoder(self, traj_encoder: Union[nn.Module, pl.LightningModule]):
         """Public function for setting the trajectory encoder externally after init"""
@@ -75,7 +79,7 @@ class GCBC(pl.LightningModule):
 
 
         Returns:
-            Dict of tensors of shape B x S x ..., with keys
+            Dict of tensors of shape B x S x (mixture_size * out_dim) with keys
             'means'
             'log_scales'
             'mixture_logits'
@@ -116,7 +120,7 @@ class GCBC(pl.LightningModule):
         gru_out, _ = self.gru(torch.cat([traj_embs, perc_embs], dim=-1), self.h_0)
 
         # use gru output to calculate mean, log_scales and mixture_logits
-        # each of shape (B x S-1 x n_dist * out_dim)
+        # each of shape (B x S-1 x mixture_size * out_dim)
         means = self.mean_linear(gru_out)
         log_scales = self.log_scale_linear(gru_out)
         mixture_logits = self.mixture_logits_linear(gru_out)
