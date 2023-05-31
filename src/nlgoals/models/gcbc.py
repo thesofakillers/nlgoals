@@ -88,11 +88,11 @@ class GCBC(pl.LightningModule):
         batch_size, seq_len = batch["rgb_static"].shape[:2]
         goal_pixel_values = batch["rgb_static"][:, -1, :]
         # B * (s-1) x 3 x H x W
-        all_frames = batch["rgb_static"][:, :-1, :, :, :].reshape(
+        all_frames = batch["rgb_static"][:, :-1, :, :, :].view(
             -1, 3, frame_height, frame_width
         )
         # B * (s-1) x input proprioceptive dims
-        all_robot_obs = batch["robot_obs"][:, :-1, :].reshape(
+        all_robot_obs = batch["robot_obs"][:, :-1, :].view(
             -1, batch["robot_obs"].shape[-1]
         )
         # append the goal_pixel_values to each frame so that B * (s-1) x 2 x 3 x H x W
@@ -106,7 +106,7 @@ class GCBC(pl.LightningModule):
         # B * (s-1) x 512
         traj_embs = self.traj_encoder.encode_visual_traj(images=all_frames_and_goals)
         # reshape into B x S-1 x traj_encoder.emb_dim
-        traj_embs = traj_embs.reshape(batch_size, seq_len - 1, -1)
+        traj_embs = traj_embs.view(batch_size, seq_len - 1, -1)
 
         # B * S-1 x visual_encoder.emb_dim
         visual_embs = self.vision_encoder(all_frames)
@@ -116,7 +116,7 @@ class GCBC(pl.LightningModule):
         # B * S-1 x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
         perc_embs = torch.cat([visual_embs, propr_embs], dim=-1)
         # reshape into B x S-1 x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
-        perc_embs = perc_embs.reshape(batch_size, seq_len - 1, -1)
+        perc_embs = perc_embs.view(batch_size, seq_len - 1, -1)
 
         # pass concatenation through GRU (don't care about hidden states)
         gru_out, _ = self.gru(torch.cat([traj_embs, perc_embs], dim=-1), self.h_0)
