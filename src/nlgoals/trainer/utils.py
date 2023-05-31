@@ -1,5 +1,6 @@
 import enum
 
+
 class Accelerator(str, enum.Enum):
     cpu = "cpu"
     gpu = "gpu"

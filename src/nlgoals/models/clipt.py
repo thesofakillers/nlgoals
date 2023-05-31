@@ -256,9 +256,9 @@ class CLIPT(pl.LightningModule):
             - you will have to manually load the CLIP model state_dict if necessary
         """
         if self.freeze_clip:
-            for key in checkpoint['state_dict'].keys():
-                if key.startswith('clip_model'):
-                    del checkpoint['state_dict'][key]
+            for key in checkpoint["state_dict"].keys():
+                if key.startswith("clip_model"):
+                    del checkpoint["state_dict"][key]
 
 
 if __name__ == "__main__":
