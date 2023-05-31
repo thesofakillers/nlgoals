@@ -75,7 +75,7 @@ class GCBC(pl.LightningModule):
         Args:
             batch: Dict of tensors of shape B x S x ..., with keys
                 - "rgb_static": B x S x 3 x H x W
-                - "robot_obs": B x S x 15, we only use first 7 dims
+                - "robot_obs": B x S x 15
 
 
         Returns:
@@ -91,8 +91,10 @@ class GCBC(pl.LightningModule):
         all_frames = batch["rgb_static"][:, :-1, :, :, :].reshape(
             -1, 3, frame_height, frame_width
         )
-        # B * (s-1) x 7
-        all_robot_obs = batch["robot_obs"][:, :-1, :7].reshape(-1, 7)
+        # B * (s-1) x input proprioceptive dims
+        all_robot_obs = batch["robot_obs"][:, :-1, :].reshape(
+            -1, batch["robot_obs"].shape[-1]
+        )
         # append the goal_pixel_values to each frame so that B * (s-1) x 2 x 3 x H x W
         all_frames_and_goals = torch.cat(
             [
