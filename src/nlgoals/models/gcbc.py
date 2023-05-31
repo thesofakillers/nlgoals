@@ -5,6 +5,7 @@ import torch
 import pytorch_lightning as pl
 
 from nlgoals.models.clipt import CLIPT
+from nlgoals.models.perception_encoders import VisionEncoder, ProprioEncoder
 
 
 class GCBC(pl.LightningModule):
@@ -16,26 +17,39 @@ class GCBC(pl.LightningModule):
     """
 
     def __init__(
-        self, traj_encoder_kwargs: Dict, hidden_dim: int, out_dim: int
+        self,
+        traj_encoder_kwargs: Dict,
+        vision_encoder_kwargs: Dict,
+        proprio_encoder_kwargs: Dict,
+        hidden_dim: int,
+        out_dim: int,
     ) -> None:
         """
         Args:
             traj_encoder_kwargs: Dict of kwargs for the trajectory encoder
-                See CLIPT for reference
+                See nlgoals.models.clipt.CLIPT for reference
+            vision_encoder_kwargs: Dict of kwargs for the vision encoder
+                See nlgoals.models.perception_encoders.vision_encoder.VisionEncoder
+                for reference
+            proprio_encoder_kwargs: Dict of kwargs for the proprioception encoder
+                See nlgoals.models.perception_encoders.proprio_encoder.ProprioEncoder
+                for reference
+            hidden_dim: Hidden dimension of the GRU
             out_dim: Dimensionality of the output
         """
         super().__init__()
         self.save_hyperparameters()
+
         self.traj_encoder = CLIPT(**traj_encoder_kwargs)
         self.set_traj_encoder(self.traj_encoder)
-        # TODO
-        self.visual_perc_encoder = "TODO"
-        self.propr_perc_encoder = "TODO"
+
+        self.vision_encoder = VisionEncoder(**vision_encoder_kwargs)
+        self.proprio_encoder = ProprioEncoder(**proprio_encoder_kwargs)
 
         gru_in_dim = (
-            self.traj_emb_dim
-            + self.visual_perc_encoder.emb_dim
-            + self.propr_perc_encoder.emb_dim
+            self.traj_encoder.emb_dim
+            + self.vision_encoder.emb_dim
+            + self.proprio_encoder.emb_dim
         )
         self.gru = nn.GRU(gru_in_dim, hidden_dim, batch_first=True)
 
@@ -44,13 +58,11 @@ class GCBC(pl.LightningModule):
         self.mixture_logits_linear = nn.Linear()
 
     def set_traj_encoder(self, traj_encoder: Union[nn.Module, pl.LightningModule]):
-        """Public function for setting the trajectory encoder"""
+        """Public function for setting the trajectory encoder externally after init"""
         self.traj_encoder = traj_encoder
         # and freeze it
         for param in self.traj_encoder.parameters():
             param.requires_grad = False
-
-        self.traj_emb_dim = self.traj_encoder.emb_dim
 
     def forward(self, batch):
         """
@@ -87,17 +99,17 @@ class GCBC(pl.LightningModule):
         )
         # B * (s-1) x 512
         traj_embs = self.traj_encoder.encode_visual_traj(images=all_frames_and_goals)
-        # reshape into B x S-1 x traj_emb_dim
+        # reshape into B x S-1 x traj_encoder.emb_dim
         traj_embs = traj_embs.reshape(batch_size, seq_len - 1, -1)
 
-        # B * S-1 x visual_perc_dim
-        visual_embs = self.visual_perc_encoder(all_frames)
-        # B * S-1 x propr_perc_dim
-        propr_embs = self.propr_perc_encoder(all_robot_obs)
+        # B * S-1 x visual_encoder.emb_dim
+        visual_embs = self.vision_encoder(all_frames)
+        # B * S-1 x proprio_encoder.emb_dim
+        propr_embs = self.proprio_encoder(all_robot_obs)
 
-        # B * S-1 x (visual_perc_dim + propr_perc_dim)
+        # B * S-1 x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
         perc_embs = torch.cat([visual_embs, propr_embs], dim=-1)
-        # reshape into B x S-1 x (visual_perc_dim + propr_perc_dim)
+        # reshape into B x S-1 x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
         perc_embs = perc_embs.reshape(batch_size, seq_len - 1, -1)
 
         # pass concatenation through GRU (don't care about hidden states)
