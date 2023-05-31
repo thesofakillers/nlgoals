@@ -1,0 +1,1 @@
+"""Encoder for proprioceptive state"""
