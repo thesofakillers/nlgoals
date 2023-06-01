@@ -25,6 +25,9 @@ class GCBC(pl.LightningModule):
         hidden_dim: int,
         out_dim: int,
         mixture_size: int,
+        target_max_bound: float,
+        target_min_bound: float,
+        num_target_vals: int,
     ) -> None:
         """
         Args:
@@ -39,6 +42,9 @@ class GCBC(pl.LightningModule):
             hidden_dim: Hidden dimension of the GRU
             out_dim: Dimensionality of the output
             mixture_size: Number of distributions in the DLML mixture
+            target_max_bound: maximum value of the expected target
+            target_min_bound: minimum value of the  expected target
+            num_target_vals: number of values in the discretized target
         """
         super().__init__()
         self.save_hyperparameters()
@@ -62,7 +68,9 @@ class GCBC(pl.LightningModule):
         self.log_scale_linear = nn.Linear(hidden_dim, total_out_dim)
         self.mixture_logits_linear = nn.Linear(hidden_dim, total_out_dim)
 
-        self.criterion = DLMLLoss(mixture_size)
+        self.loss = DLMLLoss(
+            mixture_size, target_max_bound, target_min_bound, num_target_vals
+        )
 
     def set_traj_encoder(self, traj_encoder: Union[nn.Module, pl.LightningModule]):
         """Public function for setting the trajectory encoder externally after init"""
@@ -157,8 +165,15 @@ class GCBC(pl.LightningModule):
             the loss for this batch
         """
         means, log_scales, mixture_logits = self(batch).values()
-        # TODO
-        raise NotImplementedError
+        loss = self.loss(means, log_scales, mixture_logits, batch["actions"])
+
+        self.log("train_loss", loss)
+        # TODO: other metrics?
+
+        return loss
 
     def validation_step(self, batch, batch_idx):
+        raise NotImplementedError
+
+    def test_step(self, batch, batch_idx):
         raise NotImplementedError
