@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders import VisionEncoder, ProprioEncoder
+from nlgoals.losses.dlml import DLMLLoss
 
 
 class GCBC(pl.LightningModule):
@@ -61,6 +62,8 @@ class GCBC(pl.LightningModule):
         self.log_scale_linear = nn.Linear(hidden_dim, total_out_dim)
         self.mixture_logits_linear = nn.Linear(hidden_dim, total_out_dim)
 
+        self.criterion = DLMLLoss(mixture_size)
+
     def set_traj_encoder(self, traj_encoder: Union[nn.Module, pl.LightningModule]):
         """Public function for setting the trajectory encoder externally after init"""
         self.traj_encoder = traj_encoder
@@ -79,7 +82,7 @@ class GCBC(pl.LightningModule):
 
 
         Returns:
-            Dict of tensors of shape B x S x (mixture_size * out_dim) with keys
+            Dict of tensors of shape (B x S x out_dim x mixture_size) with keys
             'means'
             'log_scales'
             'mixture_logits'
@@ -123,9 +126,16 @@ class GCBC(pl.LightningModule):
 
         # use gru output to calculate mean, log_scales and mixture_logits
         # each of shape (B x S-1 x mixture_size * out_dim)
-        means = self.mean_linear(gru_out)
-        log_scales = self.log_scale_linear(gru_out)
-        mixture_logits = self.mixture_logits_linear(gru_out)
+        # reshaped into (B x S-1 x out_dim x mixture_size)
+        means = self.mean_linear(gru_out).view(
+            batch_size, seq_len - 1, -1, self.mixture_size
+        )
+        log_scales = self.log_scale_linear(gru_out).view(
+            batch_size, seq_len - 1, -1, self.mixture_size
+        )
+        mixture_logits = self.mixture_logits_linear(gru_out).view(
+            batch_size, seq_len - 1, -1, self.mixture_size
+        )
 
         return {
             "means": means,
@@ -133,7 +143,21 @@ class GCBC(pl.LightningModule):
             "mixture_logits": mixture_logits,
         }
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, batch_idx) -> torch.Tensor:
+        """
+        Training step for the model
+
+        Args:
+            batch: Dict of tensors of shape B x S x ..., with keys
+                - "rgb_static": (B x S x 3 x H x W) RGB frames of robot arm
+                - "robot_obs": (B x S x 15) proprioceptive state
+                - "actions": (B x S x 7) relative actions
+
+        Returns:
+            the loss for this batch
+        """
+        means, log_scales, mixture_logits = self(batch).values()
+        # TODO
         raise NotImplementedError
 
     def validation_step(self, batch, batch_idx):
