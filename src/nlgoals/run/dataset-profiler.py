@@ -3,7 +3,7 @@ Profiles CALVIN dataset for bottlenecks.
 To be run with python -m cProfile -s cumtime {script-name}.py --args
 """
 import jsonargparse
-from nlgoals.data.calvin.datamodule import CALVINDM
+from nlgoals.data.calvin.legacy.datamodule import CALVINDM
 from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.data.calvin.transform_configs import CLIPTPrepareForCALVIN
 

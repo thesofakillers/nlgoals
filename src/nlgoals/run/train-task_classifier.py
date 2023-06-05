@@ -7,7 +7,7 @@ import torch
 
 from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.data.calvin.transform_configs import CLIPT_PREPARE_CONFIG
-from nlgoals.data.calvin.datamodule import CALVINDM
+from nlgoals.data.calvin.legacy.datamodule import CALVINDM
 from nlgoals.models.task_classifier import TaskClassifier
 from nlgoals.models.clipt import CLIPT
 from nlgoals.trainer.task_classifier import TrainerConfig

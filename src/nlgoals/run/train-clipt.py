@@ -7,7 +7,7 @@ import pytorch_lightning as pl
 from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.models.clipt import CLIPT
 from nlgoals.trainer.clipt import TrainerConfig
-from nlgoals.data.calvin.datamodule import CALVINDM
+from nlgoals.data.calvin.legacy.datamodule import CALVINDM
 from nlgoals.data.calvin.transform_configs import CLIPT_PREPARE_CONFIG
 
 

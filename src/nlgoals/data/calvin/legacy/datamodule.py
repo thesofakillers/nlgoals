@@ -8,7 +8,7 @@ from torch.nn.utils.rnn import pad_sequence
 import torch
 
 from nlgoals.data.calvin.utils import FrameKey
-from nlgoals.data.calvin.dataset import CALVIN
+from nlgoals.data.calvin.legacy.dataset import CALVIN
 
 
 class CALVINDM(pl.LightningDataModule):

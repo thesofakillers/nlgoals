@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from nlgoals.data.transforms import CLIPTPrepare
-from nlgoals.data.calvin.datamodule import CALVINDM
+from nlgoals.data.calvin.legacy.datamodule import CALVINDM
 from nlgoals.models.clipt import CLIPT
 from nlgoals.utils import calc_accuracy_top_k
 

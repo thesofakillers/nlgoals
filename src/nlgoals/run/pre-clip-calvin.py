@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import torch
 import numpy as np
 import pytorch_lightning as pl
-from nlgoals.data.calvin.dataset import CALVINFrameDataset, CALVINTextDataset
+from nlgoals.data.calvin.legacy.dataset import CALVINFrameDataset, CALVINTextDataset
 import jsonargparse
 import transformers
 from tqdm import tqdm
