@@ -7,7 +7,6 @@ import pytorch_lightning as pl
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders import VisionEncoder, ProprioEncoder
 from nlgoals.losses.dlml import DLMLLoss
-from nlgoals.utils import packify_tensor
 
 
 class GCBC(pl.LightningModule):
@@ -85,20 +84,24 @@ class GCBC(pl.LightningModule):
         for param in self.traj_encoder.parameters():
             param.requires_grad = False
 
-    def forward(self, batch: Dict[Dict[str, torch.Tensor]]) -> Dict[torch.Tensor]:
+    def forward(
+        self, batch: Dict[Dict[str, torch.Tensor]], traj_mode: str = "visual"
+    ) -> Dict[torch.Tensor]:
         """
-        Forward pass through the network. If the batch contains the key 'text',
-        then textual_traj_forward is called instead of visual_traj_forward
+        Forward pass through the network.
 
         Args:
             batch: Dict of Dicts with keys
-                - 'perception': Dict of tensors of shape B x S x ..., with keys
+                - "perception": Dict of tensors of shape B x S x ..., with keys
                     - "rgb_static": B x S x 3 x H x W, RGB frames of robot arm
                     - "robot_obs": B x S x 15, proprioceptive state
                     - "seq_lens": B, sequence lengths
-                - 'text': Dict of tensors of shape B x L x ..., with keys
+                - "text": Dict of tensors of shape B x L with keys
                     - "input_ids": B x L
                     - "attention_mask": B x L
+                    where L is the max length of text sequences
+            traj_mode: "visual" or "textual", whether to use the visual or textual
+                trajectories. If "visual", the "text" key must be present in `batch`
 
         Returns:
             Dict of packed tensors of shape (P x out_dim x mixture_size) with keys
@@ -106,52 +109,32 @@ class GCBC(pl.LightningModule):
             'log_scales'
             'mixture_logits'
         """
+        assert traj_mode in {
+            "textual",
+            "visual",
+        }, "`traj_mode` must be textual or visual"
         # frame_height, frame_width = batch["rgb_static"].shape[-2:]
         batch_size, max_seq_len = batch["perception"]["rgb_static"].shape[:2]
         seq_lens = batch["perception"]["seq_lens"] - 1
 
-        # B x (s-1) x 3 x H x W
+        # B x (S-1) x 3 x H x W
         curr_frames = batch["perception"]["rgb_static"][:, :-1, :, :, :]
 
-        # B x (s-1) x input proprioceptive dims
+        # B x (S-1) x input proprioceptive dims
         curr_robot_obs = batch["perception"]["robot_obs"][:, :-1, :]
 
-        if self.rolling_traj:
-            # B x 3 x H x W
-            final_frames = batch["perception"]["rgb_static"][:, -1, :]
-            # appending goal state to each curr state; B x (s-1) x 2 x 3 x H x W
-            frames_and_goals = torch.cat(
-                [
-                    # B x (s-1) x 3 x H x W -> B x s-1 x 1 x 3 x H x W
-                    curr_frames.unsqueeze(2),
-                    # B x 3 x H x W -> B x s-1 x 1 x 3 x H x W
-                    final_frames.unsqueeze(1)
-                    .unsqueeze(2)
-                    .repeat(1, max_seq_len - 1, 1, 1, 1, 1),
-                ],
-                dim=2,
-            )
-            # B * (s-1) x traj_encoder.emb_dim
-            traj_embs = self.traj_encoder.encode_visual_traj(
-                images=frames_and_goals.view(-1, *frames_and_goals.shape[2:])
-            )
-        else:
-            # B x 2 x 3 x H x W
-            start_end = batch["perception"]["rgb_static"][:, [0, -1], :, :, :]
-            # B x traj_encoder.emb_dim
-            traj_embs = self.traj_encoder.encode_visual_traj(images=start_end)
-            # same traj_emb for each timestep: B * (s-1) x traj_encoder.emb_dim
-            traj_embs = traj_embs.repeat_interleave(max_seq_len - 1, dim=0)
+        # B * (S-1) x traj_encoder.emb_dim
+        traj_embs = self._get_traj_embs(batch, curr_frames, traj_mode)
 
-        # B * (s-1) x visual_encoder.emb_dim
+        # B * (S-1) x visual_encoder.emb_dim
         visual_embs = self.vision_encoder(curr_frames)
-        # B * (s-1) x proprio_encoder.emb_dim
+        # B * (S-1) x proprio_encoder.emb_dim
         propr_embs = self.proprio_encoder(curr_robot_obs)
 
-        # B * (s-1) x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
+        # B * (S-1) x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
         perc_embs = torch.cat([visual_embs, propr_embs], dim=-1)
 
-        # B x (s-1) x (traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
+        # B x (S-1) x (traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
         gru_input = torch.cat([traj_embs, perc_embs], dim=-1).view(
             batch_size, max_seq_len, -1
         )
@@ -181,19 +164,100 @@ class GCBC(pl.LightningModule):
             "mixture_logits": mixture_logits,
         }
 
-    def visual_traj_forward(self, batch) -> Dict[torch.Tensor]:
-        raise NotImplementedError
-        pass
-
-    def textual_traj_forward(self, batch):
-        raise NotImplementedError
-        pass
-
-    def training_step(
-        self, batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]], batch_idx
+    def _get_traj_embs(
+        self, batch: Dict, curr_frames: torch.Tensor, traj_mode: str
     ) -> torch.Tensor:
         """
-        Training step for the model
+        Computes either textual or visual trajectory embeddings.
+
+        Returns:
+            traj_embs: B * (S-1) x traj_encoder.emb_dim
+        """
+        if traj_mode == "visual":
+            traj_embs = self._get_visual_traj_embs(
+                batch["perception"]["rgb_static"], curr_frames
+            )
+        elif traj_mode == "textual":
+            traj_embs = self._get_textual_traj_embs(
+                **batch["text"], curr_frames=curr_frames
+            )
+        return traj_embs
+
+    def _get_textual_traj_embs(self, input_ids, attention_mask, curr_frames):
+        """
+        Get the textual trajectory embeddings.
+        Rolling traj is not implemented.
+
+        Args:
+            input_ids: B x L
+            attention_mask: B x L
+            curr_frames: B x (S-1) x 3 x H x W
+
+        Returns:
+            traj_embs: B * (S-1) x traj_encoder.emb_dim
+        """
+        max_seq_len = curr_frames.shape[1] + 1
+        if self.rolling_traj:
+            raise NotImplementedError
+        else:
+            # B x traj_encoder.emb_dim
+            traj_embs = self.traj_encoder.encode_text_traj(
+                text_input_ids=input_ids, text_attn_mask=attention_mask
+            )
+            # same traj_emb for each timestep: B * (S-1) x traj_encoder.emb_dim
+            traj_embs = traj_embs.repeat_interleave(max_seq_len - 1, dim=0)
+        return traj_embs
+
+    def _get_visual_traj_embs(
+        self, batch_frames: torch.Tensor, curr_frames: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Computes the visual trajectory embeddings
+
+        Args:
+            batch_frames: B x S x 3 x H x W
+            curr_frames: B x (S-1) x 3 x H x W
+
+        Returns:
+            traj_embs: B * (S-1) x traj_encoder.emb_dim tensor
+        """
+        max_seq_len = curr_frames.shape[1] + 1
+        if self.rolling_traj:
+            # B x 3 x H x W
+            final_frames = batch_frames[:, -1, :]
+            # appending goal state to each curr state; B x (S-1) x 2 x 3 x H x W
+            frames_and_goals = torch.cat(
+                [
+                    # B x (S-1) x 3 x H x W -> B x s-1 x 1 x 3 x H x W
+                    curr_frames.unsqueeze(2),
+                    # B x 3 x H x W -> B x S-1 x 1 x 3 x H x W
+                    final_frames.unsqueeze(1)
+                    .unsqueeze(2)
+                    .repeat(1, max_seq_len - 1, 1, 1, 1, 1),
+                ],
+                dim=2,
+            )
+            # B * (S-1) x traj_encoder.emb_dim
+            traj_embs = self.traj_encoder.encode_visual_traj(
+                images=frames_and_goals.view(-1, *frames_and_goals.shape[2:])
+            )
+        else:
+            # B x 2 x 3 x H x W
+            start_end = batch_frames[:, [0, -1], :, :, :]
+            # B x traj_encoder.emb_dim
+            traj_embs = self.traj_encoder.encode_visual_traj(images=start_end)
+            # same traj_emb for each timestep: B * (S-1) x traj_encoder.emb_dim
+            traj_embs = traj_embs.repeat_interleave(max_seq_len - 1, dim=0)
+        return traj_embs
+
+    def _fit_step(
+        self,
+        batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]],
+        phase: str,
+        traj_mode: str,
+    ) -> torch.Tensor:
+        """
+        Fit step for the model. Logs loss and training metrics.
 
         Args:
             batch: Dict with keys
@@ -205,12 +269,14 @@ class GCBC(pl.LightningModule):
                     - "input_ids": B x L
                     - "attention_mask": B x L
                 - "actions": (B x S x 7) tensor of relative actions
+            phase: "train" or "val"
+            traj_mode: "visual" or "textual"
 
         Returns:
             the loss for this batch
         """
         # P x out_dim x mixture_size
-        means, log_scales, mixture_logits = self(batch).values()
+        means, log_scales, mixture_logits = self(batch, traj_mode).values()
         # P x out_dim
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
             batch["actions"][:, :-1, :],
@@ -219,13 +285,18 @@ class GCBC(pl.LightningModule):
         )
         loss = self.loss(means, log_scales, mixture_logits, packed_actions)
 
-        self.log("train_loss", loss)
+        self.log(f"{phase}/train_loss", loss)
         # TODO: other metrics?
 
         return loss
 
+    def training_step(self, batch, batch_idx) -> torch.Tensor:
+        loss = self._fit_step(batch, "train", "visual")
+        return loss
+
     def validation_step(self, batch, batch_idx):
-        raise NotImplementedError
+        self._fit_step(batch, "val", "visual")
+        self._fit_step(batch, "val", "textual")
 
     def test_step(self, batch, batch_idx):
         raise NotImplementedError
