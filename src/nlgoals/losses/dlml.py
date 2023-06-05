@@ -51,11 +51,11 @@ class DLMLLoss(nn.Module):
         for a batch of sequences. Expects packed sequences.
 
         Args:
-            means: (B x out_dim x mixture_size) means of the mixture
+            means: (P x out_dim x mixture_size) means of the mixture
                 out_dim is the number of dimensions in the target variable
-            log_scales: (B x out_dim x mixture_size) log scales of the mixture
-            mixture_logits: (B x out_dim x mixture_size) logits of the mixture
-            targets: (B x out_dim) target values
+            log_scales: (P x out_dim x mixture_size) log scales of the mixture
+            mixture_logits: (P x out_dim x mixture_size) logits of the mixture
+            targets: (P x out_dim) target values
 
         Returns:
             loss: the loss tensor, optionally reduced
