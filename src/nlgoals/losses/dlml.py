@@ -48,14 +48,14 @@ class DLMLLoss(nn.Module):
     ) -> torch.Tensor:
         """
         Computes the discretized logistic mixture likelihood loss
-        for a batch of sequences.
+        for a batch of sequences. Expects packed sequences.
 
         Args:
-            means: (B x ... x out_dim x mixture_size) means of the mixture
+            means: (B x out_dim x mixture_size) means of the mixture
                 out_dim is the number of dimensions in the target variable
-            log_scales: (B x ... x out_dim x mixture_size) log scales of the mixture
-            mixture_logits: (B x ... out_dim x mixture_size) logits of the mixture
-            targets: (B x ... x out_dim) target values
+            log_scales: (B x out_dim x mixture_size) log scales of the mixture
+            mixture_logits: (B x out_dim x mixture_size) logits of the mixture
+            targets: (B x out_dim) target values
 
         Returns:
             loss: the loss tensor, optionally reduced
@@ -65,7 +65,7 @@ class DLMLLoss(nn.Module):
         # epsilon value to model the rounding when discretizing
         epsilon = (0.5 * self.y_range) / (self.num_y_vals - 1)
         # broadcast targets to B x out_dim x mixture_size and center them
-        centered_targets = targets.unsqueeze(-1).repeat(1, 1, self.mixture_size) - means
+        centered_targets = targets.unsqueeze(-1).repeat(1, self.mixture_size) - means
 
         upper_bound_in = inv_scales * (centered_targets + epsilon)
         lower_bound_in = inv_scales * (centered_targets - epsilon)
