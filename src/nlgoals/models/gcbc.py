@@ -28,6 +28,7 @@ class GCBC(pl.LightningModule):
         target_max_bound: float,
         target_min_bound: float,
         num_target_vals: int,
+        rolling_traj: bool = False,
     ) -> None:
         """
         Args:
@@ -79,70 +80,92 @@ class GCBC(pl.LightningModule):
         for param in self.traj_encoder.parameters():
             param.requires_grad = False
 
-    def forward(self, batch):
+    def forward(self, batch: Dict[Dict[str, torch.Tensor]]) -> Dict[torch.Tensor]:
         """
-        Forward pass through the network
+        Forward pass through the network. If the batch contains the key 'text',
+        then textual_traj_forward is called instead of visual_traj_forward
 
         Args:
-            batch: Dict of tensors of shape B x S x ..., with keys
-                - "rgb_static": B x S x 3 x H x W
-                - "robot_obs": B x S x 15
-
+            batch: Dict of Dicts with keys
+                - 'perception': Dict of tensors of shape B x S x ..., with keys
+                    - "rgb_static": B x S x 3 x H x W, RGB frames of robot arm
+                    - "robot_obs": B x S x 15, proprioceptive state
+                    - "seq_lens": B, sequence lengths
+                - 'text': Dict of tensors of shape B x L x ..., with keys
+                    - "input_ids": B x L
+                    - "attention_mask": B x L
 
         Returns:
-            Dict of tensors of shape (B x S x out_dim x mixture_size) with keys
+            Dict of packed tensors of shape (P x out_dim x mixture_size) with keys
             'means'
             'log_scales'
             'mixture_logits'
         """
-        frame_height, frame_width = batch["rgb_static"].shape[-2:]
-        batch_size, seq_len = batch["rgb_static"].shape[:2]
-        goal_pixel_values = batch["rgb_static"][:, -1, :]
-        # B * (s-1) x 3 x H x W
-        all_frames = batch["rgb_static"][:, :-1, :, :, :].view(
-            -1, 3, frame_height, frame_width
+        # frame_height, frame_width = batch["rgb_static"].shape[-2:]
+        batch_size, max_seq_len = batch["perception"]["rgb_static"].shape[:2]
+        seq_lens = batch["perception"]["seq_lens"] - 1
+
+        # B x 3 x H x W
+        final_frames = batch["perception"]["rgb_static"][:, -1, :]
+
+        # B x (s-1) x 3 x H x W
+        curr_frames = batch["perception"]["rgb_static"][:, :-1, :, :, :]
+        # P x 3 x H x W
+        packed_curr_frames = torch.nn.utils.rnn.pack_padded_sequence(
+            curr_frames, seq_lens, batch_first=True, enforce_sorted=False
         )
-        # B * (s-1) x input proprioceptive dims
-        all_robot_obs = batch["robot_obs"][:, :-1, :].view(
-            -1, batch["robot_obs"].shape[-1]
+        # what we refer to as "P"
+        package_size = packed_curr_frames.shape[0]
+
+        # B x (s-1) x input proprioceptive dims
+        curr_robot_obs = batch["perception"]["robot_obs"][:, :-1, :]
+        # P x input proprioceptive dims
+        packed_curr_robot_obs = torch.nn.utils.rnn.pack_padded_sequence(
+            curr_robot_obs, seq_lens, batch_first=True, enforce_sorted=False
         )
-        # append the goal_pixel_values to each frame so that B * (s-1) x 2 x 3 x H x W
-        all_frames_and_goals = torch.cat(
+
+        # appending goal state to each curr state; B x (s-1) x 2 x 3 x H x W
+        frames_and_goals = torch.cat(
             [
-                all_frames,
-                goal_pixel_values.unsqueeze(1).repeat(1, seq_len - 1, 1, 1, 1),
+                # B x (s-1) x 3 x H x W -> B x s-1 x 1 x 3 x H x W
+                curr_frames.unsqueeze(2),
+                # B x 3 x H x W -> B x s-1 x 1 x 3 x H x W
+                final_frames.unsqueeze(1)
+                .unsqueeze(2)
+                .repeat(1, max_seq_len - 1, 1, 1, 1, 1),
             ],
-            dim=1,
+            dim=2,
         )
-        # B * (s-1) x 512
-        traj_embs = self.traj_encoder.encode_visual_traj(images=all_frames_and_goals)
-        # reshape into B x S-1 x traj_encoder.emb_dim
-        traj_embs = traj_embs.view(batch_size, seq_len - 1, -1)
+        # P x 2 x 3 x H x W
+        packed_frames_and_goals = nn.utils.rnn.pack_padded_sequence(
+            frames_and_goals, seq_lens, batch_first=True, enforce_sorted=False
+        )
 
-        # B * S-1 x visual_encoder.emb_dim
-        visual_embs = self.vision_encoder(all_frames)
-        # B * S-1 x proprio_encoder.emb_dim
-        propr_embs = self.proprio_encoder(all_robot_obs)
+        # P x traj_encoder.traj_dim
+        traj_embs = self.traj_encoder.encode_visual_traj(images=packed_frames_and_goals)
 
-        # B * S-1 x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
+        # P x visual_encoder.emb_dim
+        visual_embs = self.vision_encoder(packed_curr_frames)
+        # P x proprio_encoder.emb_dim
+        propr_embs = self.proprio_encoder(packed_curr_robot_obs)
+
+        # P x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
         perc_embs = torch.cat([visual_embs, propr_embs], dim=-1)
-        # reshape into B x S-1 x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
-        perc_embs = perc_embs.view(batch_size, seq_len - 1, -1)
 
-        # pass concatenation through GRU (don't care about hidden states)
-        gru_out, _ = self.gru(torch.cat([traj_embs, perc_embs], dim=-1), self.h_0)
+        # P x (traj_encoder.traj_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
+        gru_input = torch.cat([traj_embs, perc_embs], dim=-1)
+        # P x hidden_dim
+        gru_out, _ = self.gru(gru_input, self.h_0)
 
         # use gru output to calculate mean, log_scales and mixture_logits
-        # each of shape (B x S-1 x mixture_size * out_dim)
-        # reshaped into (B x S-1 x out_dim x mixture_size)
-        means = self.mean_linear(gru_out).view(
-            batch_size, seq_len - 1, -1, self.mixture_size
-        )
+        # each of shape (P x mixture_size * out_dim)
+        # reshaped into (P x out_dim x mixture_size)
+        means = self.mean_linear(gru_out).view(package_size, -1, self.mixture_size)
         log_scales = self.log_scale_linear(gru_out).view(
-            batch_size, seq_len - 1, -1, self.mixture_size
+            package_size, -1, self.mixture_size
         )
         mixture_logits = self.mixture_logits_linear(gru_out).view(
-            batch_size, seq_len - 1, -1, self.mixture_size
+            package_size, -1, self.mixture_size
         )
 
         return {
@@ -151,21 +174,43 @@ class GCBC(pl.LightningModule):
             "mixture_logits": mixture_logits,
         }
 
-    def training_step(self, batch, batch_idx) -> torch.Tensor:
+    def visual_traj_forward(self, batch) -> Dict[torch.Tensor]:
+        raise NotImplementedError
+        pass
+
+    def textual_traj_forward(self, batch):
+        raise NotImplementedError
+        pass
+
+    def training_step(
+        self, batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]], batch_idx
+    ) -> torch.Tensor:
         """
         Training step for the model
 
         Args:
-            batch: Dict of tensors of shape B x S x ..., with keys
-                - "rgb_static": (B x S x 3 x H x W) RGB frames of robot arm
-                - "robot_obs": (B x S x 15) proprioceptive state
-                - "actions": (B x S x 7) relative actions
+            batch: Dict with keys
+                - 'perception': Dict of tensors of shape B x S x ..., with keys
+                    - "rgb_static": B x S x 3 x H x W, RGB frames of robot arm
+                    - "robot_obs": B x S x 15, proprioceptive state
+                    - "seq_lens": B, sequence lengths
+                - 'text': Dict of tensors of shape B x L x ..., with keys
+                    - "input_ids": B x L
+                    - "attention_mask": B x L
+                - "actions": (B x S x 7) tensor of relative actions
 
         Returns:
             the loss for this batch
         """
+        # P x out_dim x mixture_size
         means, log_scales, mixture_logits = self(batch).values()
-        loss = self.loss(means, log_scales, mixture_logits, batch["actions"])
+        # P x out_dim
+        packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
+            batch["actions"][:, :-1, :],
+            batch["perception"]["seq_lens"] - 1,
+            batch_first=True,
+        )
+        loss = self.loss(means, log_scales, mixture_logits, packed_actions)
 
         self.log("train_loss", loss)
         # TODO: other metrics?
