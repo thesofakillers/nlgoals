@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
 
-class VisionNetwork(nn.Module):
+class VisionEncoder(nn.Module):
     """
     Vision Network described in Lynch et al. 2020: https://arxiv.org/abs/1903.01973
     Simply encodes input image into a vector.
@@ -32,7 +32,7 @@ class VisionNetwork(nn.Module):
         visual_features: int,
         spatial_softmax_temp: Optional[float] = None,
     ):
-        super(VisionNetwork, self).__init__()
+        super(VisionEncoder, self).__init__()
         kernel_sizes = [8, 4, 3]
         strides = [4, 2, 1]
         paddings = [0, 0, 0]
