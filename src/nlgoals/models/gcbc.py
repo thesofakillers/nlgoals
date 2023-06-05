@@ -7,6 +7,7 @@ import pytorch_lightning as pl
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders import VisionEncoder, ProprioEncoder
 from nlgoals.losses.dlml import DLMLLoss
+from nlgoals.utils import packify_tensor
 
 
 class GCBC(pl.LightningModule):
@@ -46,9 +47,13 @@ class GCBC(pl.LightningModule):
             target_max_bound: maximum value of the expected target
             target_min_bound: minimum value of the  expected target
             num_target_vals: number of values in the discretized target
+            rolling_traj: whether to update the trajectory embedding at each step,
+                default False
         """
         super().__init__()
         self.save_hyperparameters()
+
+        self.rolling_traj = rolling_traj
 
         self.traj_encoder = CLIPT(**traj_encoder_kwargs)
         self.set_traj_encoder(self.traj_encoder)
@@ -105,57 +110,59 @@ class GCBC(pl.LightningModule):
         batch_size, max_seq_len = batch["perception"]["rgb_static"].shape[:2]
         seq_lens = batch["perception"]["seq_lens"] - 1
 
-        # B x 3 x H x W
-        final_frames = batch["perception"]["rgb_static"][:, -1, :]
-
         # B x (s-1) x 3 x H x W
         curr_frames = batch["perception"]["rgb_static"][:, :-1, :, :, :]
-        # P x 3 x H x W
-        packed_curr_frames = torch.nn.utils.rnn.pack_padded_sequence(
-            curr_frames, seq_lens, batch_first=True, enforce_sorted=False
-        )
-        # what we refer to as "P"
-        package_size = packed_curr_frames.shape[0]
 
         # B x (s-1) x input proprioceptive dims
         curr_robot_obs = batch["perception"]["robot_obs"][:, :-1, :]
-        # P x input proprioceptive dims
-        packed_curr_robot_obs = torch.nn.utils.rnn.pack_padded_sequence(
-            curr_robot_obs, seq_lens, batch_first=True, enforce_sorted=False
-        )
 
-        # appending goal state to each curr state; B x (s-1) x 2 x 3 x H x W
-        frames_and_goals = torch.cat(
-            [
-                # B x (s-1) x 3 x H x W -> B x s-1 x 1 x 3 x H x W
-                curr_frames.unsqueeze(2),
-                # B x 3 x H x W -> B x s-1 x 1 x 3 x H x W
-                final_frames.unsqueeze(1)
-                .unsqueeze(2)
-                .repeat(1, max_seq_len - 1, 1, 1, 1, 1),
-            ],
-            dim=2,
-        )
-        # P x 2 x 3 x H x W
-        packed_frames_and_goals = nn.utils.rnn.pack_padded_sequence(
-            frames_and_goals, seq_lens, batch_first=True, enforce_sorted=False
-        )
+        if self.rolling_traj:
+            # B x 3 x H x W
+            final_frames = batch["perception"]["rgb_static"][:, -1, :]
+            # appending goal state to each curr state; B x (s-1) x 2 x 3 x H x W
+            frames_and_goals = torch.cat(
+                [
+                    # B x (s-1) x 3 x H x W -> B x s-1 x 1 x 3 x H x W
+                    curr_frames.unsqueeze(2),
+                    # B x 3 x H x W -> B x s-1 x 1 x 3 x H x W
+                    final_frames.unsqueeze(1)
+                    .unsqueeze(2)
+                    .repeat(1, max_seq_len - 1, 1, 1, 1, 1),
+                ],
+                dim=2,
+            )
+            # B * (s-1) x traj_encoder.emb_dim
+            traj_embs = self.traj_encoder.encode_visual_traj(
+                images=frames_and_goals.view(-1, *frames_and_goals.shape[2:])
+            )
+        else:
+            # B x 2 x 3 x H x W
+            start_end = batch["perception"]["rgb_static"][:, [0, -1], :, :, :]
+            # B x traj_encoder.emb_dim
+            traj_embs = self.traj_encoder.encode_visual_traj(images=start_end)
+            # same traj_emb for each timestep: B * (s-1) x traj_encoder.emb_dim
+            traj_embs = traj_embs.repeat_interleave(max_seq_len - 1, dim=0)
 
-        # P x traj_encoder.traj_dim
-        traj_embs = self.traj_encoder.encode_visual_traj(images=packed_frames_and_goals)
+        # B * (s-1) x visual_encoder.emb_dim
+        visual_embs = self.vision_encoder(curr_frames)
+        # B * (s-1) x proprio_encoder.emb_dim
+        propr_embs = self.proprio_encoder(curr_robot_obs)
 
-        # P x visual_encoder.emb_dim
-        visual_embs = self.vision_encoder(packed_curr_frames)
-        # P x proprio_encoder.emb_dim
-        propr_embs = self.proprio_encoder(packed_curr_robot_obs)
-
-        # P x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
+        # B * (s-1) x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
         perc_embs = torch.cat([visual_embs, propr_embs], dim=-1)
 
-        # P x (traj_encoder.traj_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
-        gru_input = torch.cat([traj_embs, perc_embs], dim=-1)
-        # P x hidden_dim
-        gru_out, _ = self.gru(gru_input, self.h_0)
+        # B x (s-1) x (traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
+        gru_input = torch.cat([traj_embs, perc_embs], dim=-1).view(
+            batch_size, max_seq_len, -1
+        )
+        # pack: P x traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
+        packed_gru_input = nn.utils.rnn.pack_padded_sequence(
+            gru_input, seq_lens - 1, batch_first=True, enforce_sorted=False
+        )
+        # what we refer to as "P"
+        package_size = packed_gru_input.data.shape[0]
+        # P x hidden_dimm
+        gru_out, _ = self.gru(packed_gru_input, self.h_0)
 
         # use gru output to calculate mean, log_scales and mixture_logits
         # each of shape (P x mixture_size * out_dim)
