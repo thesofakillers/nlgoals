@@ -43,10 +43,13 @@ class ShmDataset(BaseDataset):
         self.shapes = shm_lookup["shapes"]
         self.sizes = shm_lookup["sizes"]
         self.dtypes = shm_lookup["dtypes"]
-        self.dataset_type = "train" if "training" in self.abs_datasets_dir.as_posix() else "val"
+        self.dataset_type = (
+            "train" if "training" in self.abs_datasets_dir.as_posix() else "val"
+        )
         # attach to shared memories
         self.shared_memories = {
-            key: SharedMemory(name=f"{self.dataset_type}_{key}") for key in self.episode_lookup_dict
+            key: SharedMemory(name=f"{self.dataset_type}_{key}")
+            for key in self.episode_lookup_dict
         }
 
     def _load_episode(self, idx: int, window_size: int) -> Dict[str, np.ndarray]:
@@ -67,5 +70,7 @@ class ShmDataset(BaseDataset):
             array = np.ndarray(shape, dtype=self.dtypes[key], buffer=self.shared_memories[key].buf, offset=offset)[j:]  # type: ignore
             episode[key] = array
         if self.with_lang:
-            episode["language"] = self.lang_ann[self.lang_lookup[idx]][0]  # TODO check  [0]
+            episode["language"] = self.lang_ann[self.lang_lookup[idx]][
+                0
+            ]  # TODO check  [0]
         return episode

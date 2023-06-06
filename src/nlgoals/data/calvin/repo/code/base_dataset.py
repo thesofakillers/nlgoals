@@ -20,7 +20,9 @@ hasher = pyhash.fnv1_32()
 logger = logging.getLogger(__name__)
 
 
-def get_validation_window_size(idx: int, min_window_size: int, max_window_size: int) -> int:
+def get_validation_window_size(
+    idx: int, min_window_size: int, max_window_size: int
+) -> int:
     """
     In validation step, use hash function instead of random sampling for consistent window sizes across epochs.
 
@@ -85,7 +87,10 @@ class BaseDataset(Dataset):
         self.abs_datasets_dir = datasets_dir
         self.lang_folder = lang_folder  # if self.with_lang else None
         self.aux_lang_loss_window = aux_lang_loss_window
-        assert "validation" in self.abs_datasets_dir.as_posix() or "training" in self.abs_datasets_dir.as_posix()
+        assert (
+            "validation" in self.abs_datasets_dir.as_posix()
+            or "training" in self.abs_datasets_dir.as_posix()
+        )
         self.validation = "validation" in self.abs_datasets_dir.as_posix()
         assert self.abs_datasets_dir.is_dir()
         logger.info(f"loading dataset at {self.abs_datasets_dir}")
@@ -109,7 +114,9 @@ class BaseDataset(Dataset):
             elif self.min_window_size < self.max_window_size:
                 window_size = self._get_window_size(idx)
             else:
-                logger.error(f"min_window_size {self.min_window_size} > max_window_size {self.max_window_size}")
+                logger.error(
+                    f"min_window_size {self.min_window_size} > max_window_size {self.max_window_size}"
+                )
                 raise ValueError
         else:
             idx, window_size = idx
@@ -133,14 +140,23 @@ class BaseDataset(Dataset):
 
         episode = self._load_episode(idx, window_size)
 
-        seq_state_obs = process_state(episode, self.observation_space, self.transforms, self.proprio_state)
+        seq_state_obs = process_state(
+            episode, self.observation_space, self.transforms, self.proprio_state
+        )
         seq_rgb_obs = process_rgb(episode, self.observation_space, self.transforms)
         seq_depth_obs = process_depth(episode, self.observation_space, self.transforms)
         seq_acts = process_actions(episode, self.observation_space, self.transforms)
         info = get_state_info_dict(episode)
         seq_lang = process_language(episode, self.transforms, self.with_lang)
         info = self._add_language_info(info, idx)
-        seq_dict = {**seq_state_obs, **seq_rgb_obs, **seq_depth_obs, **seq_acts, **info, **seq_lang}  # type:ignore
+        seq_dict = {
+            **seq_state_obs,
+            **seq_rgb_obs,
+            **seq_depth_obs,
+            **seq_acts,
+            **info,
+            **seq_lang,
+        }  # type:ignore
         seq_dict["idx"] = idx  # type:ignore
 
         return seq_dict
@@ -162,7 +178,10 @@ class BaseDataset(Dataset):
         if len(self.episode_lookup) <= idx + window_diff:
             # last episode
             max_window = self.min_window_size + len(self.episode_lookup) - idx - 1
-        elif self.episode_lookup[idx + window_diff] != self.episode_lookup[idx] + window_diff:
+        elif (
+            self.episode_lookup[idx + window_diff]
+            != self.episode_lookup[idx] + window_diff
+        ):
             # less than max_episode steps until next episode
             steps_to_next_episode = int(
                 np.nonzero(
@@ -170,7 +189,9 @@ class BaseDataset(Dataset):
                     - (self.episode_lookup[idx] + np.arange(window_diff + 1))
                 )[0][0]
             )
-            max_window = min(self.max_window_size, (self.min_window_size + steps_to_next_episode - 1))
+            max_window = min(
+                self.max_window_size, (self.min_window_size + steps_to_next_episode - 1)
+            )
         else:
             max_window = self.max_window_size
 
@@ -211,8 +232,22 @@ class BaseDataset(Dataset):
             Padded sequence.
         """
         seq.update({"robot_obs": self._pad_with_repetition(seq["robot_obs"], pad_size)})
-        seq.update({"rgb_obs": {k: self._pad_with_repetition(v, pad_size) for k, v in seq["rgb_obs"].items()}})
-        seq.update({"depth_obs": {k: self._pad_with_repetition(v, pad_size) for k, v in seq["depth_obs"].items()}})
+        seq.update(
+            {
+                "rgb_obs": {
+                    k: self._pad_with_repetition(v, pad_size)
+                    for k, v in seq["rgb_obs"].items()
+                }
+            }
+        )
+        seq.update(
+            {
+                "depth_obs": {
+                    k: self._pad_with_repetition(v, pad_size)
+                    for k, v in seq["depth_obs"].items()
+                }
+            }
+        )
         #  todo: find better way of distinguishing rk and play action spaces
         if not self.relative_actions:
             # repeat action for world coordinates action space
@@ -227,7 +262,14 @@ class BaseDataset(Dataset):
                 dim=-1,
             )
             seq.update({"actions": seq_acts})
-        seq.update({"state_info": {k: self._pad_with_repetition(v, pad_size) for k, v in seq["state_info"].items()}})
+        seq.update(
+            {
+                "state_info": {
+                    k: self._pad_with_repetition(v, pad_size)
+                    for k, v in seq["state_info"].items()
+                }
+            }
+        )
         return seq
 
     @staticmethod
@@ -242,7 +284,9 @@ class BaseDataset(Dataset):
         Returns:
             Padded Tensor.
         """
-        last_repeated = torch.repeat_interleave(torch.unsqueeze(input_tensor[-1], dim=0), repeats=pad_size, dim=0)
+        last_repeated = torch.repeat_interleave(
+            torch.unsqueeze(input_tensor[-1], dim=0), repeats=pad_size, dim=0
+        )
         padded = torch.vstack((input_tensor, last_repeated))
         return padded
 
@@ -259,7 +303,9 @@ class BaseDataset(Dataset):
             Padded Tensor.
         """
         zeros_repeated = torch.repeat_interleave(
-            torch.unsqueeze(torch.zeros(input_tensor.shape[-1]), dim=0), repeats=pad_size, dim=0
+            torch.unsqueeze(torch.zeros(input_tensor.shape[-1]), dim=0),
+            repeats=pad_size,
+            dim=0,
         )
         padded = torch.vstack((input_tensor, zeros_repeated))
         return padded

@@ -8,7 +8,13 @@ import torchvision
 
 
 class RandomDataset(torch.utils.data.Dataset):
-    def __init__(self, n_examples: int = 64, window_size: int = 32, split: str = "train", transforms: List = []):
+    def __init__(
+        self,
+        n_examples: int = 64,
+        window_size: int = 32,
+        split: str = "train",
+        transforms: List = [],
+    ):
         self.n_examples = n_examples
         self.split = split
         self.data = [
@@ -36,18 +42,36 @@ class RandomDataset(torch.utils.data.Dataset):
 
 
 class RandomDataModule(pl.LightningDataModule):
-    def __init__(self, batch_size: int = 16, train_transforms: List = [], val_transforms: List = [], **kwargs: Dict):
+    def __init__(
+        self,
+        batch_size: int = 16,
+        train_transforms: List = [],
+        val_transforms: List = [],
+        **kwargs: Dict
+    ):
         super().__init__()
         self.batch_size = batch_size
-        self.train_dataset = RandomDataset(n_examples=32, window_size=16, split="train", transforms=train_transforms)
-        self.val_dataset = RandomDataset(n_examples=32, window_size=16, split="val", transforms=val_transforms)
+        self.train_dataset = RandomDataset(
+            n_examples=32, window_size=16, split="train", transforms=train_transforms
+        )
+        self.val_dataset = RandomDataset(
+            n_examples=32, window_size=16, split="val", transforms=val_transforms
+        )
         self.modalities = ["vis"]
 
     def train_dataloader(self):
-        return {"vis": DataLoader(self.train_dataset, batch_size=self.batch_size, num_workers=0)}
+        return {
+            "vis": DataLoader(
+                self.train_dataset, batch_size=self.batch_size, num_workers=0
+            )
+        }
 
     def val_dataloader(self):
-        val_dataloader = {"vis": DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=0)}
+        val_dataloader = {
+            "vis": DataLoader(
+                self.val_dataset, batch_size=self.batch_size, num_workers=0
+            )
+        }
         return CombinedLoader(val_dataloader, "max_size_cycle")
 
     @property

@@ -49,9 +49,13 @@ def check_shm_lookup_exists(dataset_type: str) -> Optional[Dict]:
     Returns:
         Lookup file if exists, None otherwise.
     """
-    load_path = Path("/tmp/") if "TMPDIR" not in os.environ else Path(os.environ["TMPDIR"])
+    load_path = (
+        Path("/tmp/") if "TMPDIR" not in os.environ else Path(os.environ["TMPDIR"])
+    )
     try:
-        data: Dict = np.load(load_path / f"{dataset_type}_shm_lookup.npy", allow_pickle=True).item()
+        data: Dict = np.load(
+            load_path / f"{dataset_type}_shm_lookup.npy", allow_pickle=True
+        ).item()
         return data
     except FileNotFoundError:
         return None
@@ -65,7 +69,9 @@ def save_shm_lookup(train_shm_lookup: Dict, val_shm_lookup: Dict) -> None:
         train_shm_lookup: Shared memory lookup for training data.
         val_shm_lookup: Shared memory lookup for validation data.
     """
-    save_path = Path("/tmp/") if "TMPDIR" not in os.environ else Path(os.environ["TMPDIR"])
+    save_path = (
+        Path("/tmp/") if "TMPDIR" not in os.environ else Path(os.environ["TMPDIR"])
+    )
     np.save(save_path / "train_shm_lookup.npy", train_shm_lookup)  # type: ignore
     np.save(save_path / "val_shm_lookup.npy", val_shm_lookup)  # type: ignore
 
@@ -78,9 +84,15 @@ def load_shm_lookup() -> Tuple[Dict, Dict]:
         train_shm_lookup: Shared memory lookup for training data.
         val_shm_lookup: Shared memory lookup for validation data.
     """
-    load_path = Path("/tmp/") if "TMPDIR" not in os.environ else Path(os.environ["TMPDIR"])
-    train_shm_lookup: Dict = np.load(load_path / "train_shm_lookup.npy", allow_pickle=True).item()
-    val_shm_lookup: Dict = np.load(load_path / "val_shm_lookup.npy", allow_pickle=True).item()
+    load_path = (
+        Path("/tmp/") if "TMPDIR" not in os.environ else Path(os.environ["TMPDIR"])
+    )
+    train_shm_lookup: Dict = np.load(
+        load_path / "train_shm_lookup.npy", allow_pickle=True
+    ).item()
+    val_shm_lookup: Dict = np.load(
+        load_path / "val_shm_lookup.npy", allow_pickle=True
+    ).item()
     return train_shm_lookup, val_shm_lookup
 
 
@@ -98,12 +110,22 @@ class SharedMemoryLoader:
         self.dataset_dir = dataset_dir
         self.dataset_type = "train" if "training" in dataset_dir.as_posix() else "val"
         self.lang_folder = datasets_cfg.lang_dataset.lang_folder
-        self.naming_pattern, self.n_digits = lookup_naming_pattern(self.dataset_dir, "npz")
+        self.naming_pattern, self.n_digits = lookup_naming_pattern(
+            self.dataset_dir, "npz"
+        )
         self.min_window_size_vision = datasets_cfg.vision_dataset.min_window_size
         self.min_window_size_lang = datasets_cfg.lang_dataset.min_window_size
         self.n_proc = 8
 
-    def _worker_process(self, proc_num, ep_start_end_ids, offsets, shmem, lang_ep_start_end_ids, return_dict):
+    def _worker_process(
+        self,
+        proc_num,
+        ep_start_end_ids,
+        offsets,
+        shmem,
+        lang_ep_start_end_ids,
+        return_dict,
+    ):
         """
         Multiprocessing worker to speed up the loading of the data into shared memory.
 
@@ -124,10 +146,17 @@ class SharedMemoryLoader:
         for i, (start_idx, end_idx) in enumerate(ep_start_end_ids):
             seq = self._zip_sequence(start_idx, end_idx, pbar)
             for key, array in seq.items():
-                shared_array = np.ndarray(array.shape, dtype=array.dtype, buffer=shmem[key].buf, offset=offsets[key])
+                shared_array = np.ndarray(
+                    array.shape,
+                    dtype=array.dtype,
+                    buffer=shmem[key].buf,
+                    offset=offsets[key],
+                )
                 shared_array[:] = array[:]
 
-                for j, idx in enumerate(range(start_idx, end_idx + 1 - self.min_window_size_vision)):
+                for j, idx in enumerate(
+                    range(start_idx, end_idx + 1 - self.min_window_size_vision)
+                ):
                     episode_lookup_vision[key].append((offsets[key], j))
                     if idx in lang_ep_start_end_ids[:, 0]:
                         lang_episode_dict[key][idx] = (offsets[key], j)
@@ -143,9 +172,13 @@ class SharedMemoryLoader:
         Returns:
             Shared memory lookup dict.
         """
-        lang_data = np.load(self.dataset_dir / self.lang_folder / "auto_lang_ann.npy", allow_pickle=True).item()
+        lang_data = np.load(
+            self.dataset_dir / self.lang_folder / "auto_lang_ann.npy", allow_pickle=True
+        ).item()
         ep_start_end_ids = np.load(self.dataset_dir / "ep_start_end_ids.npy")
-        lang_ep_start_end_ids = np.array(lang_data["info"]["indx"])  # each of them are 64
+        lang_ep_start_end_ids = np.array(
+            lang_data["info"]["indx"]
+        )  # each of them are 64
         lang_ann = lang_data["language"]["emb"]
         shmem, shapes, sizes, dtypes, shmem_lookup = self._init_shmem(ep_start_end_ids)
 
@@ -165,9 +198,14 @@ class SharedMemoryLoader:
         if self.n_proc > len(ep_start_end_ids):
             self.n_proc = len(ep_start_end_ids)
         split_indices = np.array_split(ep_start_end_ids, self.n_proc, axis=0)
-        split_lens = [np.sum(np.diff(split_indices[i])) for i in range(len(split_indices))]
+        split_lens = [
+            np.sum(np.diff(split_indices[i])) for i in range(len(split_indices))
+        ]
         obs_size = {key: dtypes[key].itemsize * np.prod(shapes[key]) for key in dtypes}
-        offsets = [{key: n * obs_size[key] for key in dtypes} for n in np.cumsum([0] + split_lens[:-1])]
+        offsets = [
+            {key: n * obs_size[key] for key in dtypes}
+            for n in np.cumsum([0] + split_lens[:-1])
+        ]
 
         manager = multiprocessing.Manager()
         return_dict = manager.dict()
@@ -176,7 +214,14 @@ class SharedMemoryLoader:
         for i in range(self.n_proc):
             p = multiprocessing.Process(
                 target=self._worker_process,
-                args=(i, split_indices[i], offsets[i], shmem, lang_ep_start_end_ids, return_dict),
+                args=(
+                    i,
+                    split_indices[i],
+                    offsets[i],
+                    shmem,
+                    lang_ep_start_end_ids,
+                    return_dict,
+                ),
             )
             processes.append(p)
             p.start()
@@ -189,7 +234,9 @@ class SharedMemoryLoader:
         for i, (start_idx, end_idx) in enumerate(tqdm(lang_ep_start_end_ids)):
             for key in lang_episode_dict:
                 offset, step = lang_episode_dict[key][start_idx]
-                for j, idx in enumerate(range(start_idx, end_idx + 1 - self.min_window_size_lang)):
+                for j, idx in enumerate(
+                    range(start_idx, end_idx + 1 - self.min_window_size_lang)
+                ):
                     episode_lookup_lang[key].append((offset, step + j))
             for idx in range(start_idx, end_idx + 1 - self.min_window_size_lang):
                 lang_lookup.append(i)
@@ -204,7 +251,9 @@ class SharedMemoryLoader:
         }
         return result
 
-    def _init_shmem(self, ep_start_end_ids: np.ndarray) -> Tuple[Dict, Dict, Dict, Dict, Optional[Dict]]:
+    def _init_shmem(
+        self, ep_start_end_ids: np.ndarray
+    ) -> Tuple[Dict, Dict, Dict, Dict, Optional[Dict]]:
         """
         Initialize shared memory.
 
@@ -233,7 +282,8 @@ class SharedMemoryLoader:
             try:
                 if np.all(
                     [
-                        SharedMemory(name=f"{self.dataset_type}_{key}").size == size * total_size
+                        SharedMemory(name=f"{self.dataset_type}_{key}").size
+                        == size * total_size
                         for key, size in shm_lookup["sizes"].items()
                     ]
                 ):
@@ -252,7 +302,11 @@ class SharedMemoryLoader:
                 )
             except FileNotFoundError:
                 pass
-            shmem[key] = SharedMemory(create=True, size=array.nbytes * total_size, name=f"{self.dataset_type}_{key}")
+            shmem[key] = SharedMemory(
+                create=True,
+                size=array.nbytes * total_size,
+                name=f"{self.dataset_type}_{key}",
+            )
             shapes[key] = array.shape[1:]
             sizes[key] = array.nbytes
             dtypes[key] = array.dtype
@@ -302,7 +356,9 @@ class SharedMemoryLoader:
         Returns:
             Path to file.
         """
-        return Path(f"{self.naming_pattern[0]}{file_idx:0{self.n_digits}d}{self.naming_pattern[1]}")
+        return Path(
+            f"{self.naming_pattern[0]}{file_idx:0{self.n_digits}d}{self.naming_pattern[1]}"
+        )
 
 
 def delete_shm(shm_keys, signal, frame):
