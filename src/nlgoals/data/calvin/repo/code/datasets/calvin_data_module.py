@@ -30,7 +30,7 @@ class CalvinDataModule(pl.LightningDataModule):
         self,
         datasets: DictConfig,
         training_repo_root: Optional[Path] = None,
-        root_data_dir: str = "datasets/task_D_D",
+        root_data_dir: str = "data/calvin/task_D_D",
         transforms: DictConfig = DEFAULT_TRANSFORM,
         shuffle_val: bool = False,
         **kwargs: Dict,

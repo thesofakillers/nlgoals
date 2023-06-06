@@ -5,7 +5,7 @@ defaults:
   - observation_space: lang_rgb_static_abs_act
 _target_: nlgoals.data.calvin.repo.code.datasets.calvin_data_module.CalvinDataModule
 _recursive_: false
-root_data_dir: "dataset/task_D_D"
+root_data_dir: "data/calvin/task_D_D"
 action_space: 7
 action_max: [1., 1., 1., 1., 1., 1., 1.,]
 action_min: [-1., -1., -1., -1., -1., -1., -1]
