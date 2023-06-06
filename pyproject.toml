@@ -27,6 +27,7 @@ torchvision = "^0.15.2"
 torch = "^2.0.1"
 omegaconf = "^2.3.0"
 hydra-core = "^1.3.2"
+pyhash = "^0.9.3"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.6.1"
