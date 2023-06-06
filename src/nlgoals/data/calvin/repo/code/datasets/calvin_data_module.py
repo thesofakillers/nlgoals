@@ -22,6 +22,7 @@ import torchvision
 
 logger = logging.getLogger(__name__)
 DEFAULT_TRANSFORM = OmegaConf.create({"train": None, "val": None})
+# this URL doesn't work anymore lol
 ONE_EP_DATASET_URL = "http://www.informatik.uni-freiburg.de/~meeso/50steps.tar.xz"
 
 
@@ -29,17 +30,18 @@ class CalvinDataModule(pl.LightningDataModule):
     def __init__(
         self,
         datasets: DictConfig,
-        training_repo_root: Optional[Path] = None,
+        training_repo_root: Optional[Path] = None,  # need this because Pathlib is dumb
         root_data_dir: str = "data/calvin/task_D_D",
         transforms: DictConfig = DEFAULT_TRANSFORM,
         batch_size: int = 32,
         shuffle_val: bool = False,
-        **kwargs: Dict,
+        **kwargs: Dict,  # absorb any other arguments
     ):
         super().__init__()
         self.datasets_cfg = datasets
         self.train_datasets = None
         self.val_datasets = None
+        # need the next 6 lines because Pathlib is dumb and can't glob
         root_data_path = Path(root_data_dir)
         if not root_data_path.is_absolute():
             assert (
