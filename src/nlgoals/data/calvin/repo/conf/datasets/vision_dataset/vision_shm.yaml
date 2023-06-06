@@ -2,8 +2,8 @@ _target_: nlgoals.data.calvin.repo.code.datasets.shm_dataset.ShmDataset
 key: "vis"
 min_window_size: 16
 max_window_size: 32
-proprio_state: ${datamodule.proprioception_dims}
-obs_space: ${datamodule.observation_space}
+proprio_state: ${proprioception_dims}
+obs_space: ${observation_space}
 pad: true
 lang_folder: "lang_annotations"
 num_workers: 2
