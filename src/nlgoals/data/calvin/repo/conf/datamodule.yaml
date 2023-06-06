@@ -3,6 +3,8 @@ defaults:
   - transforms: play_basic
   - proprioception_dims: robot_no_joints #robot_full
   - observation_space: lang_rgb_static_abs_act
+  - override hydra/hydra_logging: none
+  - override hydra/job_logging: none
   - _self_
 _target_: nlgoals.data.calvin.repo.code.datasets.calvin_data_module.CalvinDataModule
 _recursive_: false
@@ -12,3 +14,9 @@ action_max: [1., 1., 1., 1., 1., 1., 1.,]
 action_min: [-1., -1., -1., -1., -1., -1., -1]
 shuffle_val: false
 batch_size: 32
+
+# to avoid hydra creating output dirs: https://stackoverflow.com/a/64635492/9889508
+hydra:
+  run:
+    dir: .
+  output_subdir: null

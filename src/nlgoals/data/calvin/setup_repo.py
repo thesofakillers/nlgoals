@@ -4,7 +4,7 @@ import os
 from omegaconf import DictConfig, OmegaConf
 
 
-@hydra.main(version_base=None, config_path="./repo/conf/", config_name="datamodule")
+@hydra.main(config_path="./repo/conf/", config_name="datamodule")
 def main(cfg: DictConfig):
     datamodule = hydra.utils.instantiate(
         cfg, training_repo_root="/Users/thesofakillers/repos/thesis/"
