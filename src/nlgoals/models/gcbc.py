@@ -268,7 +268,7 @@ class GCBC(pl.LightningModule):
                 - 'text': Dict of tensors of shape B x L x ..., with keys
                     - "input_ids": B x L
                     - "attention_mask": B x L
-                - "actions": (B x S x 7) tensor of relative actions
+                - "rel_actions": (B x S x 7) tensor of relative actions
             phase: "train" or "val"
             traj_mode: "visual" or "textual"
 
@@ -279,7 +279,7 @@ class GCBC(pl.LightningModule):
         means, log_scales, mixture_logits = self(batch, traj_mode).values()
         # P x out_dim
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
-            batch["actions"][:, :-1, :],
+            batch["rel_actions"][:, :-1, :],
             batch["perception"]["seq_lens"] - 1,
             batch_first=True,
         )
