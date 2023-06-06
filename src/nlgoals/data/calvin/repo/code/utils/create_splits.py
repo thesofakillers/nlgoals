@@ -27,7 +27,6 @@ def slice_split(
 
 
 def main(input_params: Dict) -> None:
-
     dataset_root_str, last_k = (
         input_params["dataset_root"],
         input_params["last_K"],
@@ -53,7 +52,9 @@ def main(input_params: Dict) -> None:
     elif last_k == 0:
         rand_perm = np.random.permutation(len(ep_lens))
         val_size = round(len(eps_list) * 0.1)
-        splits = slice_split(ep_lens[rand_perm], ep_start_end_ids[rand_perm], eps_list, val_size)
+        splits = slice_split(
+            ep_lens[rand_perm], ep_start_end_ids[rand_perm], eps_list, val_size
+        )
         (
             val_ep_lens,
             train_ep_lens,
@@ -64,13 +65,23 @@ def main(input_params: Dict) -> None:
         raise NotImplementedError
 
     np.save(split_data_path / VAL_DIR / "ep_start_end_ids.npy", val_ep_start_end_ids)
-    np.save(split_data_path / TRAINING_DIR / "ep_start_end_ids.npy", train_ep_start_end_ids)
+    np.save(
+        split_data_path / TRAINING_DIR / "ep_start_end_ids.npy", train_ep_start_end_ids
+    )
     np.save(split_data_path / VAL_DIR / "ep_lens.npy", val_ep_lens)
     np.save(split_data_path / TRAINING_DIR / "ep_lens.npy", train_ep_lens)
 
     # copy hydra config folder to training and validation dataset
-    shutil.copytree(dataset_root / ".hydra", split_data_path / TRAINING_DIR / ".hydra", dirs_exist_ok=True)
-    shutil.copytree(dataset_root / ".hydra", split_data_path / VAL_DIR / ".hydra", dirs_exist_ok=True)
+    shutil.copytree(
+        dataset_root / ".hydra",
+        split_data_path / TRAINING_DIR / ".hydra",
+        dirs_exist_ok=True,
+    )
+    shutil.copytree(
+        dataset_root / ".hydra",
+        split_data_path / VAL_DIR / ".hydra",
+        dirs_exist_ok=True,
+    )
 
     print("moving files to play_data/validation")
     for x in tqdm(val_ep_start_end_ids):
@@ -89,7 +100,12 @@ def main(input_params: Dict) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_root", type=str, default="data", help="directory where raw dataset is allocated")
+    parser.add_argument(
+        "--dataset_root",
+        type=str,
+        default="data",
+        help="directory where raw dataset is allocated",
+    )
     parser.add_argument(
         "--last_K",
         type=int,

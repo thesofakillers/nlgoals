@@ -36,7 +36,9 @@ def compute_dataset_statistics(cfg: DictConfig) -> None:
     train_dataloader = data_module.train_dataloader()
     val_dataloader = data_module.val_dataloader()
 
-    env = hydra.utils.instantiate(cfg.rollout.env_cfg, train_dataloader.dataset.dataset_loader, "cpu")
+    env = hydra.utils.instantiate(
+        cfg.rollout.env_cfg, train_dataloader.dataset.dataset_loader, "cpu"
+    )
     tasks = hydra.utils.instantiate(cfg.rollout.task_cfg)
 
     task_counter = Counter()  # type: ignore

@@ -9,7 +9,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-def visualize_temporal_consistency(max_batched_length_per_demo, gpus, sampled_plans, all_idx, step, logger, prefix=""):
+def visualize_temporal_consistency(
+    max_batched_length_per_demo, gpus, sampled_plans, all_idx, step, logger, prefix=""
+):
     """compute t-SNE plot of embeddings os a task to visualize temporal consistency"""
     labels = []
     for demo in max_batched_length_per_demo:

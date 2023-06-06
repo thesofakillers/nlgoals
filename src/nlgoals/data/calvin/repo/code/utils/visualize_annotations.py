@@ -23,15 +23,32 @@ def generate_single_seq_gif(seq_img, seq_length, imgs, idx, i, data):
     for j in range(seq_length):
         imgRGB = seq_img[j]
         imgRGB = cv2.resize(
-            ((imgRGB - imgRGB.min()) / (imgRGB.max() - imgRGB.min()) * 255).astype(np.uint8), (500, 500)
+            ((imgRGB - imgRGB.min()) / (imgRGB.max() - imgRGB.min()) * 255).astype(
+                np.uint8
+            ),
+            (500, 500),
         )
         # img = plt.imshow(imgRGB, animated=True)
         # text1 = plt.text(
         #     200, 200, f"t = {j}", ha="center", va="center", size=10, bbox=dict(boxstyle="round", ec="b", lw=2)
         # )
-        img = cv2.putText(imgRGB, f"t = {j}", (350, 450), font, color=(0, 0, 0), fontScale=1, thickness=2)
         img = cv2.putText(
-            img, f"{i}. {data['language']['ann'][i]}", (100, 20), font, color=(0, 0, 0), fontScale=0.5, thickness=1
+            imgRGB,
+            f"t = {j}",
+            (350, 450),
+            font,
+            color=(0, 0, 0),
+            fontScale=1,
+            thickness=2,
+        )
+        img = cv2.putText(
+            img,
+            f"{i}. {data['language']['ann'][i]}",
+            (100, 20),
+            font,
+            color=(0, 0, 0),
+            fontScale=0.5,
+            thickness=1,
         )[:, :, ::-1]
         # text = plt.text(
         #     100,
@@ -79,7 +96,9 @@ def plot_and_save_gifs(imgs):
     # plt.title("Annotated Sequences")
     # plt.show()
     # anim.save("/tmp/summary_lang_anns.mp4", writer="ffmpeg", fps=15)
-    video = cv2.VideoWriter("/tmp/summary_lang_anns.avi", cv2.VideoWriter_fourcc(*"XVID"), 15, (500, 500))
+    video = cv2.VideoWriter(
+        "/tmp/summary_lang_anns.avi", cv2.VideoWriter_fourcc(*"XVID"), 15, (500, 500)
+    )
     for img in imgs:
         video.write(img)
     video.release()
@@ -99,12 +118,30 @@ def visualize_embeddings(data, with_text=True):
 
     task_ids = generate_task_id(data["language"]["task"])
 
-    cmap = ["orange", "blue", "green", "pink", "brown", "black", "purple", "yellow", "cyan", "red", "grey", "olive"]
+    cmap = [
+        "orange",
+        "blue",
+        "green",
+        "pink",
+        "brown",
+        "black",
+        "purple",
+        "yellow",
+        "cyan",
+        "red",
+        "grey",
+        "olive",
+    ]
     ids_in_legend = []
     for i, task_id in enumerate(task_ids):
         if task_id not in ids_in_legend:
             ids_in_legend.append(task_id)
-            plt.scatter(emb_2d[i, 0], emb_2d[i, 1], color=cmap[task_id], label=data["language"]["task"][i])
+            plt.scatter(
+                emb_2d[i, 0],
+                emb_2d[i, 1],
+                color=cmap[task_id],
+                label=data["language"]["task"][i],
+            )
             if with_text:
                 plt.text(emb_2d[i, 0], emb_2d[i, 1], data["language"]["ann"][i])
         else:

@@ -31,7 +31,8 @@ def main(cfg: DictConfig) -> None:
     if cfg.reannotate:
         print("Re-annotating sequences...")
         data["language"]["ann"] = [
-            task_ann[task][np.random.randint(len(task_ann[task]))] for task in data["language"]["task"]
+            task_ann[task][np.random.randint(len(task_ann[task]))]
+            for task in data["language"]["task"]
         ]
     print("Loading Language Model")
     model = hydra.utils.instantiate(cfg.model)

@@ -11,7 +11,10 @@ TRAINING_DIR: str = "training"
 
 
 def main(input_params: Dict) -> None:
-    dataset_root_str, save_format = (input_params["dataset_root"], input_params["save_format"])
+    dataset_root_str, save_format = (
+        input_params["dataset_root"],
+        input_params["save_format"],
+    )
     module_root_path = Path(calvin_agent.__file__)
     dataset_root = module_root_path.parent / Path(dataset_root_str)
     training_folder = dataset_root / TRAINING_DIR
@@ -32,12 +35,17 @@ def main(input_params: Dict) -> None:
                 if idx == 0:
                     acc_robot_state = episode["observations"]
                 else:
-                    acc_robot_state = np.concatenate((acc_robot_state, episode["observations"]), axis=0)
+                    acc_robot_state = np.concatenate(
+                        (acc_robot_state, episode["observations"]), axis=0
+                    )
             if "actions" in episode:
                 if idx == 0:
                     acc_actions = np.expand_dims(episode["actions"], axis=0)
                 else:
-                    acc_actions = np.concatenate((acc_actions, np.expand_dims(episode["actions"], axis=0)), axis=0)
+                    acc_actions = np.concatenate(
+                        (acc_actions, np.expand_dims(episode["actions"], axis=0)),
+                        axis=0,
+                    )
             else:
                 print("no actions found!!")
                 exit(0)
@@ -48,10 +56,12 @@ def main(input_params: Dict) -> None:
                     acc_scene_state = np.expand_dims(episode["scene_obs"], axis=0)
                 else:
                     acc_robot_state = np.concatenate(
-                        (acc_robot_state, np.expand_dims(episode["robot_obs"], axis=0)), axis=0
+                        (acc_robot_state, np.expand_dims(episode["robot_obs"], axis=0)),
+                        axis=0,
                     )
                     acc_scene_state = np.concatenate(
-                        (acc_scene_state, np.expand_dims(episode["scene_obs"], axis=0)), axis=0
+                        (acc_scene_state, np.expand_dims(episode["scene_obs"], axis=0)),
+                        axis=0,
                     )
         np.set_printoptions(precision=6, suppress=True)
         print(f"final robot obs shape {acc_robot_state.shape}")
@@ -73,7 +83,12 @@ def main(input_params: Dict) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_root", type=str, default="data", help="directory where  dataset is allocated")
+    parser.add_argument(
+        "--dataset_root",
+        type=str,
+        default="data",
+        help="directory where  dataset is allocated",
+    )
     parser.add_argument("--save_format", type=str, default="npz", help="file format")
     args = parser.parse_args()
     params = vars(args)  # convert to ordinary dict

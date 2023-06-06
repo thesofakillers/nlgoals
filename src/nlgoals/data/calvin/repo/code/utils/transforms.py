@@ -28,7 +28,9 @@ class NormalizeVector(object):
         return (tensor - self.mean) / self.std
 
     def __repr__(self):
-        return self.__class__.__name__ + "(mean={0}, std={1})".format(self.mean, self.std)
+        return self.__class__.__name__ + "(mean={0}, std={1})".format(
+            self.mean, self.std
+        )
 
 
 class AddGaussianNoise(object):
@@ -41,18 +43,23 @@ class AddGaussianNoise(object):
         return tensor + torch.randn(tensor.size()) * self.std + self.mean
 
     def __repr__(self):
-        return self.__class__.__name__ + "(mean={0}, std={1})".format(self.mean, self.std)
+        return self.__class__.__name__ + "(mean={0}, std={1})".format(
+            self.mean, self.std
+        )
 
 
 class AddDepthNoise(object):
     """Add multiplicative gamma noise to depth image.
     This is adapted from the DexNet 2.0 code.
-    Their code: https://github.com/BerkeleyAutomation/gqcnn/blob/master/gqcnn/training/tf/trainer_tf.py"""
+    Their code: https://github.com/BerkeleyAutomation/gqcnn/blob/master/gqcnn/training/tf/trainer_tf.py
+    """
 
     def __init__(self, shape=1000.0, rate=1000.0):
         self.shape = torch.tensor(shape)
         self.rate = torch.tensor(rate)
-        self.dist = torch.distributions.gamma.Gamma(torch.tensor(shape), torch.tensor(rate))
+        self.dist = torch.distributions.gamma.Gamma(
+            torch.tensor(shape), torch.tensor(rate)
+        )
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         assert isinstance(tensor, torch.Tensor)

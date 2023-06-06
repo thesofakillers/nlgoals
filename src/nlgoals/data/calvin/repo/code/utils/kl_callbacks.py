@@ -16,7 +16,9 @@ class KLSchedule(Callback):
         self.end_epoch = end_epoch
         self.max_kl_beta = max_kl_beta
 
-    def on_train_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
+    def on_train_epoch_start(
+        self, trainer: Trainer, pl_module: LightningModule
+    ) -> None:
         epoch = pl_module.current_epoch
         kl_beta = self._anneal_fn(epoch)
         pl_module.set_kl_beta(kl_beta)  # type: ignore
@@ -29,7 +31,9 @@ class KLConstantSchedule(KLSchedule):
     def __init__(self):
         pass
 
-    def on_train_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
+    def on_train_epoch_start(
+        self, trainer: Trainer, pl_module: LightningModule
+    ) -> None:
         pass
 
     def _anneal_fn(self, epoch: int) -> None:
@@ -56,7 +60,11 @@ class KLLinearSchedule(KLSchedule):
         elif epoch > self.end_epoch:
             kl_beta = self.max_kl_beta
         else:
-            kl_beta = self.max_kl_beta * (epoch - self.start_epoch) / (self.end_epoch - self.start_epoch)
+            kl_beta = (
+                self.max_kl_beta
+                * (epoch - self.start_epoch)
+                / (self.end_epoch - self.start_epoch)
+            )
         return kl_beta
 
 

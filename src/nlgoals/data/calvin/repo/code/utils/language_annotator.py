@@ -21,7 +21,9 @@ def main(cfg: DictConfig) -> None:
     if cfg.training:
         dataset = data_module.train_datasets
     else:
-        dataset = data_module.val_datasets  # Tupla(obs [32,9], img tuple([32, 3, 300, 300]), tuple(), act [32,9])
+        dataset = (
+            data_module.val_datasets
+        )  # Tupla(obs [32,9], img tuple([32, 3, 300, 300]), tuple(), act [32,9])
 
     # To make sure that we dont overwrite previous annotations and always keep adding
     file_name = os.path.join(dataset.dataset_loader.abs_datasets_dir, "lang_ann.npy")
@@ -29,7 +31,9 @@ def main(cfg: DictConfig) -> None:
         collected_data = np.load(file_name, allow_pickle=True).reshape(-1)[0]
         # start = collected_data['indx'][-1][0] + collected_data['indx'][-1][1]
         start = len(collected_data["indx"])
-        logger.info("Join the language annotation number {}".format(len(collected_data["indx"])))
+        logger.info(
+            "Join the language annotation number {}".format(len(collected_data["indx"]))
+        )
     else:
         collected_data = {"language": [], "indx": []}
         start = 0
@@ -53,7 +57,11 @@ def main(cfg: DictConfig) -> None:
             imgs.append([img])
         ArtistAnimation(fig, imgs, interval=50)
         plt.show(block=False)
-        lang_ann = [input("Which instructions would you give to the robot to do: (press q to quit)\n")]
+        lang_ann = [
+            input(
+                "Which instructions would you give to the robot to do: (press q to quit)\n"
+            )
+        ]
         plt.close()
 
         if lang_ann[0] == "q":
@@ -68,7 +76,10 @@ def main(cfg: DictConfig) -> None:
         )
         collected_data["language"].append(lang_ann)
         collected_data["indx"].append(
-            (dataset.dataset_loader.episode_lookup[i], dataset.dataset_loader.episode_lookup[i] + dataset.window_size)
+            (
+                dataset.dataset_loader.episode_lookup[i],
+                dataset.dataset_loader.episode_lookup[i] + dataset.window_size,
+            )
         )
     file_name = "lang_ann"
     np.save(file_name, collected_data)

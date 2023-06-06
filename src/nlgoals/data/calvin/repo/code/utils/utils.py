@@ -40,7 +40,9 @@ def get_git_commit_hash(repo_path: Path) -> str:
     return repo.head.object.hexsha
 
 
-def get_checkpoints_for_epochs(experiment_folder: Path, epochs: Union[List, str]) -> List:
+def get_checkpoints_for_epochs(
+    experiment_folder: Path, epochs: Union[List, str]
+) -> List:
     if isinstance(epochs, str):
         epochs = epochs.split(",")
         epochs = list(map(int, epochs))
@@ -52,7 +54,9 @@ def get_all_checkpoints(experiment_folder: Path) -> List:
     if experiment_folder.is_dir():
         checkpoint_folder = experiment_folder / "saved_models"
         if checkpoint_folder.is_dir():
-            checkpoints = sorted(Path(checkpoint_folder).iterdir(), key=lambda chk: chk.stat().st_mtime)
+            checkpoints = sorted(
+                Path(checkpoint_folder).iterdir(), key=lambda chk: chk.stat().st_mtime
+            )
             if len(checkpoints):
                 return [chk for chk in checkpoints if chk.suffix == ".ckpt"]
     return []
@@ -68,7 +72,9 @@ def get_last_checkpoint(experiment_folder: Path) -> Union[Path, None]:
 
 def info_cuda() -> Dict[str, Union[str, List[str]]]:
     return {
-        "GPU": [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())],
+        "GPU": [
+            torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())
+        ],
         # 'nvidia_driver': get_nvidia_driver_version(run_lambda),
         "available": str(torch.cuda.is_available()),
         "version": torch.version.cuda,
