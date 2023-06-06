@@ -4,8 +4,10 @@ from pathlib import Path
 import pickle
 from typing import Any, Dict, List, Tuple
 
-from calvin_agent.datasets.base_dataset import BaseDataset
-from calvin_agent.datasets.utils.episode_utils import lookup_naming_pattern
+from nlgoals.data.calvin.repo.code.datasets.base_dataset import BaseDataset
+from nlgoals.data.calvin.repo.code.datasets.utils.episode_utils import (
+    lookup_naming_pattern,
+)
 import numpy as np
 
 logger = logging.getLogger(__name__)

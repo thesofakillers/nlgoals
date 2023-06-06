@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Tuple, Union
 
-from calvin_agent.datasets.utils.episode_utils import (
+from nlgoals.data.calvin.repo.code.datasets.utils.episode_utils import (
     get_state_info_dict,
     process_actions,
     process_depth,

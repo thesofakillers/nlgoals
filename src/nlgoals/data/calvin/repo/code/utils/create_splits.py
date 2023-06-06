@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 from typing import Dict, List, Tuple
 
-import calvin_agent
+import nlgoals.data.calvin.repo.code
 import numpy as np
 from tqdm import tqdm
 
@@ -31,7 +31,7 @@ def main(input_params: Dict) -> None:
         input_params["dataset_root"],
         input_params["last_K"],
     )
-    module_root_path = Path(calvin_agent.__file__)
+    module_root_path = Path(nlgoals.data.calvin.repo.code.__file__)
     dataset_root = module_root_path.parent / Path(dataset_root_str)
     split_data_path = dataset_root
     (split_data_path / TRAINING_DIR).mkdir(parents=True, exist_ok=True)

@@ -2,7 +2,7 @@ import logging
 from multiprocessing.shared_memory import SharedMemory
 from typing import Dict, List, Optional
 
-from calvin_agent.datasets.base_dataset import BaseDataset
+from nlgoals.data.calvin.repo.code.datasets.base_dataset import BaseDataset
 import numpy as np
 
 logger = logging.getLogger(__name__)

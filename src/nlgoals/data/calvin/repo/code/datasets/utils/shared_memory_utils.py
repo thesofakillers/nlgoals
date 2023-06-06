@@ -9,8 +9,10 @@ from pathlib import Path
 import signal
 from typing import Dict, Optional, Tuple
 
-from calvin_agent.datasets.shm_dataset import ShmDataset
-from calvin_agent.datasets.utils.episode_utils import lookup_naming_pattern
+from nlgoals.data.calvin.repo.code.datasets.shm_dataset import ShmDataset
+from nlgoals.data.calvin.repo.code.datasets.utils.episode_utils import (
+    lookup_naming_pattern,
+)
 import numpy as np
 from omegaconf import DictConfig
 from pytorch_lightning import Callback, LightningModule, Trainer

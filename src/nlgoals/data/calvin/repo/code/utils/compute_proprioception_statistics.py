@@ -2,8 +2,8 @@ import argparse
 from pathlib import Path
 from typing import Dict
 
-import calvin_agent
-from calvin_agent.datasets.disk_dataset import load_npz, load_pkl
+import nlgoals.data.calvin.repo.code
+from nlgoals.data.calvin.repo.code.datasets.disk_dataset import load_npz, load_pkl
 import numpy as np
 import tqdm
 
@@ -15,7 +15,7 @@ def main(input_params: Dict) -> None:
         input_params["dataset_root"],
         input_params["save_format"],
     )
-    module_root_path = Path(calvin_agent.__file__)
+    module_root_path = Path(nlgoals.data.calvin.repo.code.__file__)
     dataset_root = module_root_path.parent / Path(dataset_root_str)
     training_folder = dataset_root / TRAINING_DIR
     if training_folder.is_dir():

@@ -3,9 +3,11 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import calvin_agent
-from calvin_agent.datasets.utils.episode_utils import load_dataset_statistics
-from calvin_agent.datasets.utils.shared_memory_utils import (
+import nlgoals.data.calvin.repo.code
+from nlgoals.data.calvin.repo.code.datasets.utils.episode_utils import (
+    load_dataset_statistics,
+)
+from nlgoals.data.calvin.repo.code.datasets.utils.shared_memory_utils import (
     load_shm_lookup,
     save_shm_lookup,
     SharedMemoryLoader,
