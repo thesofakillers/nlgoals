@@ -32,6 +32,7 @@ class CalvinDataModule(pl.LightningDataModule):
         training_repo_root: Optional[Path] = None,
         root_data_dir: str = "data/calvin/task_D_D",
         transforms: DictConfig = DEFAULT_TRANSFORM,
+        batch_size: int = 32,
         shuffle_val: bool = False,
         **kwargs: Dict,
     ):
@@ -50,6 +51,7 @@ class CalvinDataModule(pl.LightningDataModule):
         self.shuffle_val = shuffle_val
         self.modalities: List[str] = []
         self.transforms = transforms
+        self.batch_size = batch_size
 
         self.use_shm = "shm_dataset" in self.datasets_cfg.vision_dataset._target_
 
@@ -151,7 +153,7 @@ class CalvinDataModule(pl.LightningDataModule):
         return {
             key: DataLoader(
                 dataset,
-                batch_size=dataset.batch_size,
+                batch_size=self.batch_size,
                 num_workers=dataset.num_workers,
                 pin_memory=False,
             )
@@ -162,7 +164,7 @@ class CalvinDataModule(pl.LightningDataModule):
         val_dataloaders = {
             key: DataLoader(
                 dataset,
-                batch_size=dataset.batch_size,
+                batch_size=self.batch_size,
                 num_workers=dataset.num_workers,
                 pin_memory=False,
                 shuffle=self.shuffle_val,

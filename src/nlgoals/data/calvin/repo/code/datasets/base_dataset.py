@@ -50,7 +50,6 @@ class BaseDataset(Dataset):
         lang_folder: Name of the subdirectory of the dataset containing the language annotations.
         num_workers: Number of dataloading workers for this dataset.
         transforms: Dict with pytorch data transforms.
-        batch_size: Batch size.
         min_window_size: Minimum window length of loaded sequences.
         max_window_size: Maximum window length of loaded sequences.
         pad: If True, repeat last frame such that all sequences have length 'max_window_size'.
@@ -67,7 +66,6 @@ class BaseDataset(Dataset):
         lang_folder: str,
         num_workers: int,
         transforms: Dict = {},
-        batch_size: int = 32,
         min_window_size: int = 16,
         max_window_size: int = 32,
         pad: bool = True,
@@ -80,7 +78,6 @@ class BaseDataset(Dataset):
         self.relative_actions = "rel_actions" in self.observation_space["actions"]
 
         self.pad = pad
-        self.batch_size = batch_size
         self.num_workers = num_workers
         self.min_window_size = min_window_size
         self.max_window_size = max_window_size
