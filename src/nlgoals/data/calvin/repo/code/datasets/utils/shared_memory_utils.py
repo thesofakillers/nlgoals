@@ -117,7 +117,7 @@ class SharedMemoryLoader:
         )
         self.min_window_size_vision = datasets_cfg.vision_dataset.min_window_size
         self.min_window_size_lang = datasets_cfg.lang_dataset.min_window_size
-        self.n_proc = 8
+        self.n_proc = multiprocessing.cpu_count()
 
     def _worker_process(
         self,
