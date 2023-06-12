@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import nlgoals.data.calvin.repo.code
 from nlgoals.data.calvin.repo.code.datasets.utils.episode_utils import (
@@ -18,7 +18,9 @@ from omegaconf import DictConfig, OmegaConf
 import pytorch_lightning as pl
 from pytorch_lightning.trainer.supporters import CombinedLoader
 from torch.utils.data import DataLoader
+import torch
 import torchvision
+from torch.nn.utils.rnn import pad_sequence
 
 logger = logging.getLogger(__name__)
 DEFAULT_TRANSFORM = OmegaConf.create({"train": None, "val": None})
@@ -159,6 +161,7 @@ class CalvinDataModule(pl.LightningDataModule):
                 num_workers=dataset.num_workers,
                 pin_memory=False,
                 shuffle=True,
+                collate_fn=self._collate_fn,
             )
             for key, dataset in self.train_datasets.items()
         }
@@ -171,18 +174,153 @@ class CalvinDataModule(pl.LightningDataModule):
                 num_workers=dataset.num_workers,
                 pin_memory=False,
                 shuffle=self.shuffle_val,
+                collate_fn=self._collate_fn,
             )
             for key, dataset in self.val_datasets.items()
         }
         combined_val_loaders = CombinedLoader(val_dataloaders, "max_size_cycle")
         return combined_val_loaders
 
-    def _collate_fn(self, batch: List[Dict]):
+    def _collate_fn(
+        self, batch_list: List[Dict]
+    ) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         """
         Handles preprocessing (e.g. tokenization) and padding
 
         Args:
-            batch: list of dicts
+            batch_list: list of dicts with keys:
+                - "robot_obs": tensor (S x 8)
+                - "rgb_obs": Dict of tensors with keys
+                    - "rgb_static" (S x 3 x H x W)
+                - "depth_obs: empty dictionary
+                - "actions": tensor (S x 7)
+                - "state_info": Dict of tensors with keys
+                    - "robot_obs" (S x 15)
+                    - "scene_obs" (S x 24)
+                - "lang": sentence annotating the sequence, or empty tensor
+                - "idx": integer index of the sequence
+
+        Returns:
+            Dict with the keys:
+                - 'robot_obs' (B x MS x 8)
+                - 'rgb_static' (B x MS x 3 x H x W)
+                - 'actions' (B x MS x 7)
+                - "state_info": Dict of tensors with keys
+                    - "robot_obs" (B x MS x 15)
+                    - "scene_obs" (B x MS x 24)
+                - 'idx' (B x 1)
+                - 'seq_lens' (B x 1) the sequence lengths before padding
+            and optionally (in the case language annotations are provided):
+                - 'lang_input_ids' (B X MSL) (mls is maximum sentence length)
+                - 'lang_attn_mask' (B X MSL)
         """
-        raise NotImplementedError
-        pass
+        seq_lens = torch.tensor([x["robot_obs"].shape[0] for x in batch_list])
+        max_seq_len = seq_lens.max()
+        pad_sizes = max_seq_len - seq_lens
+
+        padded_batch = {"seq_lens": seq_lens.unsqueeze(-1)}
+
+        padded_batch["robot_obs"] = torch.stack(
+            [
+                self._pad_with_repetition(element["robot_obs"], pad_sizes[i])
+                for i, element in enumerate(batch_list)
+            ]
+        )
+
+        padded_batch["rgb_static"] = torch.stack(
+            [
+                self._pad_with_repetition(
+                    element["rgb_obs"]["rgb_static"], pad_sizes[i]
+                )
+                for i, element in enumerate(batch_list)
+            ]
+        )
+
+        # zero pad all but the last action dims and repeat last action dim (gripper action)
+        padded_batch["actions"] = torch.stack(
+            [
+                torch.cat(
+                    [
+                        self._pad_with_zeros(
+                            element["actions"][..., :-1], pad_sizes[i]
+                        ),
+                        self._pad_with_repetition(
+                            element["actions"][..., -1:], pad_sizes[i]
+                        ),
+                    ],
+                    dim=-1,
+                )
+                for i, element in enumerate(batch_list)
+            ]
+        )
+
+        padded_batch["state_info"]["robot_obs"] = torch.stack(
+            [
+                self._pad_with_repetition(
+                    element["state_info"]["robot_obs"], pad_sizes[i]
+                )
+                for i, element in enumerate(batch_list)
+            ]
+        )
+
+        padded_batch["state_info"]["scene_obs"] = torch.stack(
+            [
+                self._pad_with_repetition(
+                    element["state_info"]["scene_obs"], pad_sizes[i]
+                )
+                for i, element in enumerate(batch_list)
+            ]
+        )
+
+        padded_batch["idx"] = torch.stack([element["idx"] for element in batch_list])
+
+        # handle language
+        if isinstance(batch_list[0]["lang"], str):
+            lang_batch = self.text_processor(
+                [x["lang"] for x in batch_list], padding=True, return_tensors="pt"
+            )
+            padded_batch["lang_input_ids"] = lang_batch["input_ids"]
+            padded_batch["lang_attn_mask"] = lang_batch["attention_mask"]
+
+        # handle additional image processing
+        if self.process_vision:
+            # images are between -1, and 1. We need 0 and 1
+            raise NotImplementedError
+
+    @staticmethod
+    def _pad_with_repetition(input_tensor: torch.Tensor, pad_size: int) -> torch.Tensor:
+        """
+        Pad a sequence Tensor by repeating last element pad_size times.
+
+        Args:
+            input_tensor: Sequence to pad.
+            pad_size: Number of frames to pad.
+
+        Returns:
+            Padded Tensor.
+        """
+        last_repeated = torch.repeat_interleave(
+            torch.unsqueeze(input_tensor[-1], dim=0), repeats=pad_size, dim=0
+        )
+        padded = torch.vstack((input_tensor, last_repeated))
+        return padded
+
+    @staticmethod
+    def _pad_with_zeros(input_tensor: torch.Tensor, pad_size: int) -> torch.Tensor:
+        """
+        Pad a Tensor with zeros.
+
+        Args:
+            input_tensor: Sequence to pad.
+            pad_size: Number of frames to pad.
+
+        Returns:
+            Padded Tensor.
+        """
+        zeros_repeated = torch.repeat_interleave(
+            torch.unsqueeze(torch.zeros(input_tensor.shape[-1]), dim=0),
+            repeats=pad_size,
+            dim=0,
+        )
+        padded = torch.vstack((input_tensor, zeros_repeated))
+        return padded
