@@ -181,7 +181,7 @@ class SharedMemoryLoader:
         lang_ep_start_end_ids = np.array(
             lang_data["info"]["indx"]
         )  # each of them are 64
-        lang_ann = lang_data["language"]["emb"]
+        lang_ann = lang_data["language"]["ann"]
         shmem, shapes, sizes, dtypes, shmem_lookup = self._init_shmem(ep_start_end_ids)
 
         if shmem_lookup is not None:

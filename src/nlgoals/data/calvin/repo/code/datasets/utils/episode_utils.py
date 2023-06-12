@@ -158,10 +158,7 @@ def process_language(
 ) -> Dict[str, torch.Tensor]:
     seq_lang = {"lang": torch.empty(0)}
     if with_lang:
-        lang = torch.from_numpy(episode["language"]).float()
-        if "language" in transforms:
-            lang = transforms["language"](lang)
-        seq_lang["lang"] = lang
+        seq_lang["lang"] = episode["language"]
     return seq_lang
 
 

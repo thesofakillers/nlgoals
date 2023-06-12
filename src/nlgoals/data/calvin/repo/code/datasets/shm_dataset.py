@@ -70,7 +70,5 @@ class ShmDataset(BaseDataset):
             array = np.ndarray(shape, dtype=self.dtypes[key], buffer=self.shared_memories[key].buf, offset=offset)[j:]  # type: ignore
             episode[key] = array
         if self.with_lang:
-            episode["language"] = self.lang_ann[self.lang_lookup[idx]][
-                0
-            ]  # TODO check  [0]
+            episode["language"] = self.lang_ann[self.lang_lookup[idx]]
         return episode

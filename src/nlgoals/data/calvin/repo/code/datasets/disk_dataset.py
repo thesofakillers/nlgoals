@@ -100,9 +100,7 @@ class DiskDataset(BaseDataset):
         ]
         episode = {key: np.stack([ep[key] for ep in episodes]) for key in keys}
         if self.with_lang:
-            episode["language"] = self.lang_ann[self.lang_lookup[idx]][
-                0
-            ]  # TODO check  [0]
+            episode["language"] = self.lang_ann[self.lang_lookup[idx]]
         return episode
 
     def _build_file_indices_lang(
@@ -142,7 +140,7 @@ class DiskDataset(BaseDataset):
             ).item()
 
         ep_start_end_ids = lang_data["info"]["indx"]  # each of them are 64
-        lang_ann = lang_data["language"]["emb"]  # length total number of annotations
+        lang_ann = lang_data["language"]["ann"]  # length total number of annotations
         lang_lookup = []
         for i, (start_idx, end_idx) in enumerate(ep_start_end_ids):
             if self.pretrain:
