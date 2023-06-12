@@ -55,7 +55,7 @@ class CalvinDataModule(pl.LightningDataModule):
         self.transforms = transforms
         self.batch_size = batch_size
 
-        self.use_shm = "shm_dataset" in self.datasets_cfg.vision_dataset._target_
+        self.use_shm = "shm_dataset" in self.datasets_cfg.items()[0][1]["_target_"]
 
     def prepare_data(self, *args, **kwargs):
         # check if files already exist
@@ -176,3 +176,13 @@ class CalvinDataModule(pl.LightningDataModule):
         }
         combined_val_loaders = CombinedLoader(val_dataloaders, "max_size_cycle")
         return combined_val_loaders
+
+    def _collate_fn(self, batch: List[Dict]):
+        """
+        Handles preprocessing (e.g. tokenization) and padding
+
+        Args:
+            batch: list of dicts
+        """
+        raise NotImplementedError
+        pass
