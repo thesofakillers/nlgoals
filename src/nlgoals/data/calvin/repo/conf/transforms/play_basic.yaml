@@ -2,6 +2,7 @@ train:
   rgb_static:
     - _target_: torchvision.transforms.Resize
       size: 200
+      antialias: null
     - _target_: nlgoals.data.calvin.repo.code.utils.transforms.ScaleImageTensor
     - _target_: torchvision.transforms.Normalize
       mean: [0.5,]
@@ -12,6 +13,7 @@ train:
   rgb_gripper:
     - _target_: torchvision.transforms.Resize
       size: 84
+      antialias: null
     - _target_: nlgoals.data.calvin.repo.code.utils.transforms.ScaleImageTensor
     - _target_: torchvision.transforms.Normalize
       mean: [0.5,]
@@ -22,6 +24,7 @@ train:
   depth_static:
     - _target_: torchvision.transforms.Resize
       size: 200
+      antialias: null
     - _target_: nlgoals.data.calvin.repo.code.utils.transforms.AddDepthNoise
       shape: [1000.0]
       rate: [1000.0]
@@ -31,6 +34,7 @@ train:
   depth_gripper:
     - _target_: torchvision.transforms.Resize
       size: 84
+      antialias: null
 #    - _target_: nlgoals.data.calvin.repo.code.utils.transforms.AddDepthNoise
 #      shape: [ 1000.0 ]
 #      rate: [ 1000.0 ]
@@ -40,6 +44,7 @@ train:
   rgb_tactile:
     - _target_: torchvision.transforms.Resize
       size: 70
+      antialias: null
     - _target_: torchvision.transforms.RandomCrop
       size: 64
     - _target_: nlgoals.data.calvin.repo.code.utils.transforms.ScaleImageTensor
@@ -52,6 +57,7 @@ train:
   depth_tactile:
     - _target_: torchvision.transforms.Resize
       size: 64
+      antialias: null
     - _target_: torchvision.transforms.Normalize
       mean: [0.1,]
       std: [0.2,]
@@ -73,6 +79,7 @@ val:
   rgb_static:
     - _target_: torchvision.transforms.Resize
       size: 200
+      antialias: null
     - _target_: nlgoals.data.calvin.repo.code.utils.transforms.ScaleImageTensor
     - _target_: torchvision.transforms.Normalize
       mean: [0.5,]
@@ -80,6 +87,7 @@ val:
   rgb_gripper:
     - _target_: torchvision.transforms.Resize
       size: 84
+      antialias: null
     - _target_: nlgoals.data.calvin.repo.code.utils.transforms.ScaleImageTensor
     - _target_: torchvision.transforms.Normalize
       mean: [0.5,]
@@ -87,12 +95,15 @@ val:
   depth_static:
     - _target_: torchvision.transforms.Resize
       size: 200
+      antialias: null
   depth_gripper:
     - _target_: torchvision.transforms.Resize
       size: 84
+      antialias: null
   rgb_tactile:
     - _target_: torchvision.transforms.Resize
       size: 70
+      antialias: null
     - _target_: torchvision.transforms.RandomCrop
       size: 64
     - _target_: nlgoals.data.calvin.repo.code.utils.transforms.ScaleImageTensor
@@ -102,6 +113,7 @@ val:
   depth_tactile:
     - _target_: torchvision.transforms.Resize
       size: 64
+      antialias: null
     - _target_: torchvision.transforms.Normalize
       mean: [0.1,]
       std: [0.2,]
