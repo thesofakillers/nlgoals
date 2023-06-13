@@ -45,7 +45,7 @@ class VisionEncoder(nn.Module):
             num_cols=w, num_rows=h, temperature=spatial_softmax_temp
         )
         self.act_fn = nn.ReLU()
-        # [B, 3, 200, 200] -> [B, 32, 49, 49] -> [B, 64, 23, 23] -> [B, 64, 21, 21]
+        # [B, 3, 224, 224] -> [B, 32, 55, 55] -> [B, 64, 26, 26] -> [B, 64, 24, 24]
         self.conv_model = nn.Sequential(
             nn.Conv2d(
                 in_channels=num_channels,
@@ -82,9 +82,9 @@ class VisionEncoder(nn.Module):
         self.emb_dim = visual_features
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # [B, 3, 200, 200] -> [B, 64, 21, 21]
+        # [B, 3, 224, 224] -> [B, 64, 24, 24]
         x = self.conv_model(x)
-        # [B, 64, 21, 21] -> [B, 128]
+        # [B, 64, 24, 24] -> [B, 128]
         x = self.spatial_softmax(x)
         # [B, 128] -> [B, 512]
         x = self.fc1(x)
