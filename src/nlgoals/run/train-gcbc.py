@@ -95,7 +95,7 @@ if __name__ == "__main__":
         skip={"vision_encoder_kwargs", "proprio_encoder_kwargs", "traj_encoder_kwargs"},
     )
     parser.add_class_arguments(CLIPT, "clipt")
-    parser.add_argument("--clipt-checkpoint", type=str, required=False)
+    parser.add_argument("--clipt_checkpoint", type=str, required=False)
 
     parser.add_class_arguments(VisionEncoder, "vision_encoder")
     parser.add_class_arguments(ProprioEncoder, "proprio_encoder")
