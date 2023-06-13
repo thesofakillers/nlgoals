@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Tuple
 
 from transformers import CLIPImageProcessor
 
@@ -244,7 +244,9 @@ class CalvinDataModule(pl.LightningDataModule):
 
         return padded_batch
 
-    def _collate_tokenization(self, batch_list):
+    def _collate_tokenization(
+        self, batch_list: List[Dict]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Takes care of tokenization
 
@@ -261,7 +263,9 @@ class CalvinDataModule(pl.LightningDataModule):
         )
         return lang_batch["input_ids"], lang_batch["attention_mask"]
 
-    def _collate_padding(self, batch_list):
+    def _collate_padding(
+        self, batch_list: List[Dict]
+    ) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         """
         Takes care of padding
         Args:
@@ -309,6 +313,7 @@ class CalvinDataModule(pl.LightningDataModule):
             ]
         )
 
+        padded_batch["state_info"] = {}
         padded_batch["state_info"]["robot_obs"] = torch.stack(
             [
                 self._pad_with_repetition(
@@ -327,8 +332,11 @@ class CalvinDataModule(pl.LightningDataModule):
             ]
         )
 
-        padded_batch["idx"] = torch.stack([element["idx"] for element in batch_list])
-        pass
+        padded_batch["idx"] = torch.Tensor(
+            [element["idx"] for element in batch_list]
+        ).unsqueeze(-1)
+
+        return padded_batch
 
     @staticmethod
     def _pad_with_repetition(input_tensor: torch.Tensor, pad_size: int) -> torch.Tensor:
