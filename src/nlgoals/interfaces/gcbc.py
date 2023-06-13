@@ -21,8 +21,8 @@ def calvin_gcbc_collate(
             - "state_info": Dict of tensors with keys
                 - "robot_obs" (B x MS x 15)
                 - "scene_obs" (B x MS x 24)
-            - 'idx' (B x 1)
-            - 'seq_lens' (B x 1) the sequence lengths before padding
+            - 'idx' (B, )
+            - 'seq_lens' (B, ) the sequence lengths before padding
         and optionally (in the case language annotations are provided):
             - 'lang_input_ids' (B X MSL) (mls is maximum sentence length)
             - 'lang_attn_mask' (B X MSL)

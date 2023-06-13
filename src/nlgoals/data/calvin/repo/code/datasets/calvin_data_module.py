@@ -234,8 +234,8 @@ class CalvinDataModule(pl.LightningDataModule):
                 - "state_info": Dict of tensors with keys
                     - "robot_obs" (B x MS x 15)
                     - "scene_obs" (B x MS x 24)
-                - 'idx' (B x 1)
-                - 'seq_lens' (B x 1) the sequence lengths before padding
+                - 'idx' (B, )
+                - 'seq_lens' (B, ) the sequence lengths before padding
             and optionally (in the case language annotations are provided):
                 - 'lang_input_ids' (B X MSL) (mls is maximum sentence length)
                 - 'lang_attn_mask' (B X MSL)
@@ -276,15 +276,15 @@ class CalvinDataModule(pl.LightningDataModule):
         """
         Takes care of padding
         Args:
-            batch_list: see _collate_fn
+            batch_list: see _base_collate
         Returns:
-            padded_batch: same as _collate_fn but without the optional lang keys
+            padded_batch: same as _base_collate but without the optional lang keys
             these are handled by _collate_tokenization
         """
         seq_lens = torch.tensor([x["robot_obs"].shape[0] for x in batch_list])
         max_seq_len = seq_lens.max()
         pad_sizes = max_seq_len - seq_lens
-        padded_batch = {"seq_lens": seq_lens.unsqueeze(-1)}
+        padded_batch = {"seq_lens": seq_lens}
 
         padded_batch["robot_obs"] = torch.stack(
             [
@@ -329,9 +329,7 @@ class CalvinDataModule(pl.LightningDataModule):
             ]
         )
 
-        padded_batch["idx"] = torch.Tensor(
-            [element["idx"] for element in batch_list]
-        ).unsqueeze(-1)
+        padded_batch["idx"] = torch.Tensor([element["idx"] for element in batch_list])
 
         return padded_batch
 
