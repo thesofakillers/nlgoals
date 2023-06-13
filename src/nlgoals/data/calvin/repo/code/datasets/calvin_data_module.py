@@ -181,11 +181,15 @@ class CalvinDataModule(pl.LightningDataModule):
         combined_val_loaders = CombinedLoader(val_dataloaders, "max_size_cycle")
         return combined_val_loaders
 
+    def _setup_transforms(self):
+        # todo
+        raise NotImplementedError
+
     def _collate_fn(
         self, batch_list: List[Dict]
     ) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         """
-        Handles preprocessing (e.g. tokenization) and padding
+        Handles tokenization and padding
 
         Args:
             batch_list: list of dicts with keys:
@@ -214,10 +218,46 @@ class CalvinDataModule(pl.LightningDataModule):
                 - 'lang_input_ids' (B X MSL) (mls is maximum sentence length)
                 - 'lang_attn_mask' (B X MSL)
         """
+
+        padded_batch = self._collate_padding(batch_list)
+
+        # need this check because we could have an empty language key for vision_only
+        if isinstance(batch_list[0]["lang"], str):
+            input_ids, attention_mask = self._collate_tokenization(batch_list)
+            padded_batch["lang_input_ids"] = input_ids
+            padded_batch["lang_attn_mask"] = attention_mask
+
+        return padded_batch
+
+    def _collate_tokenization(self, batch_list):
+        """
+        Takes care of tokenization
+
+        Args:
+            batch_list: see _collate_fn
+
+        Returns:
+            input_ids: (B x MSL)
+            attention_mask: (B x MSL)
+            where MSL is the maximum sentence length in the batch
+        """
+        lang_batch = self.text_processor(
+            [x["lang"] for x in batch_list], padding=True, return_tensors="pt"
+        )
+        return lang_batch["input_ids"], lang_batch["attention_mask"]
+
+    def _collate_padding(self, batch_list):
+        """
+        Takes care of padding
+        Args:
+            batch_list: see _collate_fn
+        Returns:
+            padded_batch: same as _collate_fn but without the optional lang keys
+            these are handled by _collate_tokenization
+        """
         seq_lens = torch.tensor([x["robot_obs"].shape[0] for x in batch_list])
         max_seq_len = seq_lens.max()
         pad_sizes = max_seq_len - seq_lens
-
         padded_batch = {"seq_lens": seq_lens.unsqueeze(-1)}
 
         padded_batch["robot_obs"] = torch.stack(
@@ -273,19 +313,7 @@ class CalvinDataModule(pl.LightningDataModule):
         )
 
         padded_batch["idx"] = torch.stack([element["idx"] for element in batch_list])
-
-        # handle language
-        if isinstance(batch_list[0]["lang"], str):
-            lang_batch = self.text_processor(
-                [x["lang"] for x in batch_list], padding=True, return_tensors="pt"
-            )
-            padded_batch["lang_input_ids"] = lang_batch["input_ids"]
-            padded_batch["lang_attn_mask"] = lang_batch["attention_mask"]
-
-        # handle additional image processing
-        if self.process_vision:
-            # images are between -1, and 1. We need 0 and 1
-            raise NotImplementedError
+        pass
 
     @staticmethod
     def _pad_with_repetition(input_tensor: torch.Tensor, pad_size: int) -> torch.Tensor:
