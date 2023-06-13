@@ -20,6 +20,7 @@ from nlgoals.data.calvin.repo.code.datasets.utils.shared_memory_utils import (
     save_shm_lookup,
     SharedMemoryLoader,
 )
+from nlgoals.utils import pad_with_repetition, pad_with_zeros
 
 DEFAULT_TRANSFORM = OmegaConf.create({"train": None, "val": None})
 # this URL doesn't work anymore lol
@@ -212,6 +213,7 @@ class CalvinDataModule(pl.LightningDataModule):
         """
         Designed to be overridden externally, so that depending on the model,
         we can prepare the batch differently. By default, will do nothing.
+        See nlgoals.interfaces for potential implementations.
 
         Args:
             batch : see return signature of _base_collate
@@ -299,16 +301,14 @@ class CalvinDataModule(pl.LightningDataModule):
 
         padded_batch["robot_obs"] = torch.stack(
             [
-                self._pad_with_repetition(element["robot_obs"], pad_sizes[i])
+                self.pad_with_repetition(element["robot_obs"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
             ]
         )
 
         padded_batch["rgb_static"] = torch.stack(
             [
-                self._pad_with_repetition(
-                    element["rgb_obs"]["rgb_static"], pad_sizes[i]
-                )
+                self.pad_with_repetition(element["rgb_obs"]["rgb_static"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
             ]
         )
@@ -318,10 +318,8 @@ class CalvinDataModule(pl.LightningDataModule):
             [
                 torch.cat(
                     [
-                        self._pad_with_zeros(
-                            element["actions"][..., :-1], pad_sizes[i]
-                        ),
-                        self._pad_with_repetition(
+                        self.pad_with_zeros(element["actions"][..., :-1], pad_sizes[i]),
+                        self.pad_with_repetition(
                             element["actions"][..., -1:], pad_sizes[i]
                         ),
                     ],
@@ -334,7 +332,7 @@ class CalvinDataModule(pl.LightningDataModule):
         padded_batch["state_info"] = {}
         padded_batch["state_info"]["robot_obs"] = torch.stack(
             [
-                self._pad_with_repetition(
+                self.pad_with_repetition(
                     element["state_info"]["robot_obs"], pad_sizes[i]
                 )
                 for i, element in enumerate(batch_list)
@@ -343,7 +341,7 @@ class CalvinDataModule(pl.LightningDataModule):
 
         padded_batch["state_info"]["scene_obs"] = torch.stack(
             [
-                self._pad_with_repetition(
+                self.pad_with_repetition(
                     element["state_info"]["scene_obs"], pad_sizes[i]
                 )
                 for i, element in enumerate(batch_list)
@@ -355,41 +353,3 @@ class CalvinDataModule(pl.LightningDataModule):
         ).unsqueeze(-1)
 
         return padded_batch
-
-    @staticmethod
-    def _pad_with_repetition(input_tensor: torch.Tensor, pad_size: int) -> torch.Tensor:
-        """
-        Pad a sequence Tensor by repeating last element pad_size times.
-
-        Args:
-            input_tensor: Sequence to pad.
-            pad_size: Number of frames to pad.
-
-        Returns:
-            Padded Tensor.
-        """
-        last_repeated = torch.repeat_interleave(
-            torch.unsqueeze(input_tensor[-1], dim=0), repeats=pad_size, dim=0
-        )
-        padded = torch.vstack((input_tensor, last_repeated))
-        return padded
-
-    @staticmethod
-    def _pad_with_zeros(input_tensor: torch.Tensor, pad_size: int) -> torch.Tensor:
-        """
-        Pad a Tensor with zeros.
-
-        Args:
-            input_tensor: Sequence to pad.
-            pad_size: Number of frames to pad.
-
-        Returns:
-            Padded Tensor.
-        """
-        zeros_repeated = torch.repeat_interleave(
-            torch.unsqueeze(torch.zeros(input_tensor.shape[-1]), dim=0),
-            repeats=pad_size,
-            dim=0,
-        )
-        padded = torch.vstack((input_tensor, zeros_repeated))
-        return padded
