@@ -284,18 +284,39 @@ class GCBC(pl.LightningModule):
         )
         loss = self.loss(means, log_scales, mixture_logits, packed_actions)
 
-        self.log(f"{phase}/train_loss", loss)
+        self.log(f"{traj_mode}/{phase}_loss", loss)
         # TODO: other metrics?
 
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
-        loss = self._fit_step(batch, "train", "visual")
+        visual_batch = self.prepare_visual_batch(batch)
+        loss = self._fit_step(visual_batch, "train", "visual")
         return loss
 
     def validation_step(self, batch, batch_idx):
-        self._fit_step(batch, "val", "visual")
-        self._fit_step(batch, "val", "textual")
+        visual_batch = self.prepare_visual_batch(batch)
+        self._fit_step(visual_batch, "val", "visual")
+        textual_batch = self.prepare_textual_batch(batch)
+        self._fit_step(textual_batch, "val", "textual")
 
     def test_step(self, batch, batch_idx):
         raise NotImplementedError
+
+    @staticmethod
+    def prepare_textual_batch(batch):
+        """
+        Prepares collated batch from dataloader for textual trajectory encoding
+        Designed as a static method so to be overridden after instantiation
+        by a method from nlgoals.interfaces. By default does nothing.
+        """
+        return batch
+
+    @staticmethod
+    def prepare_visual_batch(batch):
+        """
+        Prepares collated batch from dataloader for visual trajectory encoding
+        Designed as a static method so to be overridden after instantiation
+        by a method from nlgoals.interfaces. By default does nothing.
+        """
+        return batch

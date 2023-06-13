@@ -51,3 +51,19 @@ def calvin_gcbc_collate(
         "actions": batch["actions"],
     }
     return collated_batch
+
+
+def calvin_gcbc_visual(batch):
+    """
+    The CALVIN datamodule uses PL CombineLoader for the dataloaders, so batches are
+    yielded as dictionaries of batches with keys 'vis' and 'lang'
+    """
+    return batch["vis"]
+
+
+def calvin_gcbc_textual(batch):
+    """
+    The CALVIN datamodule uses PL CombineLoader for the dataloaders, so batches are
+    yielded as dictionaries of batches with keys 'vis' and 'lang'
+    """
+    return batch["lang"]
