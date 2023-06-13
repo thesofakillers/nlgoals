@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Tuple, Any
 
-from transformers import CLIPImageProcessor
+from transformers import CLIPImageProcessor, CLIPTokenizerFast
 import hydra
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
@@ -59,6 +59,7 @@ class CalvinDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.clip_model_name = clip_model_name
+        self.text_processor = CLIPTokenizerFast.from_pretrained(clip_model_name)
 
         self.use_shm = "shm_dataset" in self.datasets_cfg.items()[0][1]["_target_"]
 
@@ -287,14 +288,14 @@ class CalvinDataModule(pl.LightningDataModule):
 
         padded_batch["robot_obs"] = torch.stack(
             [
-                self.pad_with_repetition(element["robot_obs"], pad_sizes[i])
+                pad_with_repetition(element["robot_obs"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
             ]
         )
 
         padded_batch["rgb_static"] = torch.stack(
             [
-                self.pad_with_repetition(element["rgb_obs"]["rgb_static"], pad_sizes[i])
+                pad_with_repetition(element["rgb_obs"]["rgb_static"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
             ]
         )
@@ -304,10 +305,8 @@ class CalvinDataModule(pl.LightningDataModule):
             [
                 torch.cat(
                     [
-                        self.pad_with_zeros(element["actions"][..., :-1], pad_sizes[i]),
-                        self.pad_with_repetition(
-                            element["actions"][..., -1:], pad_sizes[i]
-                        ),
+                        pad_with_zeros(element["actions"][..., :-1], pad_sizes[i]),
+                        pad_with_repetition(element["actions"][..., -1:], pad_sizes[i]),
                     ],
                     dim=-1,
                 )
@@ -318,18 +317,14 @@ class CalvinDataModule(pl.LightningDataModule):
         padded_batch["state_info"] = {}
         padded_batch["state_info"]["robot_obs"] = torch.stack(
             [
-                self.pad_with_repetition(
-                    element["state_info"]["robot_obs"], pad_sizes[i]
-                )
+                pad_with_repetition(element["state_info"]["robot_obs"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
             ]
         )
 
         padded_batch["state_info"]["scene_obs"] = torch.stack(
             [
-                self.pad_with_repetition(
-                    element["state_info"]["scene_obs"], pad_sizes[i]
-                )
+                pad_with_repetition(element["state_info"]["scene_obs"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
             ]
         )
