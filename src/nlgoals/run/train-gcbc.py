@@ -28,7 +28,7 @@ def train(args):
     pl.seed_everything(args.seed, workers=True)
     # datamodule
     hydra.core.global_hydra.GlobalHydra.instance().clear()
-    hydra.initialize(config_path=args.data.config_folder)
+    hydra.initialize_config_module(config_module="nlgoals.data.calvin.repo.conf")
     datamodule_cfg = hydra.compose(config_name=args.data.config_name)
     datamodule_cfg.batch_size = args.data.batch_size
     datamodule_cfg.num_workers = args.data.num_workers
@@ -100,8 +100,9 @@ if __name__ == "__main__":
     parser.add_class_arguments(VisionEncoder, "vision_encoder")
     parser.add_class_arguments(ProprioEncoder, "proprio_encoder")
 
-    parser.add_argument("--data.config_folder", type=str, required=True)
-    parser.add_argument("--data.config_name", type=str, required=True)
+    parser.add_argument(
+        "--data.config_name", type=str, required=True, default="datamodule.yaml"
+    )
     parser.add_argument("--data.batch_size", type=int, default=32)
     parser.add_argument("--data.num_workers", type=int, default=18)
     parser.add_argument(
