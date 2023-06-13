@@ -93,8 +93,8 @@ class GCBC(pl.LightningModule):
         Args:
             batch: Dict of Dicts with keys
                 - "perception": Dict of tensors of shape B x S x ..., with keys
-                    - "rgb_static": B x S x 3 x H x W, RGB frames of robot arm
-                    - "robot_obs": B x S x 15, proprioceptive state
+                    - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived states
+                    - "proprio_perc": B x S x 15, proprioceptive state
                     - "seq_lens": B, sequence lengths
                 - "text": Dict of tensors of shape B x L with keys
                     - "input_ids": B x L
@@ -113,15 +113,14 @@ class GCBC(pl.LightningModule):
             "textual",
             "visual",
         }, "`traj_mode` must be textual or visual"
-        # frame_height, frame_width = batch["rgb_static"].shape[-2:]
-        batch_size, max_seq_len = batch["perception"]["rgb_static"].shape[:2]
+        batch_size, max_seq_len = batch["perception"]["rgb_perc"].shape[:2]
         seq_lens = batch["perception"]["seq_lens"] - 1
 
         # B x (S-1) x 3 x H x W
-        curr_frames = batch["perception"]["rgb_static"][:, :-1, :, :, :]
+        curr_frames = batch["perception"]["rgb_perc"][:, :-1, :, :, :]
 
         # B x (S-1) x input proprioceptive dims
-        curr_robot_obs = batch["perception"]["robot_obs"][:, :-1, :]
+        curr_proprio_perc = batch["perception"]["proprio_perc"][:, :-1, :]
 
         # B * (S-1) x traj_encoder.emb_dim
         traj_embs = self._get_traj_embs(batch, curr_frames, traj_mode)
@@ -129,7 +128,7 @@ class GCBC(pl.LightningModule):
         # B * (S-1) x visual_encoder.emb_dim
         visual_embs = self.vision_encoder(curr_frames)
         # B * (S-1) x proprio_encoder.emb_dim
-        propr_embs = self.proprio_encoder(curr_robot_obs)
+        propr_embs = self.proprio_encoder(curr_proprio_perc)
 
         # B * (S-1) x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
         perc_embs = torch.cat([visual_embs, propr_embs], dim=-1)
@@ -175,7 +174,7 @@ class GCBC(pl.LightningModule):
         """
         if traj_mode == "visual":
             traj_embs = self._get_visual_traj_embs(
-                batch["perception"]["rgb_static"], curr_frames
+                batch["perception"]["rgb_perc"], curr_frames
             )
         elif traj_mode == "textual":
             traj_embs = self._get_textual_traj_embs(
@@ -260,15 +259,15 @@ class GCBC(pl.LightningModule):
         Fit step for the model. Logs loss and training metrics.
 
         Args:
-            batch: Dict with keys
+            batch: Dict, with the following keys
                 - 'perception': Dict of tensors of shape B x S x ..., with keys
-                    - "rgb_static": B x S x 3 x H x W, RGB frames of robot arm
-                    - "robot_obs": B x S x 15, proprioceptive state
+                    - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived state
+                    - "proprio_perc": B x S x 15, proprioceptive state
                     - "seq_lens": B, sequence lengths
                 - 'text': Dict of tensors of shape B x L x ..., with keys
                     - "input_ids": B x L
                     - "attention_mask": B x L
-                - "rel_actions": (B x S x 7) tensor of relative actions
+                - "actions": (B x S x 7) tensor of relative actions
             phase: "train" or "val"
             traj_mode: "visual" or "textual"
 
@@ -279,7 +278,7 @@ class GCBC(pl.LightningModule):
         means, log_scales, mixture_logits = self(batch, traj_mode).values()
         # P x out_dim
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
-            batch["rel_actions"][:, :-1, :],
+            batch["actions"][:, :-1, :],
             batch["perception"]["seq_lens"] - 1,
             batch_first=True,
         )
@@ -291,12 +290,35 @@ class GCBC(pl.LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
-        loss = self._fit_step(batch, "train", "visual")
+        prep_batch = self.prepare_batch(batch)
+        loss = self._fit_step(prep_batch, "train", "visual")
         return loss
 
     def validation_step(self, batch, batch_idx):
-        self._fit_step(batch, "val", "visual")
-        self._fit_step(batch, "val", "textual")
+        prep_batch = self.prepare_batch(batch)
+        self._fit_step(prep_batch, "val", "visual")
+        self._fit_step(prep_batch, "val", "textual")
 
     def test_step(self, batch, batch_idx):
+        prep_batch = self.prepare_batch(batch)
         raise NotImplementedError
+
+    @staticmethod
+    def prepare_batch(batch):
+        """
+        Prepares the batch for the model s.t. it looks like return signature.
+        Designed to be overridden externally, so that depending on the dataset,
+        we can prepare the batch differently.
+
+        Returns:
+            batch: Dict, with the following keys
+                - 'perception': Dict of tensors of shape B x S x ..., with keys
+                    - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived state
+                    - "proprio_perc": B x S x 15, proprioceptive state
+                    - "seq_lens": B, sequence lengths
+                - 'text': Dict of tensors of shape B x L x ..., with keys
+                    - "input_ids": B x L
+                    - "attention_mask": B x L
+                - "actions": (B x S x 7) tensor of relative actions
+        """
+        return batch
