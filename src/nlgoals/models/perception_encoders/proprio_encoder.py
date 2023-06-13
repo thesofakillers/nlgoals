@@ -9,7 +9,7 @@ class ProprioEncoder(nn.Module):
     Proprioceptive state encoder
     """
 
-    def __init__(self, proprioception_idxs: Union[List[int], int]):
+    def __init__(self, proprioception_idxs: Union[List[int], int] = 8):
         super(ProprioEncoder, self).__init__()
         self.identity = nn.Identity()
         self.proprioception_idxs = (

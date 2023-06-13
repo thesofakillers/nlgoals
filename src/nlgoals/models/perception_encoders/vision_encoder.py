@@ -25,12 +25,12 @@ class VisionEncoder(nn.Module):
 
     def __init__(
         self,
-        num_channels: int,
-        input_width: int,
-        input_height: int,
-        dropout_vis_fc: float,
-        visual_features: int,
-        spatial_softmax_temp: Optional[float] = None,
+        num_channels: int = 3,
+        input_width: int = 224,
+        input_height: int = 224,
+        dropout_vis_fc: float = 0.0,
+        visual_features: int = 64,
+        spatial_softmax_temp: Optional[float] = 1.0,
     ):
         super(VisionEncoder, self).__init__()
         kernel_sizes = [8, 4, 3]
