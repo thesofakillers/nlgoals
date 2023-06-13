@@ -85,8 +85,8 @@ class GCBC(pl.LightningModule):
             param.requires_grad = False
 
     def forward(
-        self, batch: Dict[Dict[str, torch.Tensor]], traj_mode: str = "visual"
-    ) -> Dict[torch.Tensor]:
+        self, batch: Dict[str, Dict[str, torch.Tensor]], traj_mode: str = "visual"
+    ) -> Dict[str, torch.Tensor]:
         """
         Forward pass through the network.
 
