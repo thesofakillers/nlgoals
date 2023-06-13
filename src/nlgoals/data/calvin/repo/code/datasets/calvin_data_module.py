@@ -63,7 +63,7 @@ class CalvinDataModule(pl.LightningDataModule):
 
         self.use_shm = "shm_dataset" in self.datasets_cfg.items()[0][1]["_target_"]
 
-    def prepare_data(self, *args, **kwargs):
+    def prepare_data(self):
         # check if files already exist
         dataset_exist = np.any(
             [
