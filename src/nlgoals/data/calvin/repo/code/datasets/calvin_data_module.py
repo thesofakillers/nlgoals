@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Union, Tuple, Any
 
 from transformers import CLIPImageProcessor
 import hydra
@@ -194,7 +194,29 @@ class CalvinDataModule(pl.LightningDataModule):
                 self.train_transforms[key] = clip_transform
                 self.val_transforms[key] = clip_transform
 
-    def _collate_fn(
+    def _collate_fn(self, batch_list: List[Dict]) -> Any:
+        """
+        First handles padding, tokenization and all that stuff.
+        Then allows user to make further modifications via self.custom_collate_fn
+        """
+        base_batch = self._base_collate(batch_list)
+        prepared_batch = self.custom_collate_fn(base_batch)
+        return prepared_batch
+
+    @staticmethod
+    def custom_collate_fn(
+        batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]
+    ) -> Any:
+        """
+        Designed to be overridden externally, so that depending on the model,
+        we can prepare the batch differently. By default, will do nothing.
+
+        Args:
+            batch : see return signature of _base_collate
+        """
+        return batch
+
+    def _base_collate(
         self, batch_list: List[Dict]
     ) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         """

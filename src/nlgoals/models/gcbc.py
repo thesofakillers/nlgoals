@@ -290,35 +290,12 @@ class GCBC(pl.LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
-        prep_batch = self.prepare_batch(batch)
-        loss = self._fit_step(prep_batch, "train", "visual")
+        loss = self._fit_step(batch, "train", "visual")
         return loss
 
     def validation_step(self, batch, batch_idx):
-        prep_batch = self.prepare_batch(batch)
-        self._fit_step(prep_batch, "val", "visual")
-        self._fit_step(prep_batch, "val", "textual")
+        self._fit_step(batch, "val", "visual")
+        self._fit_step(batch, "val", "textual")
 
     def test_step(self, batch, batch_idx):
-        prep_batch = self.prepare_batch(batch)
         raise NotImplementedError
-
-    @staticmethod
-    def prepare_batch(batch):
-        """
-        Prepares the batch for the model s.t. it looks like return signature.
-        Designed to be overridden externally, so that depending on the dataset,
-        we can prepare the batch differently.
-
-        Returns:
-            batch: Dict, with the following keys
-                - 'perception': Dict of tensors of shape B x S x ..., with keys
-                    - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived state
-                    - "proprio_perc": B x S x 15, proprioceptive state
-                    - "seq_lens": B, sequence lengths
-                - 'text': Dict of tensors of shape B x L x ..., with keys
-                    - "input_ids": B x L
-                    - "attention_mask": B x L
-                - "actions": (B x S x 7) tensor of relative actions
-        """
-        return batch
