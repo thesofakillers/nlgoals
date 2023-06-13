@@ -14,6 +14,7 @@ action_max: [1., 1., 1., 1., 1., 1., 1.,]
 action_min: [-1., -1., -1., -1., -1., -1., -1]
 shuffle_val: false
 batch_size: 32
+clip_model_name: "laion/CLIP-ViT-L-14-laion2B-s32B-b82K"
 
 # to avoid hydra creating output dirs: https://stackoverflow.com/a/64635492/9889508
 hydra:

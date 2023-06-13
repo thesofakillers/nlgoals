@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+from transformers import CLIPImageProcessor
+
 import nlgoals.data.calvin.repo.code
 from nlgoals.data.calvin.repo.code.datasets.utils.episode_utils import (
     load_dataset_statistics,
@@ -37,6 +39,7 @@ class CalvinDataModule(pl.LightningDataModule):
         transforms: DictConfig = DEFAULT_TRANSFORM,
         batch_size: int = 32,
         shuffle_val: bool = False,
+        clip_model_name: str = "laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
         **kwargs: Dict,  # absorb any other arguments
     ):
         super().__init__()
@@ -56,6 +59,7 @@ class CalvinDataModule(pl.LightningDataModule):
         self.modalities: List[str] = []
         self.transforms = transforms
         self.batch_size = batch_size
+        self.clip_model_name = clip_model_name
 
         self.use_shm = "shm_dataset" in self.datasets_cfg.items()[0][1]["_target_"]
 
@@ -187,6 +191,14 @@ class CalvinDataModule(pl.LightningDataModule):
             key: torchvision.transforms.Compose(val)
             for key, val in self.val_transforms.items()
         }
+
+        if self.clip_model_name is not None:
+            processor = CLIPImageProcessor.from_pretrained(self.clip_model_name)
+            clip_transform = lambda x: processor(x, return_tensors="pt").pixel_values
+            clip_transform_keys = ["rgb_static", "rgb_gripper"]
+            for key in clip_transform_keys:
+                self.train_transforms[key] = clip_transform
+                self.val_transforms[key] = clip_transform
 
     def _collate_fn(
         self, batch_list: List[Dict]
