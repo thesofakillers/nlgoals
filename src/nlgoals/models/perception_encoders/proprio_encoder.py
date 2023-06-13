@@ -17,7 +17,7 @@ class ProprioEncoder(nn.Module):
             if isinstance(proprioception_idxs, list)
             else list(range(proprioception_idxs))
         )
-        self.emb_dim = len(proprioception_idxs)
+        self.emb_dim = len(self.proprioception_idxs)
 
     def forward(self, x):
         """
