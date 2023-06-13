@@ -105,32 +105,8 @@ class CalvinDataModule(pl.LightningDataModule):
             save_shm_lookup(train_shm_lookup, val_shm_lookup)
 
     def setup(self, stage=None):
-        transforms = load_dataset_statistics(
-            self.training_dir, self.val_dir, self.transforms
-        )
+        self._setup_transforms()
 
-        self.train_transforms = {
-            cam: [
-                hydra.utils.instantiate(transform)
-                for transform in transforms.train[cam]
-            ]
-            for cam in transforms.train
-        }
-
-        self.val_transforms = {
-            cam: [
-                hydra.utils.instantiate(transform) for transform in transforms.val[cam]
-            ]
-            for cam in transforms.val
-        }
-        self.train_transforms = {
-            key: torchvision.transforms.Compose(val)
-            for key, val in self.train_transforms.items()
-        }
-        self.val_transforms = {
-            key: torchvision.transforms.Compose(val)
-            for key, val in self.val_transforms.items()
-        }
         self.train_datasets, self.val_datasets = {}, {}
 
         if self.use_shm:
@@ -181,9 +157,36 @@ class CalvinDataModule(pl.LightningDataModule):
         combined_val_loaders = CombinedLoader(val_dataloaders, "max_size_cycle")
         return combined_val_loaders
 
-    def _setup_transforms(self):
-        # todo
-        raise NotImplementedError
+    def _setup_transforms(self) -> None:
+        """
+        Sets up self.train_transforms and self.val_transforms, dictionaries of transform
+        instances for each camera and its keys
+        """
+        transforms = load_dataset_statistics(
+            self.training_dir, self.val_dir, self.transforms
+        )
+        self.train_transforms = {
+            cam: [
+                hydra.utils.instantiate(transform)
+                for transform in transforms.train[cam]
+            ]
+            for cam in transforms.train
+        }
+
+        self.val_transforms = {
+            cam: [
+                hydra.utils.instantiate(transform) for transform in transforms.val[cam]
+            ]
+            for cam in transforms.val
+        }
+        self.train_transforms = {
+            key: torchvision.transforms.Compose(val)
+            for key, val in self.train_transforms.items()
+        }
+        self.val_transforms = {
+            key: torchvision.transforms.Compose(val)
+            for key, val in self.val_transforms.items()
+        }
 
     def _collate_fn(
         self, batch_list: List[Dict]
