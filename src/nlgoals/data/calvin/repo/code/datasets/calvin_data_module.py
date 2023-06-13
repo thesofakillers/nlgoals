@@ -206,20 +206,6 @@ class CalvinDataModule(pl.LightningDataModule):
         prepared_batch = self.custom_collate_fn(base_batch)
         return prepared_batch
 
-    @staticmethod
-    def custom_collate_fn(
-        batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]
-    ) -> Any:
-        """
-        Designed to be overridden externally, so that depending on the model,
-        we can prepare the batch differently. By default, will do nothing.
-        See nlgoals.interfaces for potential implementations.
-
-        Args:
-            batch : see return signature of _base_collate
-        """
-        return batch
-
     def _base_collate(
         self, batch_list: List[Dict]
     ) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
@@ -353,3 +339,17 @@ class CalvinDataModule(pl.LightningDataModule):
         ).unsqueeze(-1)
 
         return padded_batch
+
+    @staticmethod
+    def custom_collate_fn(
+        batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]
+    ) -> Any:
+        """
+        Designed to be overridden externally, so that depending on the model,
+        we can prepare the batch differently. By default, will do nothing.
+        See nlgoals.interfaces for potential implementations.
+
+        Args:
+            batch : see return signature of _base_collate
+        """
+        return batch
