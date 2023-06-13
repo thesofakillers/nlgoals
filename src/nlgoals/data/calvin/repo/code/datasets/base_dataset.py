@@ -48,7 +48,6 @@ class BaseDataset(Dataset):
         proprio_state: DictConfig with shape of prioprioceptive state.
         key: 'vis' or 'lang'.
         lang_folder: Name of the subdirectory of the dataset containing the language annotations.
-        num_workers: Number of dataloading workers for this dataset.
         transforms: Dict with pytorch data transforms.
         min_window_size: Minimum window length of loaded sequences.
         max_window_size: Maximum window length of loaded sequences.
@@ -64,7 +63,6 @@ class BaseDataset(Dataset):
         proprio_state: DictConfig,
         key: str,
         lang_folder: str,
-        num_workers: int,
         transforms: Dict = {},
         min_window_size: int = 16,
         max_window_size: int = 32,
@@ -78,7 +76,6 @@ class BaseDataset(Dataset):
         self.relative_actions = "rel_actions" in self.observation_space["actions"]
 
         self.pad = pad
-        self.num_workers = num_workers
         self.min_window_size = min_window_size
         self.max_window_size = max_window_size
         self.abs_datasets_dir = datasets_dir

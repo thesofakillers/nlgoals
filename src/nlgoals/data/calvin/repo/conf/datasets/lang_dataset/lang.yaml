@@ -8,4 +8,3 @@ obs_space: ${observation_space}
 skip_frames: 1
 pad: true
 lang_folder: "lang_annotations"
-num_workers: 2

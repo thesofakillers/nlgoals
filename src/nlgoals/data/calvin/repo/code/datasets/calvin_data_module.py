@@ -35,6 +35,7 @@ class CalvinDataModule(pl.LightningDataModule):
         transforms: DictConfig = DEFAULT_TRANSFORM,
         batch_size: int = 32,
         shuffle_val: bool = False,
+        num_workers: int = 0,
         clip_model_name: str = "laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
         **kwargs: Dict,  # absorb any other arguments
     ):
@@ -55,6 +56,7 @@ class CalvinDataModule(pl.LightningDataModule):
         self.modalities: List[str] = []
         self.transforms = transforms
         self.batch_size = batch_size
+        self.num_workers = num_workers
         self.clip_model_name = clip_model_name
 
         self.use_shm = "shm_dataset" in self.datasets_cfg.items()[0][1]["_target_"]
@@ -132,7 +134,7 @@ class CalvinDataModule(pl.LightningDataModule):
             key: DataLoader(
                 dataset,
                 batch_size=self.batch_size,
-                num_workers=dataset.num_workers,
+                num_workers=self.num_workers,
                 pin_memory=False,
                 shuffle=True,
                 collate_fn=self._collate_fn,
@@ -145,7 +147,7 @@ class CalvinDataModule(pl.LightningDataModule):
             key: DataLoader(
                 dataset,
                 batch_size=self.batch_size,
-                num_workers=dataset.num_workers,
+                num_workers=self.num_workers,
                 pin_memory=False,
                 shuffle=self.shuffle_val,
                 collate_fn=self._collate_fn,

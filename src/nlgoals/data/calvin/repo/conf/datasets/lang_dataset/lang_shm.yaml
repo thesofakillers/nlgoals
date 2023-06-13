@@ -6,4 +6,3 @@ proprio_state: ${proprioception_dims}
 obs_space: ${observation_space}
 pad: true
 lang_folder: "lang_annotations"
-num_workers: 2

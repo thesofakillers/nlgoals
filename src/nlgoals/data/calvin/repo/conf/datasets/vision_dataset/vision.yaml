@@ -7,4 +7,3 @@ proprio_state: ${proprioception_dims}
 obs_space: ${observation_space}
 pad: true
 lang_folder: "lang_annotations" #${datamodule.datasets.lang_dataset.lang_folder}
-num_workers: 2
