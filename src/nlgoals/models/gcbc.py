@@ -139,7 +139,7 @@ class GCBC(pl.LightningModule):
         )
         # pack: P x traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
         packed_gru_input = nn.utils.rnn.pack_padded_sequence(
-            gru_input, seq_lens - 1, batch_first=True, enforce_sorted=False
+            gru_input, seq_lens.detach().cpu(), batch_first=True, enforce_sorted=False
         )
         # what we refer to as "P"
         package_size = packed_gru_input.data.shape[0]
