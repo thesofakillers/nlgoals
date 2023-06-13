@@ -11,7 +11,6 @@ from pytorch_lightning.trainer.supporters import CombinedLoader
 from torch.utils.data import DataLoader
 import torch
 import torchvision
-from torch.nn.utils.rnn import pad_sequence
 
 from nlgoals.data.calvin.repo.code.datasets.utils.episode_utils import (
     load_dataset_statistics,
