@@ -11,7 +11,11 @@ from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders.vision_encoder import VisionEncoder
 from nlgoals.models.perception_encoders.proprio_encoder import ProprioEncoder
 from nlgoals.trainer.gcbc import TrainerConfig
-from nlgoals.interfaces.gcbc import calvin_gcbc_collate
+from nlgoals.interfaces.gcbc import (
+    calvin_gcbc_collate,
+    calvin_gcbc_textual,
+    calvin_gcbc_visual,
+)
 
 
 def train(args):
@@ -45,6 +49,8 @@ def train(args):
         clipt = CLIPT(**args.clipt.as_dict())
         clipt.load_state_dict(clipt_state_dict, strict=False)
         model.set_traj_encoder(clipt)
+    model.prepare_visual_batch = calvin_gcbc_visual
+    model.prepare_textual_batch = calvin_gcbc_textual
     # trainer
     script_host = "slurm" if "SLURM_JOB_ID" in os.environ else "local"
     logger = pl.loggers.WandbLogger(
