@@ -94,7 +94,7 @@ class GCBC(pl.LightningModule):
             batch: Dict of Dicts with keys
                 - "perception": Dict of tensors of shape B x S x ..., with keys
                     - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived states
-                    - "proprio_perc": B x S x 15, proprioceptive state
+                    - "proprio_perc": B x S x P, proprioceptive state
                     - "seq_lens": B, sequence lengths
                 - "text": Dict of tensors of shape B x L with keys
                     - "input_ids": B x L
