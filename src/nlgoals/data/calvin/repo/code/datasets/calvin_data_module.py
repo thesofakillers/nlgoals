@@ -1,19 +1,8 @@
-import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Tuple
 
 from transformers import CLIPImageProcessor
-
-import nlgoals.data.calvin.repo.code
-from nlgoals.data.calvin.repo.code.datasets.utils.episode_utils import (
-    load_dataset_statistics,
-)
-from nlgoals.data.calvin.repo.code.datasets.utils.shared_memory_utils import (
-    load_shm_lookup,
-    save_shm_lookup,
-    SharedMemoryLoader,
-)
 import hydra
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
@@ -24,7 +13,15 @@ import torch
 import torchvision
 from torch.nn.utils.rnn import pad_sequence
 
-logger = logging.getLogger(__name__)
+from nlgoals.data.calvin.repo.code.datasets.utils.episode_utils import (
+    load_dataset_statistics,
+)
+from nlgoals.data.calvin.repo.code.datasets.utils.shared_memory_utils import (
+    load_shm_lookup,
+    save_shm_lookup,
+    SharedMemoryLoader,
+)
+
 DEFAULT_TRANSFORM = OmegaConf.create({"train": None, "val": None})
 # this URL doesn't work anymore lol
 ONE_EP_DATASET_URL = "http://www.informatik.uni-freiburg.de/~meeso/50steps.tar.xz"
@@ -86,9 +83,7 @@ class CalvinDataModule(pl.LightningDataModule):
                 s = input("YES / no")
                 if s == "no":
                     exit()
-            logger.info(
-                f"downloading dataset to {self.training_dir} and {self.val_dir}"
-            )
+            print(f"downloading dataset to {self.training_dir} and {self.val_dir}")
             torchvision.datasets.utils.download_and_extract_archive(
                 ONE_EP_DATASET_URL, self.training_dir
             )
