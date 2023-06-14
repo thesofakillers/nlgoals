@@ -285,8 +285,9 @@ class GCBC(pl.LightningModule):
             batch["actions"][:, :-1, :],
             batch["perception"]["seq_lens"] - 1,
             batch_first=True,
+            enforce_sorted=False,
         )
-        loss = self.loss(means, log_scales, mixture_logits, packed_actions)
+        loss = self.loss(means, log_scales, mixture_logits, packed_actions.data)
 
         self.log(f"{traj_mode}/{phase}_loss", loss)
         # TODO: other metrics?
