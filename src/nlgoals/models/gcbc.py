@@ -145,8 +145,8 @@ class GCBC(pl.LightningModule):
         )
         # what we refer to as "P"
         package_size = packed_gru_input.data.shape[0]
-        # P x hidden_dimm
-        gru_out, _ = self.gru(packed_gru_input, self.h_0)
+        # P x hidden_dimm; don't provide the init hidden state - torch auto init to zeros
+        gru_out, _ = self.gru(packed_gru_input)
 
         # use gru output to calculate mean, log_scales and mixture_logits
         # each of shape (P x mixture_size * out_dim)
