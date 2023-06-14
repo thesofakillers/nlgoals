@@ -29,7 +29,9 @@ def train(args):
     # datamodule
     hydra.core.global_hydra.GlobalHydra.instance().clear()
     hydra.initialize_config_module(config_module="nlgoals.data.calvin.repo.conf")
-    datamodule_cfg = hydra.compose(config_name=args.data.config_name)
+    datamodule_cfg = hydra.compose(
+        config_name=args.data.config_name, overrides=["datasets=vision_lang"]
+    )
     datamodule_cfg.batch_size = args.data.batch_size
     datamodule_cfg.num_workers = args.data.num_workers
     datamodule_cfg.root_data_dir = args.data.data_dir

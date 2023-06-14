@@ -151,11 +151,11 @@ class GCBC(pl.LightningModule):
         # use gru output to calculate mean, log_scales and mixture_logits
         # each of shape (P x mixture_size * out_dim)
         # reshaped into (P x out_dim x mixture_size)
-        means = self.mean_linear(gru_out).view(package_size, -1, self.mixture_size)
-        log_scales = self.log_scale_linear(gru_out).view(
+        means = self.mean_linear(gru_out.data).view(package_size, -1, self.mixture_size)
+        log_scales = self.log_scale_linear(gru_out.data).view(
             package_size, -1, self.mixture_size
         )
-        mixture_logits = self.mixture_logits_linear(gru_out).view(
+        mixture_logits = self.mixture_logits_linear(gru_out.data).view(
             package_size, -1, self.mixture_size
         )
 
