@@ -289,7 +289,9 @@ class GCBC(pl.LightningModule):
         )
         loss = self.loss(means, log_scales, mixture_logits, packed_actions.data)
 
-        self.log(f"{traj_mode}/{phase}_loss", loss)
+        self.log(
+            f"{traj_mode}/{phase}_loss", loss, batch_size=packed_actions.data.shape[0]
+        )
         # TODO: other metrics?
 
         return loss
