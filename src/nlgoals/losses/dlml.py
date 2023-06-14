@@ -60,12 +60,15 @@ class DLMLLoss(nn.Module):
         Returns:
             loss: the loss tensor, optionally reduced
         """
+        out_dim = targets.shape[-1]
         # 1 / s
         inv_scales = torch.exp(-log_scales)
         # epsilon value to model the rounding when discretizing
         epsilon = (0.5 * self.y_range) / (self.num_target_vals - 1)
-        # broadcast targets to P x out_dim x mixture_size and center them
-        centered_targets = targets.unsqueeze(-1).expand_as(means) - means
+        # broadcast targets to P x out_dim x mixture_size
+        targets = targets.unsqueeze(-1).expand_as(means)
+        # and center them (y - mu)
+        centered_targets = targets - means
 
         upper_bound_in = inv_scales * (centered_targets + epsilon)
         lower_bound_in = inv_scales * (centered_targets - epsilon)
@@ -84,35 +87,48 @@ class DLMLLoss(nn.Module):
         # middle "edge" case (very rare)
         mid_in = inv_scales * centered_targets
         log_pdf_mid = mid_in - log_scales - 2.0 * F.softplus(mid_in)
-        log_prob_mid = log_pdf_mid - np.log((targets.shape[-1] - 1) / 2)
+        log_prob_mid = log_pdf_mid - np.log((out_dim - 1) / 2)
 
         # finally, we build our log likelihood tensor
-        log_probs = torch.zeros_like(targets)
-        # conditions for filling in tensor
-        is_near_min = targets < self.target_min_bound + 1e-3
-        is_near_max = targets > self.target_max_bound - 1e-3
-        is_prob_mass_sufficient = prob_mass > 1e-5
-        # And then fill it in accordingly
-        # lower edge
-        log_probs[is_near_min] = low_bound_log_prob[is_near_min]
-        # upper edge
-        log_probs[is_near_max] = upp_bound_log_prob[is_near_max]
-        # vanilla case
-        log_probs[
-            ~is_near_min & ~is_near_max & is_prob_mass_sufficient
-        ] = vanilla_log_prob[~is_near_min & ~is_near_max & is_prob_mass_sufficient]
-        # extreme case where prob mass is too small
-        log_probs[
-            ~is_near_min & ~is_near_max & ~is_prob_mass_sufficient
-        ] = log_prob_mid[~is_near_min & ~is_near_max & ~is_prob_mass_sufficient]
+        log_probs = torch.where(
+            # lower edge
+            targets < self.target_min_bound + 1e-3,
+            low_bound_log_prob,
+            torch.where(
+                # upper edge
+                targets > self.target_max_bound - 1e-3,
+                upp_bound_log_prob,
+                torch.where(
+                    prob_mass > 1e-5,
+                    # vanilla case
+                    vanilla_log_prob,
+                    # extreme case where prob mass is too small
+                    log_prob_mid,
+                ),
+            ),
+        )
 
         # modeling which mixture to sample from
         log_probs = log_probs + F.log_softmax(mixture_logits, dim=-1)
 
-        log_likelihood = torch.sum(torch.log_sum_exp(log_probs), dim=-1)
+        log_likelihood = torch.sum(log_sum_exp(log_probs), dim=-1)
         loss = -log_likelihood
 
         if reduction == "mean":
             loss = torch.mean(loss)
         elif reduction == "sum":
             loss = torch.sum(loss)
+
+        return loss
+
+
+def log_sum_exp(x):
+    """
+    numerically stable log_sum_exp implementation that prevents overflow
+    Credit to
+    https://github.com/lukashermann/hulc/blob/main/hulc/models/decoders/logistic_decoder_rnn.py
+    """
+    axis = len(x.size()) - 1
+    m, _ = torch.max(x, dim=axis)
+    m2, _ = torch.max(x, dim=axis, keepdim=True)
+    return m + torch.log(torch.sum(torch.exp(x - m2), dim=axis))
