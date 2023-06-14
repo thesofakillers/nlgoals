@@ -64,8 +64,8 @@ class DLMLLoss(nn.Module):
         inv_scales = torch.exp(-log_scales)
         # epsilon value to model the rounding when discretizing
         epsilon = (0.5 * self.y_range) / (self.num_target_vals - 1)
-        # broadcast targets to B x out_dim x mixture_size and center them
-        centered_targets = targets.unsqueeze(-1).repeat(1, self.mixture_size) - means
+        # broadcast targets to P x out_dim x mixture_size and center them
+        centered_targets = targets.unsqueeze(-1).expand_as(means) - means
 
         upper_bound_in = inv_scales * (centered_targets + epsilon)
         lower_bound_in = inv_scales * (centered_targets - epsilon)
