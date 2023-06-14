@@ -125,9 +125,11 @@ class GCBC(pl.LightningModule):
         # B * (S-1) x traj_encoder.emb_dim
         traj_embs = self._get_traj_embs(batch, curr_frames, traj_mode)
 
-        # B * (S-1) x visual_encoder.emb_dim
+        # B * (S-1) x visual_encoder.emb_dim. Need to use reshape since we indexed
+        curr_frames = curr_frames.reshape(-1, *curr_frames.shape[2:])
         visual_embs = self.vision_encoder(curr_frames)
-        # B * (S-1) x proprio_encoder.emb_dim
+        # B * (S-1) x proprio_encoder.emb_dim. Need to use reshape since we indexed
+        curr_proprio_perc = curr_proprio_perc.reshape(-1, *curr_proprio_perc.shape[2:])
         propr_embs = self.proprio_encoder(curr_proprio_perc)
 
         # B * (S-1) x (visual_encoder.emb_dim + proprio_encoder.emb_dim)
@@ -299,6 +301,11 @@ class GCBC(pl.LightningModule):
         self._fit_step(visual_batch, "val", "visual")
         textual_batch = self.prepare_textual_batch(batch)
         self._fit_step(textual_batch, "val", "textual")
+
+    def configure_optimizers(self):
+        params_to_update = filter(lambda p: p.requires_grad, self.parameters())
+        optimizer = torch.optim.Adam(params_to_update, lr=5e-5)
+        return optimizer
 
     def test_step(self, batch, batch_idx):
         raise NotImplementedError
