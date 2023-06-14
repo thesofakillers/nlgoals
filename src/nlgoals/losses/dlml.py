@@ -63,7 +63,7 @@ class DLMLLoss(nn.Module):
         # 1 / s
         inv_scales = torch.exp(-log_scales)
         # epsilon value to model the rounding when discretizing
-        epsilon = (0.5 * self.y_range) / (self.num_y_vals - 1)
+        epsilon = (0.5 * self.y_range) / (self.num_target_vals - 1)
         # broadcast targets to B x out_dim x mixture_size and center them
         centered_targets = targets.unsqueeze(-1).repeat(1, self.mixture_size) - means
 
