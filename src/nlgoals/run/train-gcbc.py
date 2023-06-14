@@ -30,7 +30,10 @@ def train(args):
     hydra.core.global_hydra.GlobalHydra.instance().clear()
     hydra.initialize_config_module(config_module="nlgoals.data.calvin.repo.conf")
     datamodule_cfg = hydra.compose(
-        config_name=args.data.config_name, overrides=["datasets=vision_lang"]
+        config_name=args.data.config_name,
+        overrides=None
+        if args.data.shared_memory is True
+        else ["datasets=vision_lang"],
     )
     datamodule_cfg.batch_size = args.data.batch_size
     datamodule_cfg.num_workers = args.data.num_workers
@@ -110,6 +113,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data.data_dir", type=str, required=True, help="Must be absolute path"
     )
+    parser.add_argument("--data.shared_memory", type=bool, default=True)
 
     parser.add_dataclass_arguments(TrainerConfig, "trainer")
     parser.add_argument("--seed", type=int, default=42)
