@@ -137,9 +137,9 @@ class GCBC(pl.LightningModule):
 
         # B x (S-1) x (traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
         gru_input = torch.cat([traj_embs, perc_embs], dim=-1).view(
-            batch_size, max_seq_len, -1
+            batch_size, max_seq_len - 1, -1
         )
-        # pack: P x traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
+        # pack: P x (traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
         packed_gru_input = nn.utils.rnn.pack_padded_sequence(
             gru_input, seq_lens.detach().cpu(), batch_first=True, enforce_sorted=False
         )
