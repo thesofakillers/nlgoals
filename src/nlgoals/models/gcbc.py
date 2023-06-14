@@ -77,6 +77,8 @@ class GCBC(pl.LightningModule):
             mixture_size, target_max_bound, target_min_bound, num_target_vals
         )
 
+        self.mixture_size = mixture_size
+
     def set_traj_encoder(self, traj_encoder: Union[nn.Module, pl.LightningModule]):
         """Public function for setting the trajectory encoder externally after init"""
         self.traj_encoder = traj_encoder
