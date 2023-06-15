@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=TaskClassifier
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=04:00:00
+#SBATCH --mem-per-gpu=120G
+#SBATCH --output=slurm/outputs/gcbc_train_%A.out
+#SBATCH --constraint=scratch-node
+
+
+source "./slurm/.secrets"
+
+source_path=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D.zip
+source ./slurm/setup_calvin.sh $source_path
+# this will have setup the variable $data_dir
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+srun python src/nlgoals/run/train-gcbc.py \
+  --data.config_name datamodule.yaml \
+  --clipt_checkpoint checkpoints/clipt/clipt-v1.ckpt \
+  --clipt.precomputed_clip False \
+  --trainer.enable_progress_bar False \
+  --data.data_dir=$data_dir
+  --trainer.logging.enable True \
+  --data.num_workers 18 \
+  --data.shared_memory True
