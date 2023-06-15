@@ -31,7 +31,7 @@ def train(args):
     hydra.initialize_config_module(config_module="nlgoals.data.calvin.repo.conf")
     datamodule_cfg = hydra.compose(
         config_name=args.data.config_name,
-        overrides=None
+        overrides=[]
         if args.data.shared_memory is True
         else ["datasets=vision_lang"],
     )
