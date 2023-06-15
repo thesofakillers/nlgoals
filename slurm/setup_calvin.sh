@@ -4,8 +4,8 @@
 # Unzips .zip data into the data folder
 # Takes ~ 20 minutes to run
 
-# define source file and target dir
-source_file=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D.zip
+# define source file (passed as arg) and target dir
+source_file=$1
 target_dir=$TMPDIR/data
 
 # make the target dir
