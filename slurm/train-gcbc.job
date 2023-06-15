@@ -2,7 +2,7 @@
 
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=TaskClassifier
+#SBATCH --job-name=GCBC
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --time=04:00:00
@@ -28,7 +28,7 @@ srun python src/nlgoals/run/train-gcbc.py \
   --clipt_checkpoint checkpoints/clipt/clipt-v1.ckpt \
   --clipt.precomputed_clip False \
   --trainer.enable_progress_bar False \
-  --data.data_dir=$data_dir
+  --data.data_dir=$data_dir \
   --trainer.logging.enable True \
   --data.num_workers 18 \
   --data.shared_memory True
