@@ -77,7 +77,7 @@ class DLMLLoss(nn.Module):
         lower_cdf = torch.sigmoid(lower_bound_in)
 
         prob_mass = upper_cdf - lower_cdf
-        vanilla_log_prob = torch.sum(torch.clamp(prob_mass, min=1e-12))
+        vanilla_log_prob = torch.log(torch.clamp(prob_mass, min=1e-12))
 
         # handle edges
         # log probability for edge case of 0 (before scaling)
