@@ -283,7 +283,7 @@ class GCBC(pl.LightningModule):
         # P x out_dim
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
             batch["actions"][:, :-1, :],
-            batch["perception"]["seq_lens"] - 1,
+            (batch["perception"]["seq_lens"] - 1).detach().cpu(),
             batch_first=True,
             enforce_sorted=False,
         )
