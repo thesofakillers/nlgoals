@@ -23,5 +23,5 @@ echo "Unzipping..."
 unzip -q $target_dir/$source_file_name -d $target_dir
 echo "Done."
 
-$data_dir=$target_dir/$source_file_name_no_ext/
+data_dir=$target_dir/$source_file_name_no_ext/
 echo "Data files ready in $data_dir"
