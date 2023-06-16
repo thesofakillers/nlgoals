@@ -60,6 +60,7 @@ class CalvinDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.clip_model_name = clip_model_name
         self.text_processor = CLIPTokenizerFast.from_pretrained(clip_model_name)
+        self.image_processor = CLIPImageProcessor.from_pretrained(clip_model_name)
 
         self.use_shm = "shm_dataset" in self.datasets_cfg.items()[0][1]["_target_"]
 
@@ -191,12 +192,13 @@ class CalvinDataModule(pl.LightningDataModule):
         }
 
         if self.clip_model_name is not None:
-            processor = CLIPImageProcessor.from_pretrained(self.clip_model_name)
-            clip_transform = lambda x: processor(x, return_tensors="pt").pixel_values
             clip_transform_keys = ["rgb_static", "rgb_gripper"]
             for key in clip_transform_keys:
-                self.train_transforms[key] = clip_transform
-                self.val_transforms[key] = clip_transform
+                self.train_transforms[key] = self._clip_transform
+                self.val_transforms[key] = self._clip_transform
+
+    def _clip_transform(self, x):
+        return self.image_processor(x, return_tensors="pt").pixel_values
 
     def _collate_fn(self, batch_list: List[Dict]) -> Any:
         """
