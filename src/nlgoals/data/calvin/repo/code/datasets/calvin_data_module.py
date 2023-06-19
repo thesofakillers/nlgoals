@@ -59,7 +59,7 @@ class CalvinDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.clip_model_name = clip_model_name
-        self.image_processor = CLIPImageProcessor.from_pretrained(clip_model_name)
+        self.clip_img_transform = CLIPImageTransform(clip_model_name)
         self.collator = Collator(clip_model_name)
 
         self.use_shm = "shm_dataset" in self.datasets_cfg.items()[0][1]["_target_"]
@@ -191,17 +191,25 @@ class CalvinDataModule(pl.LightningDataModule):
             for key, val in self.val_transforms.items()
         }
 
-        # if self.clip_model_name is not None:
-        #     clip_transform_keys = ["rgb_static", "rgb_gripper"]
-        #     for key in clip_transform_keys:
-        #         self.train_transforms[key] = self._clip_transform
-        #         self.val_transforms[key] = self._clip_transform
+        clip_transform_keys = ["rgb_static", "rgb_gripper"]
+        for key in clip_transform_keys:
+            self.train_transforms[key] = self.clip_img_transform
+            self.val_transforms[key] = self.clip_img_transform
 
-    def _clip_transform(self, x):
-        return self.image_processor(x, return_tensors="pt").pixel_values
+
+class CLIPImageTransform:
+    """Callable object to enable pickling"""
+
+    def __init__(self, clip_model_name: str):
+        self.image_processor = CLIPImageProcessor.from_pretrained(clip_model_name)
+
+    def __call__(self, images):
+        return self.image_processor(images=images, return_tensors="pt").pixel_values
 
 
 class Collator:
+    """Callable object to enable pickling"""
+
     def __init__(self, clip_model_name: str):
         self.text_processor = CLIPTokenizerFast.from_pretrained(clip_model_name)
 
