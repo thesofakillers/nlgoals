@@ -39,7 +39,7 @@ def train(args):
     datamodule_cfg.num_workers = args.data.num_workers
     datamodule_cfg.root_data_dir = args.data.data_dir
     datamodule = hydra.utils.instantiate(datamodule_cfg)
-    datamodule.custom_collate_fn = calvin_gcbc_collate
+    datamodule.collator.custom_collate_fn = calvin_gcbc_collate
     # model
     model = GCBC(
         traj_encoder_kwargs=args.clipt.as_dict(),

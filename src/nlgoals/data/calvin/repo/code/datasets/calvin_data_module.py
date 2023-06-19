@@ -59,8 +59,8 @@ class CalvinDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.clip_model_name = clip_model_name
-        self.text_processor = CLIPTokenizerFast.from_pretrained(clip_model_name)
         self.image_processor = CLIPImageProcessor.from_pretrained(clip_model_name)
+        self.collator = Collator(clip_model_name)
 
         self.use_shm = "shm_dataset" in self.datasets_cfg.items()[0][1]["_target_"]
 
@@ -140,7 +140,7 @@ class CalvinDataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=False,
                 shuffle=True,
-                collate_fn=self._collate_fn,
+                collate_fn=self.collator,
             )
             for key, dataset in self.train_datasets.items()
         }
@@ -153,7 +153,7 @@ class CalvinDataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=False,
                 shuffle=self.shuffle_val,
-                collate_fn=self._collate_fn,
+                collate_fn=self.collator,
             )
             for key, dataset in self.val_datasets.items()
         }
@@ -191,16 +191,21 @@ class CalvinDataModule(pl.LightningDataModule):
             for key, val in self.val_transforms.items()
         }
 
-        if self.clip_model_name is not None:
-            clip_transform_keys = ["rgb_static", "rgb_gripper"]
-            for key in clip_transform_keys:
-                self.train_transforms[key] = self._clip_transform
-                self.val_transforms[key] = self._clip_transform
+        # if self.clip_model_name is not None:
+        #     clip_transform_keys = ["rgb_static", "rgb_gripper"]
+        #     for key in clip_transform_keys:
+        #         self.train_transforms[key] = self._clip_transform
+        #         self.val_transforms[key] = self._clip_transform
 
     def _clip_transform(self, x):
         return self.image_processor(x, return_tensors="pt").pixel_values
 
-    def _collate_fn(self, batch_list: List[Dict]) -> Any:
+
+class Collator:
+    def __init__(self, clip_model_name: str):
+        self.text_processor = CLIPTokenizerFast.from_pretrained(clip_model_name)
+
+    def __call__(self, batch_list):
         """
         First handles padding, tokenization and all that stuff.
         Then allows user to make further modifications via self.custom_collate_fn
@@ -252,25 +257,6 @@ class CalvinDataModule(pl.LightningDataModule):
             padded_batch["lang_attn_mask"] = attention_mask
 
         return padded_batch
-
-    def _collate_tokenization(
-        self, batch_list: List[Dict]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Takes care of tokenization
-
-        Args:
-            batch_list: see _collate_fn
-
-        Returns:
-            input_ids: (B x MSL)
-            attention_mask: (B x MSL)
-            where MSL is the maximum sentence length in the batch
-        """
-        lang_batch = self.text_processor(
-            [x["lang"] for x in batch_list], padding=True, return_tensors="pt"
-        )
-        return lang_batch["input_ids"], lang_batch["attention_mask"]
 
     def _collate_padding(
         self, batch_list: List[Dict]
@@ -334,6 +320,25 @@ class CalvinDataModule(pl.LightningDataModule):
         padded_batch["idx"] = torch.Tensor([element["idx"] for element in batch_list])
 
         return padded_batch
+
+    def _collate_tokenization(
+        self, batch_list: List[Dict]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Takes care of tokenization
+
+        Args:
+            batch_list: see _collate_fn
+
+        Returns:
+            input_ids: (B x MSL)
+            attention_mask: (B x MSL)
+            where MSL is the maximum sentence length in the batch
+        """
+        lang_batch = self.text_processor(
+            [x["lang"] for x in batch_list], padding=True, return_tensors="pt"
+        )
+        return lang_batch["input_ids"], lang_batch["attention_mask"]
 
     @staticmethod
     def custom_collate_fn(
