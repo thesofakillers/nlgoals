@@ -46,8 +46,14 @@ def get_checkpoints_for_epochs(
     if isinstance(epochs, str):
         epochs = epochs.split(",")
         epochs = list(map(int, epochs))
-    ep = lambda s: int(s.stem.split("=")[1])
-    return [chk for chk in get_all_checkpoints(experiment_folder) if ep(chk) in epochs]
+    # ep = lambda s: int(s.stem.split("=")[1])
+    return [
+        chk for chk in get_all_checkpoints(experiment_folder) if get_ep(chk) in epochs
+    ]
+
+
+def get_ep(checkpoint):
+    return int(checkpoint.stem.split("=")[1])
 
 
 def get_all_checkpoints(experiment_folder: Path) -> List:
@@ -55,11 +61,15 @@ def get_all_checkpoints(experiment_folder: Path) -> List:
         checkpoint_folder = experiment_folder / "saved_models"
         if checkpoint_folder.is_dir():
             checkpoints = sorted(
-                Path(checkpoint_folder).iterdir(), key=lambda chk: chk.stat().st_mtime
+                Path(checkpoint_folder).iterdir(), key=get_chk_st_mtime
             )
             if len(checkpoints):
                 return [chk for chk in checkpoints if chk.suffix == ".ckpt"]
     return []
+
+
+def get_chk_st_mtime(chk):
+    return chk.stat().st_mtime
 
 
 def get_last_checkpoint(experiment_folder: Path) -> Union[Path, None]:
