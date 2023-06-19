@@ -156,7 +156,7 @@ class DiskDataset(BaseDataset):
                     episode_lookup.append(idx)
                 cnt += 1
 
-        return np.array(episode_lookup), lang_lookup, lang_ann
+        return np.array(episode_lookup), np.array(lang_lookup), np.array(lang_ann)
 
     def _build_file_indices(self, abs_datasets_dir: Path) -> np.ndarray:
         """
