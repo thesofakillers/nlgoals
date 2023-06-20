@@ -140,6 +140,7 @@ class CalvinDataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=False,
                 shuffle=True,
+                persistent_workers=True,
                 collate_fn=self.collator,
             )
             for key, dataset in self.train_datasets.items()
@@ -153,6 +154,7 @@ class CalvinDataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=False,
                 shuffle=self.shuffle_val,
+                persistent_workers=True,
                 collate_fn=self.collator,
             )
             for key, dataset in self.val_datasets.items()
