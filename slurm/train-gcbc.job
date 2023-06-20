@@ -24,7 +24,7 @@ module load Anaconda3/2022.05
 source activate nlgoals
 
 srun python src/nlgoals/run/train-gcbc.py \
-  --data.config_name datamodule.yaml \
+  --data.config_name default.yaml \
   --clipt_checkpoint checkpoints/clipt/clipt-v1.ckpt \
   --clipt.precomputed_clip False \
   --trainer.enable_progress_bar False \

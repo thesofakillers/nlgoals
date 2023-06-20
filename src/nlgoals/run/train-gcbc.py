@@ -28,7 +28,9 @@ def train(args):
     pl.seed_everything(args.seed, workers=True)
     # datamodule
     hydra.core.global_hydra.GlobalHydra.instance().clear()
-    hydra.initialize_config_module(config_module="nlgoals.data.calvin.repo.conf")
+    hydra.initialize_config_module(
+        config_module="nlgoals.data.calvin.repo.conf.datamodule"
+    )
     datamodule_cfg = hydra.compose(
         config_name=args.data.config_name,
         overrides=[] if args.data.shared_memory is True else ["datasets=vision_lang"],
