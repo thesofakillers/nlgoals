@@ -5,7 +5,7 @@
 #SBATCH --job-name=GCBC
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=04:00:00
+#SBATCH --time=24:00:00
 #SBATCH --mem-per-gpu=120G
 #SBATCH --output=slurm/outputs/gcbc_train_%A.out
 #SBATCH --constraint=scratch-node
@@ -30,5 +30,7 @@ srun python src/nlgoals/run/train-gcbc.py \
   --trainer.enable_progress_bar False \
   --data.data_dir=$data_dir \
   --trainer.logging.enable True \
-  --data.num_workers 18 \
-  --data.shared_memory True
+  --data.num_workers 8 \
+  --data.batch_size 32 \
+  --data.shared_memory True \
+  --seed 1
