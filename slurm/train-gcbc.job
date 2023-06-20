@@ -32,4 +32,5 @@ srun python src/nlgoals/run/train-gcbc.py \
   --trainer.logging.enable True \
   --data.num_workers 8 \
   --data.batch_size 32 \
-  --data.shared_memory True
+  --data.shared_memory True \
+  --seed 1
