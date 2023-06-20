@@ -1,8 +1,9 @@
-from typing import Dict, Union
+from typing import Dict, Union, Tuple
 
 import torch.nn as nn
 import torch
 import pytorch_lightning as pl
+import torchmetrics.functional as tmf
 
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders import VisionEncoder, ProprioEncoder
@@ -73,7 +74,7 @@ class GCBC(pl.LightningModule):
         self.log_scale_linear = nn.Linear(hidden_dim, total_out_dim)
         self.mixture_logits_linear = nn.Linear(hidden_dim, total_out_dim)
 
-        self.loss = DLMLLoss(
+        self.dlml = DLMLLoss(
             mixture_size, target_max_bound, target_min_bound, num_target_vals
         )
 
@@ -88,7 +89,7 @@ class GCBC(pl.LightningModule):
 
     def forward(
         self, batch: Dict[str, Dict[str, torch.Tensor]], traj_mode: str = "visual"
-    ) -> Dict[str, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Forward pass through the network.
 
@@ -106,7 +107,7 @@ class GCBC(pl.LightningModule):
                 trajectories. If "visual", the "text" key must be present in `batch`
 
         Returns:
-            Dict of packed tensors of shape (P x out_dim x mixture_size) with keys
+            Tuple of packed tensors of shape (P x out_dim x mixture_size) with order
             'means'
             'log_scales'
             'mixture_logits'
@@ -161,11 +162,7 @@ class GCBC(pl.LightningModule):
             package_size, -1, self.mixture_size
         )
 
-        return {
-            "means": means,
-            "log_scales": log_scales,
-            "mixture_logits": mixture_logits,
-        }
+        return means, log_scales, mixture_logits
 
     def _get_traj_embs(
         self, batch: Dict, curr_frames: torch.Tensor, traj_mode: str
@@ -279,7 +276,7 @@ class GCBC(pl.LightningModule):
             the loss for this batch
         """
         # P x out_dim x mixture_size
-        means, log_scales, mixture_logits = self(batch, traj_mode).values()
+        means, log_scales, mixture_logits = self(batch, traj_mode)
         # P x out_dim
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
             batch["actions"][:, :-1, :],
@@ -287,21 +284,57 @@ class GCBC(pl.LightningModule):
             batch_first=True,
             enforce_sorted=False,
         )
-        loss = self.loss(means, log_scales, mixture_logits, packed_actions.data)
 
-        self.log(
-            f"{traj_mode}/{phase}_loss", loss, batch_size=packed_actions.data.shape[0]
+        loss = self.dlml.loss(means, log_scales, mixture_logits, packed_actions.data)
+
+        # P x out_dim
+        pred_act = self.dlml.sample(means, log_scales, mixture_logits)
+        # scalar - mean action similarity for the batch
+        action_sim = (
+            tmf.pairwise_cosine_similarity(
+                pred_act, packed_actions.data, reduction=None
+            )
+            .diag()
+            .mean()
         )
-        # TODO: other metrics?
+
+        package_size = packed_actions.data.shape[0]
+        self.log(f"{traj_mode}/{phase}_loss", loss, batch_size=package_size)
+        self.log(f"{traj_mode}/{phase}_action_sim", action_sim, batch_size=package_size)
 
         return loss
+
+    def act(
+        self,
+        batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]],
+        traj_mode: str,
+    ) -> torch.Tensor:
+        """
+        Predicts a next action for a given input batch of data
+
+        Args:
+            batch: Dict, with the following keys
+                - 'perception': Dict of tensors of shape B x S x ..., with keys
+                    - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived state
+                    - "proprio_perc": B x S x 15, proprioceptive state
+                    - "seq_lens": B, sequence lengths
+                - 'text': Dict of tensors of shape B x L x ..., with keys
+                    - "input_ids": B x L
+                    - "attention_mask": B x L
+            traj_mode: "visual" or "textual"
+        """
+        # P x out_dim x mixture_size
+        means, log_scales, mixture_logits = self(batch, traj_mode)
+
+        pred_action = self.dlml.sample(means, log_scales, mixture_logits)
+        return pred_action
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
         visual_batch = self.prepare_visual_batch(batch)
         loss = self._fit_step(visual_batch, "train", "visual")
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx) -> None:
         visual_batch = self.prepare_visual_batch(batch)
         self._fit_step(visual_batch, "val", "visual")
         textual_batch = self.prepare_textual_batch(batch)
@@ -313,7 +346,7 @@ class GCBC(pl.LightningModule):
         return optimizer
 
     def test_step(self, batch, batch_idx):
-        raise NotImplementedError
+        raise NotImplementedError("Evaluation is handled by an external script.")
 
     @staticmethod
     def prepare_textual_batch(batch):
