@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 
 
-class DLMLLoss(nn.Module):
+class DLMLLoss:
     """
     Discretized Logistic Mixture Likelihood loss
 
@@ -38,7 +38,7 @@ class DLMLLoss(nn.Module):
         self.num_target_vals = num_target_vals
         self.y_range = target_max_bound - target_min_bound
 
-    def forward(
+    def loss(
         self,
         means: torch.Tensor,
         log_scales: torch.Tensor,
@@ -120,6 +120,46 @@ class DLMLLoss(nn.Module):
             loss = torch.sum(loss)
 
         return loss
+
+    def sample(
+        self,
+        means: torch.Tensor,
+        log_scales: torch.Tensor,
+        mixture_logits: torch.Tensor,
+    ) -> torch.Tensor:
+        """
+        Samples a next action from our mixture of logistic distributions
+
+        Args:
+            means: (P x out_dim x mixture_size) means of the mixture
+                out_dim is the number of dimensions in the target variable
+            log_scales: (P x out_dim x mixture_size) log scales of the mixture
+            mixture_logits: (P x out_dim x mixture_size) logits of the mixture
+
+        Returns:
+            P x out_dim tensor of sampled actions
+        """
+        # gumbel-max sampling
+        r1, r2 = 1e-5, 1.0 - 1e-5
+        temp = (r1 - r2) * torch.rand(means.shape, device=means.device) + r2
+        temp = mixture_logits - torch.log(-torch.log(temp))
+        argmax = torch.argmax(temp, -1)
+
+        # (K dimensional vector, e.g. [0 0 0 1 0 0 0 0] for k=8, argmax=3
+        dist_one_hot = torch.eye(self.mixture_size)[argmax]
+
+        # use it to sample, and aggregate
+        sampled_log_scale = (dist_one_hot * log_scales).sum(dim=-1)
+        sampled_mean = (dist_one_hot * means).sum(dim=-1)
+
+        # now we can sample from the sampled distribution. Use inverse scaling
+        y = (r1 - r2) * torch.rand(sampled_mean.shape, device=sampled_mean.device) + r2
+
+        sampled_output = sampled_mean + torch.exp(sampled_log_scale) * (
+            torch.log(y) - torch.log(1 - y)
+        )
+
+        return sampled_output
 
 
 def log_sum_exp(x):
