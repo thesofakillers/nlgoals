@@ -198,7 +198,7 @@ class CalvinDataModule(pl.LightningDataModule):
 
 
 class CLIPImageTransform:
-    """Callable object to enable pickling"""
+    """Callable object to enable pickling necessary for multiprocessing"""
 
     def __init__(self, clip_model_name: str):
         self.image_processor = CLIPImageProcessor.from_pretrained(clip_model_name)
@@ -208,7 +208,7 @@ class CLIPImageTransform:
 
 
 class Collator:
-    """Callable object to enable pickling"""
+    """Callable object to enable pickling necessary for multiprocessing"""
 
     def __init__(self, clip_model_name: str):
         self.text_processor = CLIPTokenizerFast.from_pretrained(clip_model_name)
