@@ -146,7 +146,7 @@ class DLMLLoss:
         argmax = torch.argmax(temp, -1)
 
         # (K dimensional vector, e.g. [0 0 0 1 0 0 0 0] for k=8, argmax=3
-        dist_one_hot = torch.eye(self.mixture_size)[argmax]
+        dist_one_hot = torch.eye(self.mixture_size, device=means.device)[argmax]
 
         # use it to sample, and aggregate
         sampled_log_scale = (dist_one_hot * log_scales).sum(dim=-1)
