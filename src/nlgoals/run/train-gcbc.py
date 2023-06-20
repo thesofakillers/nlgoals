@@ -106,7 +106,7 @@ if __name__ == "__main__":
     parser.add_class_arguments(ProprioEncoder, "proprio_encoder")
 
     parser.add_argument(
-        "--data.config_name", type=str, required=True, default="datamodule.yaml"
+        "--data.config_name", type=str, required=True, default="default.yaml"
     )
     parser.add_argument("--data.batch_size", type=int, default=32)
     parser.add_argument("--data.num_workers", type=int, default=18)

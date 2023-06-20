@@ -14,7 +14,9 @@ from nlgoals.interfaces.gcbc import (
 
 def main(args):
     hydra.core.global_hydra.GlobalHydra.instance().clear()
-    hydra.initialize_config_module(config_module="nlgoals.data.calvin.repo.conf")
+    hydra.initialize_config_module(
+        config_module="nlgoals.data.calvin.repo.conf.datamodule"
+    )
     datamodule_cfg = hydra.compose(
         config_name=args.data.config_name,
         overrides=[] if args.data.shared_memory is True else ["datasets=vision_lang"],
@@ -44,7 +46,7 @@ if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
     parser.add_argument(
-        "--data.config_name", type=str, required=True, default="datamodule.yaml"
+        "--data.config_name", type=str, required=True, default="default.yaml"
     )
     parser.add_argument("--data.batch_size", type=int, default=32)
     parser.add_argument("--data.num_workers", type=int, default=18)
