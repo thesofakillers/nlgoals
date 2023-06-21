@@ -21,6 +21,7 @@ from nlgoals.interfaces.gcbc import (
 
 def train(args):
     # device
+    script_host = "slurm" if "SLURM_JOB_ID" in os.environ else "local"
     logger = pl.loggers.WandbLogger(
         job_type="sweep" if not args.debug else "debug",
         entity="giulio-uva",
@@ -72,7 +73,6 @@ def train(args):
     model.prepare_visual_batch = calvin_gcbc_visual
     model.prepare_textual_batch = calvin_gcbc_textual
     # trainer
-    script_host = "slurm" if "SLURM_JOB_ID" in os.environ else "local"
     trainer = pl.Trainer(
         max_epochs=2,
         accelerator=args.trainer.accelerator,
