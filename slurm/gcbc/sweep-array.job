@@ -2,13 +2,13 @@
 
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=PreCLIP
+#SBATCH --job-name=GCBC
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=1:00:00
+#SBATCH --time=00:30:00
 #SBATCH --mem-per-gpu=120G
 #SBATCH --array=1-42%3
-#SBATCH --output=slurm/outputs/pre-clip-calvin_%A_%a.out
+#SBATCH --output=slurm/outputs/sweep_gcbc_%A_%a.out
 #SBATCH --constraint=scratch-node
 
 # sets wandb sweep ID
