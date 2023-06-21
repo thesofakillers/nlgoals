@@ -342,7 +342,7 @@ class GCBC(pl.LightningModule):
 
     def configure_optimizers(self):
         params_to_update = filter(lambda p: p.requires_grad, self.parameters())
-        optimizer = torch.optim.Adam(params_to_update, lr=5e-5)
+        optimizer = torch.optim.AdamW(params_to_update, lr=2e-4)
         return optimizer
 
     def test_step(self, batch, batch_idx):
