@@ -19,6 +19,7 @@ class CheckpointConfig:
 
 @dataclass
 class TrainerConfig:
+    min_epochs: int = 1
     max_epochs: int = 100
     accelerator: Accelerator = "auto"
     devices: int = 1
@@ -26,3 +27,6 @@ class TrainerConfig:
     logging: LoggingConfig = LoggingConfig()
     checkpoint: CheckpointConfig = CheckpointConfig()
     log_every_n_steps: int = 50
+    val_check_interval: float = 0.1
+    check_val_every_n_epoch = None
+    precision = 16

@@ -78,6 +78,7 @@ def train(args):
         **args.trainer.checkpoint.as_dict()
     )
     trainer = pl.Trainer(
+        min_epochs=args.trainer.min_epochs,
         max_epochs=args.trainer.max_epochs,
         accelerator=args.trainer.accelerator,
         devices=args.trainer.devices,
@@ -86,6 +87,9 @@ def train(args):
         logger=logger,
         callbacks=[early_stopping, checkpoint_callback],
         log_every_n_steps=args.trainer.log_every_n_steps,
+        val_check_interval=args.trainer.val_check_interval,
+        check_val_every_n_epoch=args.trainer.check_val_every_n_epoch,
+        precision=args.trianer.precision,
     )
 
     trainer.fit(model, datamodule)
