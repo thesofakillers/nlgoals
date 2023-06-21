@@ -23,14 +23,14 @@ class GCBC(pl.LightningModule):
         traj_encoder_kwargs: Dict,
         vision_encoder_kwargs: Dict,
         proprio_encoder_kwargs: Dict,
-        hidden_dim: int = 2048,
+        hidden_dim: int = 512,
         out_dim: int = 7,
         mixture_size: int = 10,
         target_max_bound: float = 1.0,
         target_min_bound: float = -1.0,
         num_target_vals: int = 256,
         rolling_traj: bool = False,
-        lr: float = 2e-4,
+        lr: float = 1e-5,
     ) -> None:
         """
         Args:
