@@ -65,7 +65,6 @@ def train(args):
         log_model=False,
         tags=["gcbc"],
     )
-    print(logger.experiment.config)
 
     # override config with wandb sweep config
     args.gcbc.lr = logger.experiment.config["lr"]
@@ -119,6 +118,7 @@ def train(args):
         val_check_interval=args.trainer.val_check_interval,
         check_val_every_n_epoch=args.trainer.check_val_every_n_epoch,
         precision=args.trainer.precision,
+        plugins=[pl.pytorch.plugins.environments.SLURMEnvironment(auto_requeue=False)],
     )
 
     trainer.fit(model, datamodule)
