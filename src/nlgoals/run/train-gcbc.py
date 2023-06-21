@@ -89,7 +89,7 @@ def train(args):
         log_every_n_steps=args.trainer.log_every_n_steps,
         val_check_interval=args.trainer.val_check_interval,
         check_val_every_n_epoch=args.trainer.check_val_every_n_epoch,
-        precision=args.trianer.precision,
+        precision=args.trainer.precision,
     )
 
     trainer.fit(model, datamodule)
