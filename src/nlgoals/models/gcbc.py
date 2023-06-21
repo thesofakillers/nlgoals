@@ -30,6 +30,7 @@ class GCBC(pl.LightningModule):
         target_min_bound: float = -1.0,
         num_target_vals: int = 256,
         rolling_traj: bool = False,
+        lr: float = 2e-4,
     ) -> None:
         """
         Args:
@@ -49,6 +50,7 @@ class GCBC(pl.LightningModule):
             num_target_vals: number of values in the discretized target
             rolling_traj: whether to update the trajectory embedding at each step,
                 default False
+            lr: learning rate
         """
         super().__init__()
         self.save_hyperparameters()
@@ -79,6 +81,7 @@ class GCBC(pl.LightningModule):
         )
 
         self.mixture_size = mixture_size
+        self.lr = lr
 
     def set_traj_encoder(self, traj_encoder: Union[nn.Module, pl.LightningModule]):
         """Public function for setting the trajectory encoder externally after init"""
@@ -342,7 +345,7 @@ class GCBC(pl.LightningModule):
 
     def configure_optimizers(self):
         params_to_update = filter(lambda p: p.requires_grad, self.parameters())
-        optimizer = torch.optim.AdamW(params_to_update, lr=2e-4)
+        optimizer = torch.optim.AdamW(params_to_update, lr=self.lr)
         return optimizer
 
     def test_step(self, batch, batch_idx):
