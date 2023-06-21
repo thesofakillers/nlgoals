@@ -118,7 +118,7 @@ def train(args):
         val_check_interval=args.trainer.val_check_interval,
         check_val_every_n_epoch=args.trainer.check_val_every_n_epoch,
         precision=args.trainer.precision,
-        plugins=[pl.pytorch.plugins.environments.SLURMEnvironment(auto_requeue=False)],
+        plugins=[pl.plugins.environments.SLURMEnvironment(auto_requeue=False)],
     )
 
     trainer.fit(model, datamodule)
