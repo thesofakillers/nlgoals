@@ -118,12 +118,10 @@ def train(args):
         val_check_interval=args.trainer.val_check_interval,
         check_val_every_n_epoch=args.trainer.check_val_every_n_epoch,
         precision=args.trainer.precision,
-        plugins=[pl.plugins.environments.SLURMEnvironment(auto_requeue=False)],
     )
 
     trainer.fit(model, datamodule)
 
 
 if __name__ == "__main__":
-    os.environ["SLURM_JOB_NAME"] = "bash"
     wandb.agent(sweep_id=os.environ["WANDB_SWEEP_ID"], function=main, count=1)

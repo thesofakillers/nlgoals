@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=18
 #SBATCH --time=00:30:00
 #SBATCH --mem-per-gpu=120G
-#SBATCH --array=1-42%3
+#SBATCH --array=1-42%42
 #SBATCH --output=slurm/outputs/sweep_gcbc_%A_%a.out
 #SBATCH --constraint=scratch-node
 
@@ -32,5 +32,5 @@ srun python -u src/nlgoals/run/sweep-gcbc.py \
   --trainer.logging.enable True \
   --data.num_workers 4 \
   --data.batch_size 16 \
-  --data.shared_memory True \
+  --data.shared_memory False \
   --seed 1
