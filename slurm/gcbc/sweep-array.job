@@ -1,0 +1,37 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=PreCLIP
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=1:00:00
+#SBATCH --mem-per-gpu=120G
+#SBATCH --array=1-42%3
+#SBATCH --output=slurm/outputs/pre-clip-calvin_%A_%a.out
+#SBATCH --constraint=scratch-node
+
+# sets wandb sweep ID
+source "./slurm/.secrets"
+
+source_path=/scratch-shared/gstarace/repos/thesis/data/calvin/calvin_debug_dataset.zip
+source ./slurm/setup_calvin.sh $source_path
+# this will have setup the variable $data_dir
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+srun python -u src/nlgoals/run/sweep-gcbc.py \
+  --wandb.sweep_id $SWEEP_ID \
+  --clipt_checkpoint checkpoints/clipt/clipt-v1.ckpt \
+  --clipt.precomputed_clip False \
+  --trainer.enable_progress_bar False \
+  --data.data_dir=$data_dir \
+  --trainer.logging.enable True \
+  --data.num_workers 4 \
+  --data.batch_size 16 \
+  --data.shared_memory True \
+  --seed 1
