@@ -125,4 +125,5 @@ def train(args):
 
 
 if __name__ == "__main__":
+    os.environ["SLURM_JOB_NAME"] = "bash"
     wandb.agent(sweep_id=os.environ["WANDB_SWEEP_ID"], function=main, count=1)
