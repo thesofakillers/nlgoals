@@ -11,12 +11,11 @@
 #SBATCH --output=slurm/outputs/sweep_gcbc_%A_%a.out
 #SBATCH --constraint=scratch-node
 
-
 source_path=/scratch-shared/gstarace/repos/thesis/data/calvin/calvin_debug_dataset.zip
 source ./slurm/setup_calvin.sh $source_path
 # this will have setup the variable $data_dir
 
-# sets wandb sweep ID
+# sets wandb sweep ID in $WANDB_SWEEP_ID
 source "./slurm/.secrets"
 
 module purge
@@ -26,7 +25,6 @@ module load Anaconda3/2022.05
 source activate nlgoals
 
 srun python -u src/nlgoals/run/sweep-gcbc.py \
-  --wandb.sweep_id $WANDB_SWEEP_ID \
   --clipt_checkpoint checkpoints/clipt/clipt-v1.ckpt \
   --clipt.precomputed_clip False \
   --trainer.enable_progress_bar False \

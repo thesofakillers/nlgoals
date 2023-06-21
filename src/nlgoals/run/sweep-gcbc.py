@@ -19,77 +19,7 @@ from nlgoals.interfaces.gcbc import (
 )
 
 
-def train(args):
-    # device
-    script_host = "slurm" if "SLURM_JOB_ID" in os.environ else "local"
-    logger = pl.loggers.WandbLogger(
-        job_type="sweep" if not args.debug else "debug",
-        entity="giulio-uva",
-        project="nlgoals",
-        mode="disabled" if not args.trainer.logging.enable else "online",
-        group=script_host,
-        log_model=False,
-        tags=["gcbc"],
-    )
-    wandb_config = logger.experiment.config
-
-    args.gcbc.lr = wandb_config["lr"]
-    args.gcbc.hidden_dim = wandb_config["hidden_dim"]
-
-    if args.trainer.accelerator == "auto":
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-    else:
-        device = args.trainer.accelerator
-    # determinism
-    pl.seed_everything(args.seed, workers=True)
-    # datamodule
-    hydra.core.global_hydra.GlobalHydra.instance().clear()
-    hydra.initialize_config_module(
-        config_module="nlgoals.data.calvin.repo.conf.datamodule"
-    )
-    datamodule_cfg = hydra.compose(
-        config_name=args.data.config_name,
-        overrides=[] if args.data.shared_memory is True else ["datasets=vision_lang"],
-    )
-    datamodule_cfg.batch_size = args.data.batch_size
-    datamodule_cfg.num_workers = args.data.num_workers
-    datamodule_cfg.root_data_dir = args.data.data_dir
-    datamodule = hydra.utils.instantiate(datamodule_cfg)
-    datamodule.collator.custom_collate_fn = calvin_gcbc_collate
-    # model
-    model = GCBC(
-        traj_encoder_kwargs=args.clipt.as_dict(),
-        vision_encoder_kwargs=args.vision_encoder.as_dict(),
-        proprio_encoder_kwargs=args.proprio_encoder.as_dict(),
-        **args.gcbc.as_dict(),
-    )
-    if args.clipt_checkpoint is not None:
-        clipt_state_dict = torch.load(args.clipt_checkpoint, map_location=device)[
-            "state_dict"
-        ]
-        clipt = CLIPT(**args.clipt.as_dict())
-        clipt.load_state_dict(clipt_state_dict, strict=False)
-        model.set_traj_encoder(clipt)
-    model.prepare_visual_batch = calvin_gcbc_visual
-    model.prepare_textual_batch = calvin_gcbc_textual
-    # trainer
-    trainer = pl.Trainer(
-        max_epochs=2,
-        accelerator=args.trainer.accelerator,
-        devices=args.trainer.devices,
-        enable_progress_bar=args.trainer.enable_progress_bar,
-        deterministic=True,
-        logger=logger,
-        log_every_n_steps=1,
-        val_check_interval=0.1,
-        check_val_every_n_epoch=None,
-        precision=args.trainer.precision,
-    )
-
-    trainer.fit(model, datamodule)
-
-
-if __name__ == "__main__":
+def main():
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
     parser.add_class_arguments(
@@ -118,8 +48,82 @@ if __name__ == "__main__":
 
     parser.add_argument("--debug", action="store_true")
 
-    parser.add_argument("--wandb.sweep_id", type=str, required=True)
-
     args = parser.parse_args()
 
-    wandb.agent(sweep_id=args.wandb.sweep_id, function=train(args), count=1)
+    train(args)
+
+
+def train(args):
+    # device
+    script_host = "slurm" if "SLURM_JOB_ID" in os.environ else "local"
+    logger = pl.loggers.WandbLogger(
+        job_type="sweep" if not args.debug else "debug",
+        entity="giulio-uva",
+        project="nlgoals",
+        mode="disabled" if not args.trainer.logging.enable else "online",
+        group=script_host,
+        log_model=False,
+        tags=["gcbc"],
+    )
+    with wandb.init() as run:
+        # override config with wandb sweep config
+        args.gcbc.lr = run.config["lr"]
+        args.gcbc.hidden_dim = run.config["hidden_dim"]
+
+        if args.trainer.accelerator == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            device = args.trainer.accelerator
+        # determinism
+        pl.seed_everything(args.seed, workers=True)
+        # datamodule
+        hydra.core.global_hydra.GlobalHydra.instance().clear()
+        hydra.initialize_config_module(
+            config_module="nlgoals.data.calvin.repo.conf.datamodule"
+        )
+        datamodule_cfg = hydra.compose(
+            config_name=args.data.config_name,
+            overrides=[]
+            if args.data.shared_memory is True
+            else ["datasets=vision_lang"],
+        )
+        datamodule_cfg.batch_size = args.data.batch_size
+        datamodule_cfg.num_workers = args.data.num_workers
+        datamodule_cfg.root_data_dir = args.data.data_dir
+        datamodule = hydra.utils.instantiate(datamodule_cfg)
+        datamodule.collator.custom_collate_fn = calvin_gcbc_collate
+        # model
+        model = GCBC(
+            traj_encoder_kwargs=args.clipt.as_dict(),
+            vision_encoder_kwargs=args.vision_encoder.as_dict(),
+            proprio_encoder_kwargs=args.proprio_encoder.as_dict(),
+            **args.gcbc.as_dict(),
+        )
+        if args.clipt_checkpoint is not None:
+            clipt_state_dict = torch.load(args.clipt_checkpoint, map_location=device)[
+                "state_dict"
+            ]
+            clipt = CLIPT(**args.clipt.as_dict())
+            clipt.load_state_dict(clipt_state_dict, strict=False)
+            model.set_traj_encoder(clipt)
+        model.prepare_visual_batch = calvin_gcbc_visual
+        model.prepare_textual_batch = calvin_gcbc_textual
+        # trainer
+        trainer = pl.Trainer(
+            max_epochs=2,
+            accelerator=args.trainer.accelerator,
+            devices=args.trainer.devices,
+            enable_progress_bar=args.trainer.enable_progress_bar,
+            deterministic=True,
+            logger=logger,
+            log_every_n_steps=args.trainer.log_every_n_steps,
+            val_check_interval=args.trainer.val_check_interval,
+            check_val_every_n_epoch=args.trainer.check_val_every_n_epoch,
+            precision=args.trainer.precision,
+        )
+
+        trainer.fit(model, datamodule)
+
+
+if __name__ == "__main__":
+    wandb.agent(sweep_id=os.environ["WANDB_SWEEP_ID"], function=main, count=1)
