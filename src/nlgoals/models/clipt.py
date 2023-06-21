@@ -23,7 +23,7 @@ class CLIPT(pl.LightningModule):
         self,
         clip_model_name: str = "laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
         num_frames: int = 2,
-        precomputed_clip: bool = True,
+        precomputed_clip: bool = False,
         freeze_clip: bool = True,
         **kwargs,
     ):
