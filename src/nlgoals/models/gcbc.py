@@ -30,7 +30,7 @@ class GCBC(pl.LightningModule):
         target_min_bound: float = -1.0,
         num_target_vals: int = 256,
         rolling_traj: bool = False,
-        lr: float = 1e-5,
+        lr: float = 2e-4,
     ) -> None:
         """
         Args:
@@ -353,7 +353,7 @@ class GCBC(pl.LightningModule):
 
     def configure_optimizers(self):
         params_to_update = filter(lambda p: p.requires_grad, self.parameters())
-        optimizer = torch.optim.AdamW(params_to_update, lr=self.lr)
+        optimizer = torch.optim.Adam(params_to_update, lr=self.lr)
         return optimizer
 
     def test_step(self, batch, batch_idx):
