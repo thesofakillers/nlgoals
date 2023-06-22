@@ -301,6 +301,7 @@ class GCBC(pl.LightningModule):
             .mean()
         )
         action_dis = (
+            # aka L1 distance
             tmf.pairwise_manhattan_distance(
                 pred_act, packed_actions.data, reduction=None
             )
