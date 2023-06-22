@@ -300,10 +300,18 @@ class GCBC(pl.LightningModule):
             .diag()
             .mean()
         )
+        action_dis = (
+            tmf.pairwise_manhattan_distance(
+                pred_act, packed_actions.data, reduction=None
+            )
+            .diag()
+            .mean()
+        )
 
         package_size = packed_actions.data.shape[0]
         self.log(f"{traj_mode}/{phase}_loss", loss, batch_size=package_size)
         self.log(f"{traj_mode}/{phase}_action_sim", action_sim, batch_size=package_size)
+        self.log(f"{traj_mode}/{phase}_action_dis", action_dis, batch_size=package_size)
 
         return loss
 
