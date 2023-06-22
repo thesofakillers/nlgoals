@@ -23,7 +23,7 @@ class GCBC(pl.LightningModule):
         traj_encoder_kwargs: Dict,
         vision_encoder_kwargs: Dict,
         proprio_encoder_kwargs: Dict,
-        hidden_dim: int = 512,
+        hidden_dim: int = 2048,
         out_dim: int = 7,
         mixture_size: int = 10,
         target_max_bound: float = 1.0,
@@ -338,8 +338,8 @@ class GCBC(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx) -> None:
-        visual_batch = self.prepare_visual_batch(batch)
-        self._fit_step(visual_batch, "val", "visual")
+        # visual_batch = self.prepare_visual_batch(batch)
+        # self._fit_step(visual_batch, "val", "visual")
         textual_batch = self.prepare_textual_batch(batch)
         self._fit_step(textual_batch, "val", "textual")
 

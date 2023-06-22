@@ -27,6 +27,6 @@ class TrainerConfig:
     logging: LoggingConfig = LoggingConfig()
     checkpoint: CheckpointConfig = CheckpointConfig()
     log_every_n_steps: int = 50
-    val_check_interval: float = 0.1
+    val_check_interval: float = 0.5
     check_val_every_n_epoch: int = 1
     precision: int = 16
