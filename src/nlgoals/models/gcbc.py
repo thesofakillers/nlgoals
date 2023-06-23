@@ -300,19 +300,26 @@ class GCBC(pl.LightningModule):
             .diag()
             .mean()
         )
+        # ignoring the discrete gripper action
         action_dis = (
             # aka L1 distance
             tmf.pairwise_manhattan_distance(
-                pred_act, packed_actions.data, reduction=None
+                pred_act[:, :-1], packed_actions.data[:, :-1], reduction=None
             )
             .diag()
             .mean()
         )
+        gripper_pred = pred_act[:, -1] > 0
+        gripper_gt = packed_actions.data[:, -1] > 0
+        gripper_acc = (gripper_pred == gripper_gt).float().mean()
 
         package_size = packed_actions.data.shape[0]
         self.log(f"{traj_mode}/{phase}_loss", loss, batch_size=package_size)
         self.log(f"{traj_mode}/{phase}_action_sim", action_sim, batch_size=package_size)
         self.log(f"{traj_mode}/{phase}_action_dis", action_dis, batch_size=package_size)
+        self.log(
+            f"{traj_mode}/{phase}_gripper_acc", gripper_acc, batch_size=package_size
+        )
 
         return loss
 
