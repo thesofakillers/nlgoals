@@ -30,7 +30,7 @@ class GCBC(pl.LightningModule):
         target_min_bound: float = -1.0,
         num_target_vals: int = 256,
         rolling_traj: bool = False,
-        lr: float = 2e-4,
+        lr: float = 5e-5,
     ) -> None:
         """
         Args:
