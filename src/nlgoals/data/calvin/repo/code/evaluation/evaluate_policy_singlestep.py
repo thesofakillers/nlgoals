@@ -17,26 +17,33 @@ def evaluate_policy_singlestep(model, env, datamodule, args, checkpoint):
         conf_dir / "callbacks/rollout/tasks/new_playtable_tasks.yaml"
     )
     task_oracle = hydra.utils.instantiate(task_cfg)
+
+    # unclear wtf this is
     val_annotations = OmegaConf.load(
         conf_dir / "annotations/new_playtable_validation.yaml"
     )
 
-    task_to_id_dict = torch.load(checkpoint)["task_to_id_dict"]
-    dataset = datamodule.val_dataloader().dataset.datasets["vis"]
+    # necessary for getting starting state for each task
+    dataset = datamodule.val_dataloader().dataset.datasets["lang"]
+
+    task_to_idx_dict = dataset.task_to_idx
 
     results = Counter()
 
-    for task, ids in task_to_id_dict.items():
+    # each task has a list of episodes associated with it
+    for task, ids in task_to_idx_dict.items():
+        # for each episode for this task
         for i in ids:
             episode = dataset[int(i)]
+            # determine whether success is achieved, given its starting state
             results[task] += rollout(
                 env, model, episode, task_oracle, args, task, val_annotations
             )
         print(f"{task}: {results[task]} / {len(ids)}")
 
-    print(
-        f"SR: {sum(results.values()) / sum(len(x) for x in task_to_id_dict.values()) * 100:.1f}%"
-    )
+    # overall success rate
+    success_rate = sum(results.values()) / sum(len(x) for x in task_to_idx_dict.values())
+    print(f"SR: {success_rate * 100:.1f}%")
 
 
 def rollout(env, model, episode, task_oracle, args, task, val_annotations):
@@ -52,7 +59,7 @@ def rollout(env, model, episode, task_oracle, args, task, val_annotations):
     model.reset()
     start_info = env.get_info()
 
-    for step in range(args.ep_len):
+    for _step in range(args.ep_len):
         action = model.step(obs, lang_annotation)
         obs, _, _, current_info = env.step(action)
         if args.debug:
