@@ -59,10 +59,10 @@ class DiskDataset(BaseDataset):
                 self.task_names,
             ) = self._build_file_indices_lang(self.abs_datasets_dir)
             # each task has a list of episode idxs associated with it
-            self.task_to_id = {task: [] for task in np.unique(self.task_names)}
+            self.task_to_idx = {task: [] for task in np.unique(self.task_names)}
             for i, idx in enumerate(self.lang_lookup):
                 task_name = self.task_names[idx]
-                self.task_to_id[task_name].append(i)
+                self.task_to_idx[task_name].append(i)
         else:
             self.episode_lookup = self._build_file_indices(self.abs_datasets_dir)
 

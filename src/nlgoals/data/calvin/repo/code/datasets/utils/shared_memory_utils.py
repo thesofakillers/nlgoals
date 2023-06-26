@@ -244,17 +244,17 @@ class SharedMemoryLoader:
             for idx in range(start_idx, end_idx + 1 - self.min_window_size_lang):
                 lang_lookup.append(i)
         # each task has a list of episode idxs associated with it
-        task_to_id = {task: [] for task in np.unique(task_names)}
+        task_to_idx = {task: [] for task in np.unique(task_names)}
         for i, idx in enumerate(lang_lookup):
             task_name = task_names[idx]
-            task_to_id[task_name].append(i)
+            task_to_idx[task_name].append(i)
         result = {
             "episode_lookup_vision": episode_lookup_vision,
             "episode_lookup_lang": episode_lookup_lang,
             "lang_lookup": lang_lookup,
             "lang_ann": lang_ann,
             "task_names": task_names,
-            "task_to_id": task_to_id,
+            "task_to_idx": task_to_idx,
             "shapes": shapes,
             "sizes": sizes,
             "dtypes": dtypes,
