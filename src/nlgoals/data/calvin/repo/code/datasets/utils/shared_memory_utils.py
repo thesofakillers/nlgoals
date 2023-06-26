@@ -182,6 +182,7 @@ class SharedMemoryLoader:
             lang_data["info"]["indx"]
         )  # each of them are 64
         lang_ann = lang_data["language"]["ann"]
+        task_name = lang_data["language"]["task"]
         shmem, shapes, sizes, dtypes, shmem_lookup = self._init_shmem(ep_start_end_ids)
 
         if shmem_lookup is not None:
@@ -247,6 +248,7 @@ class SharedMemoryLoader:
             "episode_lookup_lang": episode_lookup_lang,
             "lang_lookup": lang_lookup,
             "lang_ann": lang_ann,
+            "task_name": task_name,
             "shapes": shapes,
             "sizes": sizes,
             "dtypes": dtypes,

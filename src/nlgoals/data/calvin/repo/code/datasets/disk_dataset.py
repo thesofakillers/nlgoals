@@ -56,6 +56,7 @@ class DiskDataset(BaseDataset):
                 self.episode_lookup,
                 self.lang_lookup,
                 self.lang_ann,
+                self.task_name,
             ) = self._build_file_indices_lang(self.abs_datasets_dir)
         else:
             self.episode_lookup = self._build_file_indices(self.abs_datasets_dir)
@@ -115,7 +116,8 @@ class DiskDataset(BaseDataset):
         Returns:
             episode_lookup: Mapping from training example index to episode (file) index.
             lang_lookup: Mapping from training example to index of language instruction.
-            lang_ann: Language embeddings.
+            lang_ann: Language description.
+            task_name: Task name, e.g. "close_drawer".
         """
         assert abs_datasets_dir.is_dir()
 
@@ -141,6 +143,7 @@ class DiskDataset(BaseDataset):
 
         ep_start_end_ids = lang_data["info"]["indx"]  # each of them are 64
         lang_ann = lang_data["language"]["ann"]  # length total number of annotations
+        task_name = lang_data["language"]["task"]
         lang_lookup = []
         for i, (start_idx, end_idx) in enumerate(ep_start_end_ids):
             if self.pretrain:
@@ -156,7 +159,12 @@ class DiskDataset(BaseDataset):
                     episode_lookup.append(idx)
                 cnt += 1
 
-        return np.array(episode_lookup), np.array(lang_lookup), np.array(lang_ann)
+        return (
+            np.array(episode_lookup),
+            np.array(lang_lookup),
+            np.array(lang_ann),
+            np.array(task_name),
+        )
 
     def _build_file_indices(self, abs_datasets_dir: Path) -> np.ndarray:
         """
