@@ -2,6 +2,7 @@ from typing import Dict, Union, Tuple
 
 import torch.nn as nn
 import torch
+import torch.nn.functional as F
 import pytorch_lightning as pl
 import torchmetrics.functional as tmf
 
@@ -300,15 +301,11 @@ class GCBC(pl.LightningModule):
             .diag()
             .mean()
         )
-        # ignoring the discrete gripper action
-        action_dis = (
-            # aka L1 distance
-            tmf.pairwise_manhattan_distance(
-                pred_act[:, :-1], packed_actions.data[:, :-1], reduction=None
-            )
-            .diag()
-            .mean()
-        )
+        # ignoring the discrete gripper action, compute mean action distance
+        action_dis = F.l1_loss(
+            pred_act[:, :-1], packed_actions.data[:, :-1], reduction="mean"
+        ).mean()
+        # for which we just calculate the accuracy discretely.
         gripper_pred = pred_act[:, -1] > 0
         gripper_gt = packed_actions.data[:, -1] > 0
         gripper_acc = (gripper_pred == gripper_gt).float().mean()
