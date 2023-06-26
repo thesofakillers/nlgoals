@@ -22,7 +22,11 @@ from calvin_agent.evaluation.utils import (
     join_vis_lang,
     print_and_save,
 )
-from calvin_agent.utils.utils import get_all_checkpoints, get_checkpoints_for_epochs, get_last_checkpoint
+from calvin_agent.utils.utils import (
+    get_all_checkpoints,
+    get_checkpoints_for_epochs,
+    get_last_checkpoint,
+)
 import hydra
 import numpy as np
 from omegaconf import OmegaConf
@@ -50,7 +54,9 @@ def make_env(dataset_path):
 
 class CustomModel(CalvinBaseModel):
     def __init__(self):
-        logger.warning("Please implement these methods as an interface to your custom model architecture.")
+        logger.warning(
+            "Please implement these methods as an interface to your custom model architecture."
+        )
         raise NotImplementedError
 
     def reset(self):
@@ -70,7 +76,9 @@ class CustomModel(CalvinBaseModel):
         raise NotImplementedError
 
 
-def evaluate_policy(model, env, epoch, eval_log_dir=None, debug=False, create_plan_tsne=False):
+def evaluate_policy(
+    model, env, epoch, eval_log_dir=None, debug=False, create_plan_tsne=False
+):
     """
     Run this function to evaluate a model on the CALVIN challenge.
 
@@ -86,9 +94,13 @@ def evaluate_policy(model, env, epoch, eval_log_dir=None, debug=False, create_pl
         Dictionary with results
     """
     conf_dir = Path(__file__).absolute().parents[2] / "conf"
-    task_cfg = OmegaConf.load(conf_dir / "callbacks/rollout/tasks/new_playtable_tasks.yaml")
+    task_cfg = OmegaConf.load(
+        conf_dir / "callbacks/rollout/tasks/new_playtable_tasks.yaml"
+    )
     task_oracle = hydra.utils.instantiate(task_cfg)
-    val_annotations = OmegaConf.load(conf_dir / "annotations/new_playtable_validation.yaml")
+    val_annotations = OmegaConf.load(
+        conf_dir / "annotations/new_playtable_validation.yaml"
+    )
 
     eval_log_dir = get_log_dir(eval_log_dir)
 
@@ -101,11 +113,26 @@ def evaluate_policy(model, env, epoch, eval_log_dir=None, debug=False, create_pl
         eval_sequences = tqdm(eval_sequences, position=0, leave=True)
 
     for initial_state, eval_sequence in eval_sequences:
-        result = evaluate_sequence(env, model, task_oracle, initial_state, eval_sequence, val_annotations, plans, debug)
+        result = evaluate_sequence(
+            env,
+            model,
+            task_oracle,
+            initial_state,
+            eval_sequence,
+            val_annotations,
+            plans,
+            debug,
+        )
         results.append(result)
         if not debug:
             eval_sequences.set_description(
-                " ".join([f"{i + 1}/5 : {v * 100:.1f}% |" for i, v in enumerate(count_success(results))]) + "|"
+                " ".join(
+                    [
+                        f"{i + 1}/5 : {v * 100:.1f}% |"
+                        for i, v in enumerate(count_success(results))
+                    ]
+                )
+                + "|"
             )
 
     if create_plan_tsne:
@@ -115,7 +142,16 @@ def evaluate_policy(model, env, epoch, eval_log_dir=None, debug=False, create_pl
     return results
 
 
-def evaluate_sequence(env, model, task_checker, initial_state, eval_sequence, val_annotations, plans, debug):
+def evaluate_sequence(
+    env,
+    model,
+    task_checker,
+    initial_state,
+    eval_sequence,
+    val_annotations,
+    plans,
+    debug,
+):
     """
     Evaluates a sequence of language instructions.
     """
@@ -130,7 +166,9 @@ def evaluate_sequence(env, model, task_checker, initial_state, eval_sequence, va
         print(f"Evaluating sequence: {' -> '.join(eval_sequence)}")
         print("Subtask: ", end="")
     for subtask in eval_sequence:
-        success = rollout(env, model, task_checker, subtask, val_annotations, plans, debug)
+        success = rollout(
+            env, model, task_checker, subtask, val_annotations, plans, debug
+        )
         if success:
             success_counter += 1
         else:
@@ -163,7 +201,9 @@ def rollout(env, model, task_oracle, subtask, val_annotations, plans, debug):
             collect_plan(model, plans, subtask)
 
         # check if current step solves a task
-        current_task_info = task_oracle.get_task_info_for_set(start_info, current_info, {subtask})
+        current_task_info = task_oracle.get_task_info_for_set(
+            start_info, current_info, {subtask}
+        )
         if len(current_task_info) > 0:
             if debug:
                 print(colored("success", "green"), end=" ")
@@ -175,12 +215,18 @@ def rollout(env, model, task_oracle, subtask, val_annotations, plans, debug):
 
 def main():
     seed_everything(0, workers=True)  # type:ignore
-    parser = argparse.ArgumentParser(description="Evaluate a trained model on multistep sequences with language goals.")
-    parser.add_argument("--dataset_path", type=str, help="Path to the dataset root directory.")
+    parser = argparse.ArgumentParser(
+        description="Evaluate a trained model on multistep sequences with language goals."
+    )
+    parser.add_argument(
+        "--dataset_path", type=str, help="Path to the dataset root directory."
+    )
 
     # arguments for loading default model
     parser.add_argument(
-        "--train_folder", type=str, help="If calvin_agent was used to train, specify path to the log dir."
+        "--train_folder",
+        type=str,
+        help="If calvin_agent was used to train, specify path to the log dir.",
     )
     parser.add_argument(
         "--checkpoints",
@@ -202,12 +248,23 @@ def main():
 
     # arguments for loading custom model or custom language embeddings
     parser.add_argument(
-        "--custom_model", action="store_true", help="Use this option to evaluate a custom model architecture."
+        "--custom_model",
+        action="store_true",
+        help="Use this option to evaluate a custom model architecture.",
     )
 
-    parser.add_argument("--debug", action="store_true", help="Print debug info and visualize environment.")
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print debug info and visualize environment.",
+    )
 
-    parser.add_argument("--eval_log_dir", default=None, type=str, help="Where to log the evaluation results.")
+    parser.add_argument(
+        "--eval_log_dir",
+        default=None,
+        type=str,
+        help="Where to log the evaluation results.",
+    )
 
     parser.add_argument("--device", default=0, type=int, help="CUDA device")
     args = parser.parse_args()
@@ -221,15 +278,23 @@ def main():
         assert "train_folder" in args
 
         checkpoints = []
-        if args.checkpoints is None and args.last_k_checkpoints is None and args.checkpoint is None:
+        if (
+            args.checkpoints is None
+            and args.last_k_checkpoints is None
+            and args.checkpoint is None
+        ):
             print("Evaluating model with last checkpoint.")
             checkpoints = [get_last_checkpoint(Path(args.train_folder))]
         elif args.checkpoints is not None:
             print(f"Evaluating model with checkpoints {args.checkpoints}.")
-            checkpoints = get_checkpoints_for_epochs(Path(args.train_folder), args.checkpoints)
+            checkpoints = get_checkpoints_for_epochs(
+                Path(args.train_folder), args.checkpoints
+            )
         elif args.checkpoints is None and args.last_k_checkpoints is not None:
             print(f"Evaluating model with last {args.last_k_checkpoints} checkpoints.")
-            checkpoints = get_all_checkpoints(Path(args.train_folder))[-args.last_k_checkpoints :]
+            checkpoints = get_all_checkpoints(Path(args.train_folder))[
+                -args.last_k_checkpoints :
+            ]
         elif args.checkpoint is not None:
             checkpoints = [Path(args.checkpoint)]
 
@@ -243,7 +308,14 @@ def main():
                 env=env,
                 device_id=args.device,
             )
-            evaluate_policy(model, env, epoch, eval_log_dir=args.eval_log_dir, debug=args.debug, create_plan_tsne=True)
+            evaluate_policy(
+                model,
+                env,
+                epoch,
+                eval_log_dir=args.eval_log_dir,
+                debug=args.debug,
+                create_plan_tsne=True,
+            )
 
 
 if __name__ == "__main__":

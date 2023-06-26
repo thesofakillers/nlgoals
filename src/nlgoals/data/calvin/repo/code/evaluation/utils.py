@@ -20,7 +20,9 @@ hasher = pyhash.fnv1_32()
 logger = logging.getLogger(__name__)
 
 
-def get_default_model_and_env(train_folder, dataset_path, checkpoint, env=None, device_id=0):
+def get_default_model_and_env(
+    train_folder, dataset_path, checkpoint, env=None, device_id=0
+):
     train_cfg_path = Path(train_folder) / ".hydra/config.yaml"
     train_cfg_path = format_sftp_path(train_cfg_path)
     cfg = OmegaConf.load(train_cfg_path)
@@ -28,7 +30,9 @@ def get_default_model_and_env(train_folder, dataset_path, checkpoint, env=None, 
     if not hydra.core.global_hydra.GlobalHydra.instance().is_initialized():
         hydra.initialize("../../conf/datamodule/datasets")
     # we don't want to use shm dataset for evaluation
-    datasets_cfg = hydra.compose("vision_lang.yaml", overrides=["lang_dataset.lang_folder=" + lang_folder])
+    datasets_cfg = hydra.compose(
+        "vision_lang.yaml", overrides=["lang_dataset.lang_folder=" + lang_folder]
+    )
     # since we don't use the trainer during inference, manually set up data_module
     cfg.datamodule.datasets = datasets_cfg
     cfg.datamodule.root_data_dir = dataset_path
@@ -40,18 +44,26 @@ def get_default_model_and_env(train_folder, dataset_path, checkpoint, env=None, 
     device = torch.device(f"cuda:{device_id}")
 
     if env is None:
-        rollout_cfg = OmegaConf.load(Path(__file__).parents[2] / "conf/callbacks/rollout/default.yaml")
-        env = hydra.utils.instantiate(rollout_cfg.env_cfg, dataset, device, show_gui=False)
+        rollout_cfg = OmegaConf.load(
+            Path(__file__).parents[2] / "conf/callbacks/rollout/default.yaml"
+        )
+        env = hydra.utils.instantiate(
+            rollout_cfg.env_cfg, dataset, device, show_gui=False
+        )
 
     checkpoint = format_sftp_path(checkpoint)
     print(f"Loading model from {checkpoint}")
     # import the model class that was used for the training
     model_cls = locate(cfg.model._target_)
     model = model_cls.load_from_checkpoint(checkpoint)
-    model.load_lang_embeddings(dataset.abs_datasets_dir / dataset.lang_folder / "embeddings.npy")
+    model.load_lang_embeddings(
+        dataset.abs_datasets_dir / dataset.lang_folder / "embeddings.npy"
+    )
     model.freeze()
     if cfg.model.action_decoder.get("load_action_bounds", False):
-        model.action_decoder._setup_action_bounds(cfg.datamodule.root_data_dir, None, None, True)
+        model.action_decoder._setup_action_bounds(
+            cfg.datamodule.root_data_dir, None, None, True
+        )
     model = model.cuda(device)
     print("Successfully loaded model.")
 
@@ -108,7 +120,9 @@ def print_and_save(results, sequences, log_dir, epoch=None):
     task_info = {}
     for task in total:
         task_info[task] = {"success": cnt_success[task], "total": total[task]}
-        print(f"{task}: {cnt_success[task]} / {total[task]} |  SR: {cnt_success[task] / total[task] * 100:.1f}%")
+        print(
+            f"{task}: {cnt_success[task]} / {total[task]} |  SR: {cnt_success[task] / total[task] * 100:.1f}%"
+        )
 
     data = {"avg_seq_len": avg_seq_len, "chain_sr": chain_sr, "task_info": task_info}
 
@@ -140,7 +154,13 @@ def create_tsne(plan_dict, log_dir, epoch):
     )
     latent_goals = torch.cat(latent_goals)
     plans = torch.cat(plans)
-    np.savez(f"{log_dir / f'tsne_data_{epoch}.npz'}", ids=ids, labels=labels, plans=plans, latent_goals=latent_goals)
+    np.savez(
+        f"{log_dir / f'tsne_data_{epoch}.npz'}",
+        ids=ids,
+        labels=labels,
+        plans=plans,
+        latent_goals=latent_goals,
+    )
 
 
 def get_log_dir(log_dir):
