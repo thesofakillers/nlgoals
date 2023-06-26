@@ -1,14 +1,13 @@
+import enum
 from typing import Dict, Union, Tuple
 
 import torch.nn as nn
 import torch
-import torch.nn.functional as F
 import pytorch_lightning as pl
-import torchmetrics.functional as tmf
 
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders import VisionEncoder, ProprioEncoder
-from nlgoals.losses.dlml import DLMLLoss
+from nlgoals.models.components.action_decoders.calvin import CALVINActionDecoder
 
 
 class GCBC(pl.LightningModule):
@@ -77,12 +76,32 @@ class GCBC(pl.LightningModule):
         self.log_scale_linear = nn.Linear(hidden_dim, total_out_dim)
         self.mixture_logits_linear = nn.Linear(hidden_dim, total_out_dim)
 
-        self.dlml = DLMLLoss(
+        # sets self.action_decoder
+        self._set_action_decoder(
             mixture_size, target_max_bound, target_min_bound, num_target_vals
         )
+        # sets self.name and other metadata
+        self._set_additional_metadata()
 
         self.mixture_size = mixture_size
         self.lr = lr
+
+    def _set_action_decoder(
+        self, mixture_size, target_max_bound, target_min_bound, num_target_vals
+    ):
+        """
+        Responsible for computing loss and sampling predicted actions
+        Function to be defined by inheriting classes
+        """
+        raise NotImplementedError
+
+    def _set_additional_metadata(self):
+        """
+        Responsible for computing loss and sampling predicted actions
+        Function to be defined by inheriting classes
+        """
+
+        raise NotImplementedError
 
     def set_traj_encoder(self, traj_encoder: Union[nn.Module, pl.LightningModule]):
         """Public function for setting the trajectory encoder externally after init"""
@@ -288,36 +307,14 @@ class GCBC(pl.LightningModule):
             batch_first=True,
             enforce_sorted=False,
         )
-
-        loss = self.dlml.loss(means, log_scales, mixture_logits, packed_actions.data)
-
+        loss = self.action_decoder.loss(
+            means, log_scales, mixture_logits, packed_actions.data
+        )
         # P x out_dim
-        pred_act = self.dlml.sample(means, log_scales, mixture_logits)
-        # scalar - mean action similarity for the batch
-        action_sim = (
-            tmf.pairwise_cosine_similarity(
-                pred_act, packed_actions.data, reduction=None
-            )
-            .diag()
-            .mean()
+        pred_act = self.action_decoder.sample(means, log_scales, mixture_logits)
+        self.action_decoder.log_metrics(
+            self, pred_act, packed_actions, loss, traj_mode, phase
         )
-        # ignoring the discrete gripper action, compute mean action distance
-        action_dis = F.l1_loss(
-            pred_act[:, :-1], packed_actions.data[:, :-1], reduction="mean"
-        ).mean()
-        # for which we just calculate the accuracy discretely.
-        gripper_pred = pred_act[:, -1] > 0
-        gripper_gt = packed_actions.data[:, -1] > 0
-        gripper_acc = (gripper_pred == gripper_gt).float().mean()
-
-        package_size = packed_actions.data.shape[0]
-        self.log(f"{traj_mode}/{phase}_loss", loss, batch_size=package_size)
-        self.log(f"{traj_mode}/{phase}_action_sim", action_sim, batch_size=package_size)
-        self.log(f"{traj_mode}/{phase}_action_dis", action_dis, batch_size=package_size)
-        self.log(
-            f"{traj_mode}/{phase}_gripper_acc", gripper_acc, batch_size=package_size
-        )
-
         return loss
 
     def act(
@@ -341,8 +338,8 @@ class GCBC(pl.LightningModule):
         """
         # P x out_dim x mixture_size
         means, log_scales, mixture_logits = self(batch, traj_mode)
-
-        pred_action = self.dlml.sample(means, log_scales, mixture_logits)
+        # P x out_dim
+        pred_action = self.action_decoder.sample(means, log_scales, mixture_logits)
         return pred_action
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
@@ -381,3 +378,20 @@ class GCBC(pl.LightningModule):
         by a method from nlgoals.interfaces. By default does nothing.
         """
         return batch
+
+
+class CALVIN_GCBC(GCBC):
+    def _set_action_decoder(
+        self, mixture_size, target_max_bound, target_min_bound, num_target_vals
+    ):
+        self.action_decoder = CALVINActionDecoder(
+            mixture_size, target_max_bound, target_min_bound, num_target_vals
+        )
+
+    def _set_metadata(self):
+        self.name = "GCBC"
+        self.datasets = ["CALVIN"]
+
+
+class GCBC_ENUM(enum.Enum):
+    CALVIN = "CALVIN"

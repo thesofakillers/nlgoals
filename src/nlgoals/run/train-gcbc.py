@@ -6,7 +6,7 @@ import torch
 import pytorch_lightning as pl
 import hydra
 
-from nlgoals.models.gcbc import GCBC
+from nlgoals.models.gcbc import GCBC, GCBC_ENUM, CALVIN_GCBC
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders.vision_encoder import VisionEncoder
 from nlgoals.models.perception_encoders.proprio_encoder import ProprioEncoder
@@ -16,6 +16,11 @@ from nlgoals.interfaces.gcbc import (
     calvin_gcbc_textual,
     calvin_gcbc_visual,
 )
+
+gcbc_enum_to_class = {
+    "CALVIN": CALVIN_GCBC,
+    GCBC_ENUM.CALVIN: CALVIN_GCBC,
+}
 
 
 def train(args):
@@ -41,7 +46,8 @@ def train(args):
     datamodule = hydra.utils.instantiate(datamodule_cfg)
     datamodule.collator.custom_collate_fn = calvin_gcbc_collate
     # model
-    model = GCBC(
+    ModelClass = gcbc_enum_to_class[args.model.gcbc]
+    model = ModelClass(
         traj_encoder_kwargs=args.clipt.as_dict(),
         vision_encoder_kwargs=args.vision_encoder.as_dict(),
         proprio_encoder_kwargs=args.proprio_encoder.as_dict(),
@@ -66,14 +72,15 @@ def train(args):
         group=script_host,
         config=args,
         log_model=False,
-        tags=["gcbc"],
+        tags=["gcbc", *model.datasets],
     )
     early_stopping = pl.callbacks.early_stopping.EarlyStopping(
         monitor="textual/val_loss", mode="min"
     )
     args.trainer.checkpoint.filename = (
-        f"{args.trainer.checkpoint.filename}-s{args.seed}"
+        f"{model.name}-{'_'.join(model.datasets)}-s{args.seed}"
     )
+    args.trainer.checkpoint.dirpath = os.path.join("checkpoints", "gcbc")
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         **args.trainer.checkpoint.as_dict()
     )
@@ -98,6 +105,7 @@ def train(args):
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
+    parser.add_argument("--model_variant", type=GCBC_ENUM, required=True)
     parser.add_class_arguments(
         GCBC,
         "gcbc",
