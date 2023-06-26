@@ -36,7 +36,8 @@ class ShmDataset(BaseDataset):
             self.episode_lookup_dict = shm_lookup["episode_lookup_lang"]
             self.lang_lookup = shm_lookup["lang_lookup"]
             self.lang_ann = shm_lookup["lang_ann"]
-            self.task_name = shm_lookup["task_name"]
+            self.task_names = shm_lookup["task_names"]
+            self.task_to_id = shm_lookup["task_to_id"]
         else:
             self.episode_lookup_dict = shm_lookup["episode_lookup_vision"]
         key = list(self.episode_lookup_dict.keys())[0]

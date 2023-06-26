@@ -182,7 +182,7 @@ class SharedMemoryLoader:
             lang_data["info"]["indx"]
         )  # each of them are 64
         lang_ann = lang_data["language"]["ann"]
-        task_name = lang_data["language"]["task"]
+        task_names = lang_data["language"]["task"]
         shmem, shapes, sizes, dtypes, shmem_lookup = self._init_shmem(ep_start_end_ids)
 
         if shmem_lookup is not None:
@@ -243,12 +243,18 @@ class SharedMemoryLoader:
                     episode_lookup_lang[key].append((offset, step + j))
             for idx in range(start_idx, end_idx + 1 - self.min_window_size_lang):
                 lang_lookup.append(i)
+        # each task has a list of episode idxs associated with it
+        task_to_id = {task: [] for task in np.unique(task_names)}
+        for i, idx in enumerate(lang_lookup):
+            task_name = task_names[idx]
+            task_to_id[task_name].append(i)
         result = {
             "episode_lookup_vision": episode_lookup_vision,
             "episode_lookup_lang": episode_lookup_lang,
             "lang_lookup": lang_lookup,
             "lang_ann": lang_ann,
-            "task_name": task_name,
+            "task_names": task_names,
+            "task_to_id": task_to_id,
             "shapes": shapes,
             "sizes": sizes,
             "dtypes": dtypes,
