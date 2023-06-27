@@ -7,11 +7,42 @@ from typing import Dict, Union
 import torch
 
 
+def calvin_obs_prepare(obs: Dict, lang_ann: str) -> Dict:
+    """
+    Prepares an observation from the CALVIN environment .step() so that
+    it can be passed to GCBC.step()
+
+    Args:
+        obs: Dict with keys
+            - "robot_obs": tensor (1 x 8)
+            - "rgb_obs": Dict of tensors with keys
+                - "rgb_static" (1 x 3 x H x W)
+            - "depth_obs: empty dictionary
+            - "actions": tensor (1 x 7)
+            - "state_info": Dict of tensors with keys
+                - "robot_obs" (1 x 15)
+                - "scene_obs" (1 x 24)
+            - "idx": integer index of the sequence
+    Returns
+        Dict, with the following keys
+            - 'perception': Dict of tensors of shape B x S x ..., with keys
+                - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived state
+                - "proprio_perc": B x S x 15, proprioceptive state
+                - "seq_lens": B, sequence lengths
+            - 'text': Dict of tensors of shape B x L x ..., with keys
+                - "input_ids": B x L
+                - "attention_mask": B x L
+    """
+    # TODO
+    pass
+
+
 def calvin_gcbc_collate(
     batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]],
 ) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
     """
-    Custom collate function for GCBC data.
+    Custom collate function for CALVIN data.
+    Takes data in CALVIN output format and wrangles it into GCBC input format.
 
     Args:
         batch : Dict with the keys:
