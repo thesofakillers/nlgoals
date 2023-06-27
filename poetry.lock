@@ -493,7 +493,7 @@ gitpython = "*"
 gym = "*"
 hydra-colorlog = "*"
 hydra-core = "1.1.1"
-lightning-lite = "*"
+lightning_lite = "*"
 matplotlib = "*"
 moviepy = "*"
 MulticoreTSNE = "*"
@@ -517,7 +517,7 @@ wheel = "*"
 type = "git"
 url = "https://github.com/thesofakillers/calvin.git"
 reference = 'main'
-resolved_reference = "9593fb38c2186524d473b39c408ea1958de45ebc"
+resolved_reference = "072634b3a3735ec2fa0ea594c66b5a6857b7adab"
 subdirectory = "calvin_models"
 [[package]]
 name = "calvin-env"
@@ -549,7 +549,7 @@ scipy = "*"
 type = "git"
 url = "https://github.com/thesofakillers/calvin_env.git"
 reference = 'main'
-resolved_reference = "797142c588c21e76717268b7b430958dbd13bf48"
+resolved_reference = "d86c44bbdeb2242e2f66b1038b3c43d1ac81c21e"
 
 [[package]]
 name = "certifi"
