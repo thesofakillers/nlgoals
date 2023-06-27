@@ -69,6 +69,7 @@ class GCBC(pl.LightningModule):
             + self.proprio_encoder.emb_dim
         )
         self.gru = nn.GRU(gru_in_dim, hidden_dim, batch_first=True)
+        self.hidden_state = None
 
         total_out_dim = out_dim * mixture_size
 
@@ -109,6 +110,10 @@ class GCBC(pl.LightningModule):
         # and freeze it
         for param in self.traj_encoder.parameters():
             param.requires_grad = False
+
+    def reset(self):
+        """Resets hidden state"""
+        self.hidden_state = None
 
     def forward(
         self, batch: Dict[str, Dict[str, torch.Tensor]], traj_mode: str = "visual"
@@ -172,7 +177,7 @@ class GCBC(pl.LightningModule):
         # what we refer to as "P"
         package_size = packed_gru_input.data.shape[0]
         # P x hidden_dimm; don't provide the init hidden state - torch auto init to zeros
-        gru_out, _ = self.gru(packed_gru_input)
+        gru_out, self.hidden_state = self.gru(packed_gru_input, self.hidden_state)
 
         # use gru output to calculate mean, log_scales and mixture_logits
         # each of shape (P x mixture_size * out_dim)
@@ -315,15 +320,16 @@ class GCBC(pl.LightningModule):
         self.action_decoder.log_metrics(
             self, pred_act, packed_actions, loss, traj_mode, phase
         )
+        self.reset()
         return loss
 
-    def act(
+    def step(
         self,
         batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]],
         traj_mode: str,
     ) -> torch.Tensor:
         """
-        Predicts a next action for a given input batch of data
+        Predicts a next action for a given input (batch) of data
 
         Args:
             batch: Dict, with the following keys
@@ -336,11 +342,12 @@ class GCBC(pl.LightningModule):
                     - "attention_mask": B x L
             traj_mode: "visual" or "textual"
         """
-        # P x out_dim x mixture_size
-        means, log_scales, mixture_logits = self(batch, traj_mode)
-        # P x out_dim
-        pred_action = self.action_decoder.sample(means, log_scales, mixture_logits)
-        return pred_action
+        with torch.no_grad():
+            # P x out_dim x mixture_size
+            means, log_scales, mixture_logits = self(batch, traj_mode)
+            # P x out_dim
+            pred_action = self.action_decoder.sample(means, log_scales, mixture_logits)
+            return pred_action
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
         visual_batch = self.prepare_visual_batch(batch)
