@@ -41,7 +41,7 @@ rope = "^1.8.0"
 [tool.poetry.group.calvin.dependencies]
 opencv-python = "<4.7"
 tacto = { git = "https://github.com/thesofakillers/tacto.git", branch = 'main' }
-calvin-env = { git = "https://github.com/mees/calvin_env.git", rev = '797142c588' }
+calvin-env = { git = "https://github.com/thesofakillers/calvin_env.git", branch = 'main' }
 calvin = { git = "https://github.com/thesofakillers/calvin.git", branch = 'main', subdirectory = "calvin_models" }
 numba = "^0.56.4"
 
