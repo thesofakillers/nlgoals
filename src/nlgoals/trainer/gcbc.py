@@ -13,6 +13,7 @@ class LoggingConfig:
 class CheckpointConfig:
     monitor: str = "textual/val_loss"
     mode: str = "min"
+    save_last: bool = True
 
 
 @dataclass
