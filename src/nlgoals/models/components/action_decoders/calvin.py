@@ -58,4 +58,3 @@ class CALVINActionDecoder:
         pl_instance.log(
             f"{traj_mode}/{phase}_gripper_acc", gripper_acc, batch_size=package_size
         )
-        pass
