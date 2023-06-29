@@ -46,7 +46,7 @@ def train(args):
     datamodule = hydra.utils.instantiate(datamodule_cfg)
     datamodule.collator.custom_collate_fn = calvin_gcbc_collate
     # model
-    ModelClass = gcbc_enum_to_class[args.model.gcbc]
+    ModelClass = gcbc_enum_to_class[args.model_variant]
     model = ModelClass(
         traj_encoder_kwargs=args.clipt.as_dict(),
         vision_encoder_kwargs=args.vision_encoder.as_dict(),
