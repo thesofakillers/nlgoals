@@ -152,7 +152,7 @@ class DLMLLoss:
         sampled_log_scale = (dist_one_hot * log_scales).sum(dim=-1)
         sampled_mean = (dist_one_hot * means).sum(dim=-1)
 
-        # now we can sample from the sampled distribution. Use inverse scaling
+        # now we can sample from the sampled distribution. Use inverse sampling
         y = (r1 - r2) * torch.rand(sampled_mean.shape, device=sampled_mean.device) + r2
 
         sampled_output = sampled_mean + torch.exp(sampled_log_scale) * (
