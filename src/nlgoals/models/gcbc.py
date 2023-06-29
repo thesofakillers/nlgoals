@@ -395,7 +395,7 @@ class CALVIN_GCBC(GCBC):
             mixture_size, target_max_bound, target_min_bound, num_target_vals
         )
 
-    def _set_metadata(self):
+    def _set_additional_metadata(self):
         self.name = "GCBC"
         self.datasets = ["CALVIN"]
 
