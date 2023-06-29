@@ -318,7 +318,7 @@ class GCBC(pl.LightningModule):
         # P x out_dim
         pred_act = self.action_decoder.sample(means, log_scales, mixture_logits)
         self.action_decoder.log_metrics(
-            self, pred_act, packed_actions, loss, traj_mode, phase
+            self, pred_act, packed_actions.data, loss, traj_mode, phase
         )
         self.reset()
         return loss
