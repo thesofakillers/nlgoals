@@ -47,12 +47,16 @@ def train(args):
     datamodule.collator.custom_collate_fn = calvin_gcbc_collate
     # model
     ModelClass = gcbc_enum_to_class[args.model_variant]
-    model = ModelClass(
-        traj_encoder_kwargs=args.clipt.as_dict(),
-        vision_encoder_kwargs=args.vision_encoder.as_dict(),
-        proprio_encoder_kwargs=args.proprio_encoder.as_dict(),
-        **args.gcbc.as_dict(),
-    )
+    if args.model_checkpoint is not None:
+        model = ModelClass.load_from_checkpoint(args.model_checkpoint)
+        print("hello!!!!!")
+    else:
+        model = ModelClass(
+            traj_encoder_kwargs=args.clipt.as_dict(),
+            vision_encoder_kwargs=args.vision_encoder.as_dict(),
+            proprio_encoder_kwargs=args.proprio_encoder.as_dict(),
+            **args.gcbc.as_dict(),
+        )
     if args.clipt_checkpoint is not None:
         clipt_state_dict = torch.load(args.clipt_checkpoint, map_location=device)[
             "state_dict"
@@ -68,6 +72,8 @@ def train(args):
         job_type="train" if not args.debug else "debug",
         entity="giulio-uva",
         project="nlgoals",
+        id=args.wandb_id,
+        resume="must" if args.wandb_id is not None else None,
         mode="disabled" if not args.trainer.logging.enable else "online",
         group=script_host,
         config=args,
@@ -99,13 +105,17 @@ def train(args):
         precision=args.trainer.precision,
     )
 
-    trainer.fit(model, datamodule)
+    trainer.fit(model, datamodule, ckpt_path=args.model_checkpoint)
 
 
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
     parser.add_argument("--model_variant", type=GCBC_ENUM, required=True)
+    parser.add_argument("--model_checkpoint", type=str, default=None)
+    parser.add_argument(
+        "--wandb_id", type=str, default=None, help="To resume logging to the same run"
+    )
     parser.add_class_arguments(
         GCBC,
         "gcbc",
