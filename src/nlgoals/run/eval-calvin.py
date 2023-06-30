@@ -29,7 +29,7 @@ def rollout(
     env, reset_info, model, lang_annotation, rollout_steps, task_oracle, task, tokenizer
 ):
     obs = env.reset(
-        robot_obs=reset_info["robot_obs"][0], scene_obs=reset_info["scene_obs"[0]]
+        robot_obs=reset_info["robot_obs"][0], scene_obs=reset_info["scene_obs"][0]
     )
 
     start_info = env.get_info()
@@ -117,8 +117,8 @@ def main(args):
         use_egl=True if device.type == "cuda" else False,
     )
     # task oracle
-    task_cfg = OmegaConf.load(args.task_cfg)
-    task_oracle = hydra.utils.instantiate(task_cfg)
+    task_oracle_cfg = OmegaConf.load(args.task_oracle_cfg)
+    task_oracle = hydra.utils.instantiate(task_oracle_cfg)
     # model
     ModelClass = gcbc_enum_to_class[args.model_variant]
     model = ModelClass.load_from_checkpoint(args.model_checkpoint)
@@ -141,6 +141,8 @@ if __name__ == "__main__":
     parser.add_argument("--rollout_steps", type=int, default=240)
     # "nlgoals/data/calvin/repo/conf/callbacks/rollout/default.yaml",
     parser.add_argument("--rollout_cfg_path", type=str, required=True)
+    # "nlgoals/data/calvin/repo/conf/callbacks/rollout/tasks/new_playtable_tasks.yaml"
+    parser.add_argument("--task_oracle_cfg", type=str, required=True)
 
     # "calvin_env/data/"
     parser.add_argument("--urdf_data_dir", type=str, required=True)
