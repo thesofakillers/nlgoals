@@ -341,6 +341,9 @@ class GCBC(pl.LightningModule):
                     - "input_ids": B x L
                     - "attention_mask": B x L
             traj_mode: "visual" or "textual"
+
+        Returns:
+            pred_act: P x out_dim tensor of predicted actions
         """
         with torch.no_grad():
             # P x out_dim x mixture_size
@@ -402,3 +405,9 @@ class CALVIN_GCBC(GCBC):
 
 class GCBC_ENUM(enum.Enum):
     CALVIN = "CALVIN"
+
+
+gcbc_enum_to_class = {
+    "CALVIN": CALVIN_GCBC,
+    GCBC_ENUM.CALVIN: CALVIN_GCBC,
+}

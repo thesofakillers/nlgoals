@@ -6,7 +6,7 @@ import torch
 import pytorch_lightning as pl
 import hydra
 
-from nlgoals.models.gcbc import GCBC, GCBC_ENUM, CALVIN_GCBC
+from nlgoals.models.gcbc import GCBC, GCBC_ENUM, CALVIN_GCBC, gcbc_enum_to_class
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders.vision_encoder import VisionEncoder
 from nlgoals.models.perception_encoders.proprio_encoder import ProprioEncoder
@@ -16,11 +16,6 @@ from nlgoals.interfaces.gcbc import (
     calvin_gcbc_textual,
     calvin_gcbc_visual,
 )
-
-gcbc_enum_to_class = {
-    "CALVIN": CALVIN_GCBC,
-    GCBC_ENUM.CALVIN: CALVIN_GCBC,
-}
 
 
 def train(args):
