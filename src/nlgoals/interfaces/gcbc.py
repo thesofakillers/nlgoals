@@ -7,34 +7,37 @@ from typing import Dict, Union
 import torch
 
 
-def calvin_obs_prepare(obs: Dict, lang_ann: str) -> Dict:
+def calvin_obs_prepare(obs: Dict, lang_ann: str, tokenizer) -> Dict:
     """
     Prepares an observation from the CALVIN environment .step() so that
     it can be passed to GCBC.step()
 
     Args:
-        obs: Dict with keys
-            - "robot_obs": tensor (1 x 8)
+        obs: Dict with following keys. It's 1 x 1 because batch size 1, single timestep
+            - "robot_obs": tensor (1 x 1 x 8)
             - "rgb_obs": Dict of tensors with keys
-                - "rgb_static" (1 x 3 x H x W)
+                - "rgb_static" (1 x 1 x 3 x H x W)
             - "depth_obs: empty dictionary
-            - "actions": tensor (1 x 7)
-            - "state_info": Dict of tensors with keys
-                - "robot_obs" (1 x 15)
-                - "scene_obs" (1 x 24)
-            - "idx": integer index of the sequence
     Returns
         Dict, with the following keys
             - 'perception': Dict of tensors of shape B x S x ..., with keys
-                - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived state
-                - "proprio_perc": B x S x 15, proprioceptive state
-                - "seq_lens": B, sequence lengths
+                - "rgb_perc": 1 x 1 x 3 x H x W, RGB frames of perceived state
+                - "proprio_perc": 1 x 1 x 8, proprioceptive state
+                - "seq_lens": 1, sequence lengths (will just be 1)
             - 'text': Dict of tensors of shape B x L x ..., with keys
-                - "input_ids": B x L
-                - "attention_mask": B x L
+                - "input_ids": 1 x L
+                - "attention_mask": 1 x L
     """
-    # TODO
-    pass
+    output = {"perception": {}, "text": {}}
+    output["perception"]["rgb_perc"] = obs["rgb_obs"]["rgb_static"]
+    output["perception"]["proprio_perc"] = obs["robot_obs"]
+    output["perception"]["seq_lens"] = torch.tensor([1])
+
+    processed_lang = tokenizer(lang_ann, return_tensors="pt")
+    output["text"]["input_ids"] = processed_lang["input_ids"]
+    output["text"]["attention_mask"] = processed_lang["attention_mask"]
+
+    return output
 
 
 def calvin_gcbc_collate(
