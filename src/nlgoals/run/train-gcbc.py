@@ -49,7 +49,6 @@ def train(args):
     ModelClass = gcbc_enum_to_class[args.model_variant]
     if args.model_checkpoint is not None:
         model = ModelClass.load_from_checkpoint(args.model_checkpoint)
-        print("hello!!!!!")
     else:
         model = ModelClass(
             traj_encoder_kwargs=args.clipt.as_dict(),
