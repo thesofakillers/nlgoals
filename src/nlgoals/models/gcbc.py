@@ -1,5 +1,5 @@
 import enum
-from typing import Dict, Union, Tuple
+from typing import Dict, Union, Tuple, Optional
 
 import torch.nn as nn
 import torch
@@ -116,23 +116,29 @@ class GCBC(pl.LightningModule):
         self.hidden_state = None
 
     def forward(
-        self, batch: Dict[str, Dict[str, torch.Tensor]], traj_mode: str = "visual"
+        self,
+        batch: Dict[str, Dict[str, torch.Tensor]],
+        traj_mode: str = "visual",
+        final_frames: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Forward pass through the network.
 
         Args:
-            batch: Dict of Dicts with keys
+            batch: Dict of Dicts with the following keys. The final frames have been
+                   separated, and the seq lens subtracted by 1.
                 - "perception": Dict of tensors of shape B x S x ..., with keys
-                    - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived states
-                    - "proprio_perc": B x S x P, proprioceptive state
-                    - "seq_lens": B, sequence lengths
+                    - "rgb_perc": B x S-1 x 3 x H x W, RGB frames of perceived states
+                    - "proprio_perc": B x S-1 x P, proprioceptive state
+                    - "seq_lens": B, sequence lengths (without final frame)
                 - "text": Dict of tensors of shape B x L with keys
                     - "input_ids": B x L
                     - "attention_mask": B x L
                     where L is the max length of text sequences
             traj_mode: "visual" or "textual", whether to use the visual or textual
                 trajectories. If "visual", the "text" key must be present in `batch`
+            final_frames: B X 3 X H X W, final frames of the episode. Only required if
+                traj_mode == "visual"
 
         Returns:
             Tuple of packed tensors of shape (P x out_dim x mixture_size) with order
@@ -145,16 +151,16 @@ class GCBC(pl.LightningModule):
             "visual",
         }, "`traj_mode` must be textual or visual"
         batch_size, max_seq_len = batch["perception"]["rgb_perc"].shape[:2]
-        seq_lens = batch["perception"]["seq_lens"] - 1
+        seq_lens = batch["perception"]["seq_lens"]
 
         # B x (S-1) x 3 x H x W
-        curr_frames = batch["perception"]["rgb_perc"][:, :-1, :, :, :]
+        curr_frames = batch["perception"]["rgb_perc"]
 
         # B x (S-1) x input proprioceptive dims
-        curr_proprio_perc = batch["perception"]["proprio_perc"][:, :-1, :]
+        curr_proprio_perc = batch["perception"]["proprio_perc"]
 
         # B * (S-1) x traj_encoder.emb_dim
-        traj_embs = self._get_traj_embs(batch, curr_frames, traj_mode)
+        traj_embs = self._get_traj_embs(batch, curr_frames, traj_mode, final_frames)
 
         # B * (S-1) x visual_encoder.emb_dim. Need to use reshape since we indexed
         curr_frames = curr_frames.reshape(-1, *curr_frames.shape[2:])
@@ -168,7 +174,7 @@ class GCBC(pl.LightningModule):
 
         # B x (S-1) x (traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
         gru_input = torch.cat([traj_embs, perc_embs], dim=-1).view(
-            batch_size, max_seq_len - 1, -1
+            batch_size, max_seq_len, -1
         )
         # pack: P x (traj_encoder.emb_dim + visual_encoder.emb_dim + proprio_encoder.emb_dim)
         packed_gru_input = nn.utils.rnn.pack_padded_sequence(
@@ -193,7 +199,11 @@ class GCBC(pl.LightningModule):
         return means, log_scales, mixture_logits
 
     def _get_traj_embs(
-        self, batch: Dict, curr_frames: torch.Tensor, traj_mode: str
+        self,
+        batch: Dict,
+        curr_frames: torch.Tensor,
+        traj_mode: str,
+        final_frames: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Computes either textual or visual trajectory embeddings.
@@ -202,9 +212,7 @@ class GCBC(pl.LightningModule):
             traj_embs: B * (S-1) x traj_encoder.emb_dim
         """
         if traj_mode == "visual":
-            traj_embs = self._get_visual_traj_embs(
-                batch["perception"]["rgb_perc"], curr_frames
-            )
+            traj_embs = self._get_visual_traj_embs(curr_frames, final_frames)
         elif traj_mode == "textual":
             traj_embs = self._get_textual_traj_embs(
                 **batch["text"], curr_frames=curr_frames
@@ -237,22 +245,23 @@ class GCBC(pl.LightningModule):
         return traj_embs
 
     def _get_visual_traj_embs(
-        self, batch_frames: torch.Tensor, curr_frames: torch.Tensor
+        self,
+        curr_frames: torch.Tensor,
+        final_frames: torch.Tensor,
     ) -> torch.Tensor:
         """
         Computes the visual trajectory embeddings
 
         Args:
-            batch_frames: B x S x 3 x H x W
             curr_frames: B x (S-1) x 3 x H x W
+            final_frames: B x 3 x H x W
 
         Returns:
             traj_embs: B * (S-1) x traj_encoder.emb_dim tensor
         """
-        max_seq_len = curr_frames.shape[1] + 1
+        # S-1
+        max_seq_len = curr_frames.shape[1]
         if self.rolling_traj:
-            # B x 3 x H x W
-            final_frames = batch_frames[:, -1, :]
             # appending goal state to each curr state; B x (S-1) x 2 x 3 x H x W
             frames_and_goals = torch.cat(
                 [
@@ -261,7 +270,7 @@ class GCBC(pl.LightningModule):
                     # B x 3 x H x W -> B x S-1 x 1 x 3 x H x W
                     final_frames.unsqueeze(1)
                     .unsqueeze(2)
-                    .repeat(1, max_seq_len - 1, 1, 1, 1, 1),
+                    .repeat(1, max_seq_len, 1, 1, 1, 1),
                 ],
                 dim=2,
             )
@@ -270,13 +279,42 @@ class GCBC(pl.LightningModule):
                 images=frames_and_goals.view(-1, *frames_and_goals.shape[2:])
             )
         else:
-            # B x 2 x 3 x H x W
-            start_end = batch_frames[:, [0, -1], :, :, :]
+            # appending goal state to the first frame; B x 2 x 3 x H x W
+            start_end = torch.cat(
+                [
+                    # B x 3 x H x W -> B x 1 x 3 x H x W
+                    curr_frames[:, 0].unsqueeze(1),
+                    # B x 3 x H x W -> B x 1 x 3 x H x W
+                    final_frames.unsqueeze(1),
+                ],
+                dim=1,
+            )
             # B x traj_encoder.emb_dim
             traj_embs = self.traj_encoder.encode_visual_traj(images=start_end)
             # same traj_emb for each timestep: B * (S-1) x traj_encoder.emb_dim
-            traj_embs = traj_embs.repeat_interleave(max_seq_len - 1, dim=0)
+            traj_embs = traj_embs.repeat_interleave(max_seq_len, dim=0)
         return traj_embs
+
+    def _separate_final_step(self, batch: Dict) -> Tuple[Dict, torch.Tensor]:
+        """
+        Separates the final frames from the batch and returns the batch without the final
+        frames and the final frames.
+
+        Args:
+            batch: batch of data, see self._fit_step()
+
+        Returns:
+            batch: batch of data without the final frames
+            final_frames: B x 3 x H x W tensor of final frames
+        """
+        final_frames = batch["perception"]["rgb_perc"][:, -1]
+        batch["perception"]["rgb_perc"] = batch["perception"]["rgb_perc"][:, :-1]
+        batch["perception"]["proprio_perc"] = batch["perception"]["proprio_perc"][
+            :, :-1
+        ]
+        batch["perception"]["seq_lens"] = batch["perception"]["seq_lens"] - 1
+
+        return batch, final_frames
 
     def _fit_step(
         self,
@@ -303,12 +341,16 @@ class GCBC(pl.LightningModule):
         Returns:
             the loss for this batch
         """
+        # separate final frames from the rest of the frames
+        # B x S-1 x ...; B x 3 x H x W
+        batch, final_frames = self._separate_final_step(batch)
+
         # P x out_dim x mixture_size
-        means, log_scales, mixture_logits = self(batch, traj_mode)
+        means, log_scales, mixture_logits = self(batch, traj_mode, final_frames)
         # P x out_dim
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
             batch["actions"][:, :-1, :],
-            (batch["perception"]["seq_lens"] - 1).detach().cpu(),
+            (batch["perception"]["seq_lens"]).detach().cpu(),
             batch_first=True,
             enforce_sorted=False,
         )
@@ -346,8 +388,13 @@ class GCBC(pl.LightningModule):
             pred_act: P x out_dim tensor of predicted actions
         """
         with torch.no_grad():
+            # this if statement allows single step sampling (for textual trajectories)
+            if batch['perception']['rgb_perc'].shape[1] > 1:
+                batch, final_frames = self._separate_final_step(batch)
+            else:
+                final_frames = None
             # P x out_dim x mixture_size
-            means, log_scales, mixture_logits = self(batch, traj_mode)
+            means, log_scales, mixture_logits = self(batch, traj_mode, final_frames)
             # P x out_dim
             pred_action = self.action_decoder.sample(means, log_scales, mixture_logits)
             return pred_action
