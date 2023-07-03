@@ -10,6 +10,7 @@ from termcolor import colored
 import zipfile
 from tqdm.auto import tqdm
 import os
+import json
 
 from omegaconf import OmegaConf
 import hydra
@@ -104,13 +105,16 @@ def evaluate_policy(
         k: np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
         for k in task_to_idx_dict.keys()
     }
+    videos_metadata = {k: None for k in task_to_idx_dict.keys()}
     results = {k: np.zeros(num_rollouts) for k in task_to_idx_dict.keys()}
+    evaluated_idxs = {k: np.zeros(num_rollouts) for k in task_to_idx_dict.keys()}
 
     for task, idxs in tqdm(
         task_to_idx_dict.items(), desc="Tasks", total=number_of_tasks
     ):
         # sample subset of idxs
         idxs = np.random.choice(idxs, size=num_rollouts, replace=False)
+        evaluated_idxs[task] = idxs
         for i, idx in enumerate(tqdm(idxs, desc="Task instances")):
             try:
                 episode = dataset[int(idx)]
@@ -135,6 +139,7 @@ def evaluate_policy(
             # save first success video
             if was_success and videos[task][0].sum() == 0:
                 videos[task] = video
+                videos_metadata[task] = idx
         print(f"{task}: {results[task].sum()} / {len(idxs)}")
     # overall success rate
     success_rate = sum([outcomes.sum for outcomes in results.values()]) / sum(
@@ -149,8 +154,13 @@ def evaluate_policy(
     print("saving...")
     results_path = os.path.join(save_dir, "results.npz")
     np.savez(results_path, **results)
+    evaluated_idxx_path = os.path.join(save_dir, "evaluated_idxs.npz")
+    np.savez(evaluated_idxx_path, **evaluated_idxs)
     videos_path = os.path.join(save_dir, "videos.npz")
     np.savez(videos_path, **videos)
+    videos_metadata_path = os.path.join(save_dir, "videos_metadata.json")
+    with open(videos_metadata_path, "w") as f:
+        json.dump(videos_metadata, f)
 
 
 def main(args):
