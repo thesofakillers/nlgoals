@@ -12,8 +12,9 @@
 
 source "./slurm/.secrets"
 
-source_path=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D.zip
-source ./slurm/setup_calvin.sh $source_path
+# since we are not reading images from disk very often here, don't need to use
+# shared memory or local dir
+data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D/
 
 module purge
 module load 2022
@@ -21,7 +22,7 @@ module load Anaconda3/2022.05
 
 source activate nlgoals
 
-confs_path=$HOME/repos/thesis/src/nlgoals/data/calvin/repo/conf
+confs_path=$HOME/repos/thesis/src/nlgoals/data/calvin/repo/conf/callbacks/rollout
 calvin_env_path=$HOME/repos/calvin_env
 
 srun python src/nlgoals/run/eval-calvin.py \
@@ -31,10 +32,10 @@ srun python src/nlgoals/run/eval-calvin.py \
   --data.data_dir=$data_dir \
   --data.num_workers 4 \
   --data.batch_size 16 \
-  --data.shared_memory True \
+  --data.shared_memory False \
   --clipt_checkpoint checkpoints/clipt/clipt-v1.ckpt \
   --rollout_steps 240 \
-  --rollout_cfg_path $confs_path/callbacks/rollout/default.yaml \
-  --task_oracle_cfg $confs_path/callbacks/rollout/tasks/new_playtable_tasks.yaml \
+  --rollout_cfg_path $confs_path/default.yaml \
+  --task_oracle_cfg $confs_path/tasks/new_playtable_tasks.yaml \
   --urdf_data_dir $calvin_env_path/data/ \
   --egl_dir_path $calvin_env_path/egl_check/
