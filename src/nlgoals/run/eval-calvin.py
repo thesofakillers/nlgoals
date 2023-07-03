@@ -79,6 +79,7 @@ def evaluate_policy(
     tokenizer,
     rollout_steps: int,
     save_dir: str,
+    num_rollouts: int = 100,
 ):
     """
     Evaluate a policy on the CALVIN environment
@@ -94,6 +95,7 @@ def evaluate_policy(
         tokenizer: the tokenizer to use for the textual input
         rollout_steps: the number of steps to rollout for
         save_dir: directory where to save the results.npz and videos.npz
+        num_rollouts: the number of rollouts to perform
     """
     task_to_idx_dict = dataset.task_to_idx
     number_of_tasks = len(task_to_idx_dict)
@@ -102,17 +104,19 @@ def evaluate_policy(
         k: np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
         for k in task_to_idx_dict.keys()
     }
-    results = {k: np.zeros(len(idxs)) for k, idxs in task_to_idx_dict.items()}
+    results = {k: np.zeros(num_rollouts) for k, idxs in task_to_idx_dict.items()}
 
     for task, idxs in tqdm(
         task_to_idx_dict.items(), desc="Tasks", total=number_of_tasks
     ):
+        # sample subset of idxs
+        idxs = np.random.choice(idxs, size=num_rollouts, replace=False)
         for i, idx in enumerate(tqdm(idxs, desc="Task instances")):
             try:
                 episode = dataset[int(idx)]
-            except zipfile.BadZipFile as e:
+            except zipfile.BadZipFile as _e:
                 print(
-                    f"BadZipFile: Something went wrong with {idx} of task {task}. Skipping..."
+                    f"BadZipFile: Something went wrong with idx {idx} of task {task}. Skipping..."
                 )
                 continue
             reset_info = episode["state_info"]
@@ -204,7 +208,14 @@ def main(args):
     _ = torch.set_grad_enabled(False)
 
     evaluate_policy(
-        model, env, dataset, task_oracle, tokenizer, args.rollout_steps, args.save_dir
+        model,
+        env,
+        dataset,
+        task_oracle,
+        tokenizer,
+        args.rollout_steps,
+        args.save_dir,
+        args.num_rollouts,
     )
 
 
@@ -216,6 +227,12 @@ if __name__ == "__main__":
         type=str,
         required=True,
         help="Directory where to save the results.npz and videos.npz",
+    )
+    parser.add_argument(
+        "--num_rollouts",
+        type=int,
+        default=100,
+        help="Number of rollouts to perform per task",
     )
 
     parser.add_argument("--rollout_steps", type=int, default=240)
