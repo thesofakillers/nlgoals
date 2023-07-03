@@ -38,7 +38,7 @@ def rollout(
     for _step in range(rollout_steps):
         # (1, 7) squeezed into (7,)
         action = model.step(
-            calvin_obs_prepare(obs, lang_annotation, tokenizer), "textual"
+            calvin_obs_prepare(obs, lang_annotation, tokenizer, model.device), "textual"
         ).squeeze()
         obs, _, _, current_info = env.step(action)
 
@@ -131,6 +131,8 @@ def main(args):
         model.set_traj_encoder(clipt)
     model.prepare_visual_batch = calvin_gcbc_visual
     model.prepare_textual_batch = calvin_gcbc_textual
+    model.eval()
+    _ = torch.set_grad_enabled(False)
 
     evaluate_policy(model, env, dataset, task_oracle, tokenizer)
 
