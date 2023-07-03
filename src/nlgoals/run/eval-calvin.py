@@ -143,8 +143,10 @@ def evaluate_policy(
 
     # save results
     print("saving...")
-    np.savez(f"{save_dir}/results.npz", **results)
-    np.savez(f"{save_dir}/videos.npz", **videos)
+    results_path = os.path.join(save_dir, "results.npz")
+    np.savez(results_path, **results)
+    videos_path = os.path.join(save_dir, "videos.npz")
+    np.savez(videos_path, **videos)
 
 
 def main(args):
