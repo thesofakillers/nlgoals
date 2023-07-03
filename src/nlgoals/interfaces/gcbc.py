@@ -7,7 +7,7 @@ from typing import Dict, Union
 import torch
 
 
-def calvin_obs_prepare(obs: Dict, lang_ann: str, tokenizer) -> Dict:
+def calvin_obs_prepare(obs: Dict, lang_ann: str, tokenizer, device) -> Dict:
     """
     Prepares an observation from the CALVIN environment .step() so that
     it can be passed to GCBC.step()
@@ -18,6 +18,9 @@ def calvin_obs_prepare(obs: Dict, lang_ann: str, tokenizer) -> Dict:
             - "rgb_obs": Dict of tensors with keys
                 - "rgb_static" (1 x 1 x 3 x H x W)
             - "depth_obs: empty dictionary
+        lang_ann: str, the language annotation for the current timestep
+        tokenizer: the tokenizer to use to tokenize the language annotation
+        device: the device to put the resulting tensors on
     Returns
         Dict, with the following keys
             - 'perception': Dict of tensors of shape B x S x ..., with keys
@@ -29,13 +32,13 @@ def calvin_obs_prepare(obs: Dict, lang_ann: str, tokenizer) -> Dict:
                 - "attention_mask": 1 x L
     """
     output = {"perception": {}, "text": {}}
-    output["perception"]["rgb_perc"] = obs["rgb_obs"]["rgb_static"]
-    output["perception"]["proprio_perc"] = obs["robot_obs"]
-    output["perception"]["seq_lens"] = torch.tensor([1])
+    output["perception"]["rgb_perc"] = obs["rgb_obs"]["rgb_static"].to(device)
+    output["perception"]["proprio_perc"] = obs["robot_obs"].to(device)
+    output["perception"]["seq_lens"] = torch.tensor([1]).to(device)
 
     processed_lang = tokenizer(lang_ann, return_tensors="pt")
-    output["text"]["input_ids"] = processed_lang["input_ids"]
-    output["text"]["attention_mask"] = processed_lang["attention_mask"]
+    output["text"]["input_ids"] = processed_lang["input_ids"].to(device)
+    output["text"]["attention_mask"] = processed_lang["attention_mask"].to(device)
 
     return output
 

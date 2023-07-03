@@ -38,7 +38,7 @@ def rollout(
     for _step in range(rollout_steps):
         # (1, 7) squeezed into (7,)
         action = model.step(
-            calvin_obs_prepare(obs, lang_annotation, tokenizer), "textual"
+            calvin_obs_prepare(obs, lang_annotation, tokenizer, model.device), "textual"
         ).squeeze()
         obs, _, _, current_info = env.step(action)
 
