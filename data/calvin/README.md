@@ -41,12 +41,23 @@ sh download_data.sh ABCD
 sh download_data.sh debug
 ```
 
-YOu can verify the integrity of the downloaded zips with the following commands:
+You can verify the integrity of the downloaded zips with the following commands:
 
 ```terminal
 wget http://calvin.cs.uni-freiburg.de/dataset/sha256sum.txt
 sha256sum --check --ignore-missing sha256sum.txt
 ```
+
+### CALVIN Environment files
+
+Please use download_env_files.sh to download the calvin_env repository which
+contains the necessary URDF and EGL files.
+
+```terminal
+bash download_env_files.sh -o <output_dir>
+```
+
+This will download the calvin_env repository to `<output_dir>/calvin_env`
 
 ## Language Embeddings
 
