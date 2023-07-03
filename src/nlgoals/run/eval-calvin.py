@@ -132,6 +132,7 @@ def main(args):
     model.prepare_visual_batch = calvin_gcbc_visual
     model.prepare_textual_batch = calvin_gcbc_textual
     model.eval()
+    _ = torch.set_grad_enabled(False)
 
     evaluate_policy(model, env, dataset, task_oracle, tokenizer)
 

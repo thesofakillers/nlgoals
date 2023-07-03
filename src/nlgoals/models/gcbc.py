@@ -387,17 +387,16 @@ class GCBC(pl.LightningModule):
         Returns:
             pred_act: P x out_dim tensor of predicted actions
         """
-        with torch.no_grad():
-            # this if statement allows single step sampling (for textual trajectories)
-            if batch['perception']['rgb_perc'].shape[1] > 1:
-                batch, final_frames = self._separate_final_step(batch)
-            else:
-                final_frames = None
-            # P x out_dim x mixture_size
-            means, log_scales, mixture_logits = self(batch, traj_mode, final_frames)
-            # P x out_dim
-            pred_action = self.action_decoder.sample(means, log_scales, mixture_logits)
-            return pred_action
+        # this if statement allows single step sampling (for textual trajectories)
+        if batch['perception']['rgb_perc'].shape[1] > 1:
+            batch, final_frames = self._separate_final_step(batch)
+        else:
+            final_frames = None
+        # P x out_dim x mixture_size
+        means, log_scales, mixture_logits = self(batch, traj_mode, final_frames)
+        # P x out_dim
+        pred_action = self.action_decoder.sample(means, log_scales, mixture_logits)
+        return pred_action
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
         visual_batch = self.prepare_visual_batch(batch)
