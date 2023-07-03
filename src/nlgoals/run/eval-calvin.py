@@ -104,7 +104,7 @@ def evaluate_policy(
         k: np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
         for k in task_to_idx_dict.keys()
     }
-    results = {k: np.zeros(num_rollouts) for k, idxs in task_to_idx_dict.items()}
+    results = {k: np.zeros(num_rollouts) for k in task_to_idx_dict.keys()}
 
     for task, idxs in tqdm(
         task_to_idx_dict.items(), desc="Tasks", total=number_of_tasks
