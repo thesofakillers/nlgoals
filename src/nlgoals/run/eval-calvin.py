@@ -131,6 +131,7 @@ def main(args):
         model.set_traj_encoder(clipt)
     model.prepare_visual_batch = calvin_gcbc_visual
     model.prepare_textual_batch = calvin_gcbc_textual
+    model.eval()
 
     evaluate_policy(model, env, dataset, task_oracle, tokenizer)
 
