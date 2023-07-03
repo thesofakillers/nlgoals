@@ -5,18 +5,22 @@ I am so horribly sorry about how terribly opaque this code is.
 You can thank the CALVIN authors
 """
 
-from typing import Set
+from typing import Set, Dict, Tuple
 from termcolor import colored
-from collections import Counter
 import zipfile
 from tqdm.auto import tqdm
+import os
 
 from omegaconf import OmegaConf
 import hydra
 import torch
 import jsonargparse
+import numpy as np
+from calvin_agent.wrappers.calvin_env_wrapper import CalvinEnvWrapper
+from calvin_env.envs.tasks import Tasks
+from torch.utils.data import Dataset
 
-from nlgoals.models.gcbc import gcbc_enum_to_class, GCBC_ENUM
+from nlgoals.models.gcbc import GCBC, gcbc_enum_to_class, GCBC_ENUM
 from nlgoals.models.clipt import CLIPT
 from nlgoals.interfaces.gcbc import (
     calvin_obs_prepare,
@@ -28,12 +32,21 @@ from nlgoals.interfaces.gcbc import (
 
 
 def rollout(
-    env, reset_info, model, lang_annotation, rollout_steps, task_oracle, task, tokenizer
-):
+    env: CalvinEnvWrapper,
+    reset_info: Dict,
+    model: GCBC,
+    lang_annotation: str,
+    rollout_steps: int,
+    task_oracle: Tasks,
+    task: str,
+    tokenizer,
+) -> Tuple[bool, np.ndarray]:
+    rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
+
+    # the starting state
     obs = env.reset(
         robot_obs=reset_info["robot_obs"][0], scene_obs=reset_info["scene_obs"][0]
     )
-
     start_info = env.get_info()
 
     model.reset()
@@ -44,26 +57,57 @@ def rollout(
         ).squeeze()
         obs, _, _, current_info = env.step(action)
 
+        # save observation for visualization
+        rollout_obs[_step] = obs["rgb_obs"]["rgb_static"].squeeze().cpu().numpy()
+
         # check if current step solves the task
         completed_tasks: Set = task_oracle.get_task_info_for_set(
             start_info, current_info, {task}
         )
         if len(completed_tasks) > 0:
-            print(colored("S", "green"), end=" ")
-            return True
-    print(colored("F", "red"), end=" ")
-    return False
+            print(colored("S", "green"), end="\n")
+            return True, rollout_obs
+    print(colored("F", "red"), end="\n")
+    return False, rollout_obs
 
 
-def evaluate_policy(model, env, dataset, task_oracle, tokenizer):
-    results = Counter()
+def evaluate_policy(
+    model: GCBC,
+    env: CalvinEnvWrapper,
+    dataset: Dataset,
+    task_oracle: Tasks,
+    tokenizer,
+    rollout_steps: int,
+    save_dir: str,
+):
+    """
+    Evaluate a policy on the CALVIN environment
+    For a given dataset, goes through each of the starting states possible for a given
+    task, and lets the model interact with the environment until it either solves the
+    task or the rollout length is reached
+
+    Args:
+        model: the model to evaluate
+        env: the environment to evaluate on
+        dataset: the dataset providing the starting states and transforms
+        task_oracle: the task oracle to check if the task is solved
+        tokenizer: the tokenizer to use for the textual input
+        rollout_steps: the number of steps to rollout for
+        save_dir: directory where to save the results.npz and videos.npz
+    """
     task_to_idx_dict = dataset.task_to_idx
     number_of_tasks = len(task_to_idx_dict)
+
+    videos = {
+        k: np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
+        for k in task_to_idx_dict.keys()
+    }
+    results = {k: np.zeros(len(idxs)) for k, idxs in task_to_idx_dict.items()}
 
     for task, idxs in tqdm(
         task_to_idx_dict.items(), desc="Tasks", total=number_of_tasks
     ):
-        for idx in tqdm(idxs, desc="Task instances"):
+        for i, idx in enumerate(tqdm(idxs, desc="Task instances")):
             try:
                 episode = dataset[int(idx)]
             except zipfile.BadZipFile as e:
@@ -73,22 +117,34 @@ def evaluate_policy(model, env, dataset, task_oracle, tokenizer):
                 continue
             reset_info = episode["state_info"]
             lang_annotation = episode["lang"]
-            results[task] += rollout(
+            was_success, video = rollout(
                 env,
                 reset_info,
                 model,
                 lang_annotation,
-                args.rollout_steps,
+                rollout_steps,
                 task_oracle,
                 task,
                 tokenizer,
             )
-        print(f"{task}: {results[task]} / {len(idxs)}")
+            results[task][i] = was_success
+            # save first success video
+            if was_success and videos[task][0].sum() == 0:
+                videos[task] = video
+        print(f"{task}: {results[task].sum()} / {len(idxs)}")
     # overall success rate
-    success_rate = sum(results.values()) / sum(
+    success_rate = sum([outcomes.sum for outcomes in results.values()]) / sum(
         len(x) for x in task_to_idx_dict.values()
     )
     print(f"SR: {success_rate * 100:.1f}%")
+
+    # make the save_dir if it doesn't exist
+    os.makedirs(save_dir, exist_ok=True)
+
+    # save results
+    print("saving...")
+    np.savez(f"{save_dir}/results.npz", **results)
+    np.savez(f"{save_dir}/videos.npz", **videos)
 
 
 def main(args):
@@ -145,11 +201,20 @@ def main(args):
     model.eval()
     _ = torch.set_grad_enabled(False)
 
-    evaluate_policy(model, env, dataset, task_oracle, tokenizer)
+    evaluate_policy(
+        model, env, dataset, task_oracle, tokenizer, args.rollout_steps, args.save_dir
+    )
 
 
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
+
+    parser.add_argument(
+        "--save_dir",
+        type=str,
+        required=True,
+        help="Directory where to save the results.npz and videos.npz",
+    )
 
     parser.add_argument("--rollout_steps", type=int, default=240)
     # "nlgoals/data/calvin/repo/conf/callbacks/rollout/default.yaml",
