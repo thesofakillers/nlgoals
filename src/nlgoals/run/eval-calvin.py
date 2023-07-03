@@ -51,7 +51,7 @@ def rollout(
     start_info = env.get_info()
 
     model.reset()
-    for _step in tqdm(range(rollout_steps), desc="Steps"):
+    for _step in tqdm(range(rollout_steps), desc="Steps", disable=None):
         # (1, 7) squeezed into (7,)
         action = model.step(
             calvin_obs_prepare(obs, lang_annotation, tokenizer, model.device), "textual"
