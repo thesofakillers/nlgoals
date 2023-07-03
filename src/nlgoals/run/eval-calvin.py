@@ -8,6 +8,8 @@ You can thank the CALVIN authors
 from typing import Set
 from termcolor import colored
 from collections import Counter
+import zipfile
+from tqdm.auto import tqdm
 
 from omegaconf import OmegaConf
 import hydra
@@ -35,7 +37,7 @@ def rollout(
     start_info = env.get_info()
 
     model.reset()
-    for _step in range(rollout_steps):
+    for _step in tqdm(range(rollout_steps), desc="Steps"):
         # (1, 7) squeezed into (7,)
         action = model.step(
             calvin_obs_prepare(obs, lang_annotation, tokenizer, model.device), "textual"
@@ -56,10 +58,19 @@ def rollout(
 def evaluate_policy(model, env, dataset, task_oracle, tokenizer):
     results = Counter()
     task_to_idx_dict = dataset.task_to_idx
+    number_of_tasks = len(task_to_idx_dict)
 
-    for task, idxs in task_to_idx_dict.items():
-        for idx in idxs:
-            episode = dataset[int(idx)]
+    for task, idxs in tqdm(
+        task_to_idx_dict.items(), desc="Tasks", total=number_of_tasks
+    ):
+        for idx in tqdm(idxs, desc="Task instances"):
+            try:
+                episode = dataset[int(idx)]
+            except zipfile.BadZipFile as e:
+                print(
+                    f"BadZipFile: Something went wrong with {idx} of task {task}. Skipping..."
+                )
+                continue
             reset_info = episode["state_info"]
             lang_annotation = episode["lang"]
             results[task] += rollout(
