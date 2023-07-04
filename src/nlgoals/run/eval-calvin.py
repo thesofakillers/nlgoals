@@ -168,7 +168,7 @@ def evaluate_policy(
 
     # overall success rate
     success_rate = sum([outcomes.sum() for outcomes in results.values()]) / sum(
-        [len(outcome) for outcome in results.values()]
+        [len(outcomes) for outcomes in results.values()]
     )
     print(f"SR: {success_rate * 100:.1f}%")
 
