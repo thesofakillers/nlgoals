@@ -145,7 +145,7 @@ def evaluate_policy(
             # save first success video
             if was_success and videos[task][0].sum() == 0:
                 videos[task] = video
-                videos_metadata[task] = idx
+                videos_metadata[task] = int(idx)
         print(f"{task}: {results[task].sum()} / {len(idxs)}")
 
     # save results
