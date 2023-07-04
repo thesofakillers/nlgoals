@@ -41,6 +41,7 @@ def rollout(
     task_oracle: Tasks,
     task: str,
     tokenizer,
+    verbose: bool = False,
 ) -> Tuple[bool, np.ndarray]:
     rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
 
@@ -51,7 +52,7 @@ def rollout(
     start_info = env.get_info()
 
     model.reset()
-    for _step in tqdm(range(rollout_steps), desc="Steps", disable=None):
+    for _step in tqdm(range(rollout_steps), desc="Steps", disable=not verbose):
         # (1, 7) squeezed into (7,)
         action = model.step(
             calvin_obs_prepare(obs, lang_annotation, tokenizer, model.device), "textual"
@@ -66,9 +67,11 @@ def rollout(
             start_info, current_info, {task}
         )
         if len(completed_tasks) > 0:
-            print(colored("S", "green"), end="\n")
+            if verbose:
+                print(colored("S", "green"), end="\n")
             return True, rollout_obs
-    print(colored("F", "red"), end="\n")
+    if verbose:
+        print(colored("F", "red"), end="\n")
     return False, rollout_obs
 
 
@@ -81,6 +84,7 @@ def evaluate_policy(
     rollout_steps: int,
     save_dir: str,
     num_rollouts: int = 100,
+    verbose: bool = False,
 ):
     """
     Evaluate a policy on the CALVIN environment
@@ -97,6 +101,7 @@ def evaluate_policy(
         rollout_steps: the number of steps to rollout for
         save_dir: directory where to save the results.npz and videos.npz
         num_rollouts: the number of rollouts to perform
+        verbose: whether to print the results of each rollout
     """
     task_to_idx_dict = dataset.task_to_idx
     number_of_tasks = len(task_to_idx_dict)
@@ -134,6 +139,7 @@ def evaluate_policy(
                 task_oracle,
                 task,
                 tokenizer,
+                verbose,
             )
             results[task][i] = was_success
             # save first success video
@@ -141,17 +147,13 @@ def evaluate_policy(
                 videos[task] = video
                 videos_metadata[task] = idx
         print(f"{task}: {results[task].sum()} / {len(idxs)}")
-    # overall success rate
-    success_rate = sum([outcomes.sum for outcomes in results.values()]) / sum(
-        len(x) for x in task_to_idx_dict.values()
-    )
-    print(f"SR: {success_rate * 100:.1f}%")
+
+    # save results
+    print("saving...")
 
     # make the save_dir if it doesn't exist
     os.makedirs(save_dir, exist_ok=True)
 
-    # save results
-    print("saving...")
     results_path = os.path.join(save_dir, "results.npz")
     np.savez(results_path, **results)
     evaluated_idxx_path = os.path.join(save_dir, "evaluated_idxs.npz")
@@ -162,6 +164,13 @@ def evaluate_policy(
     with open(videos_metadata_path, "w") as f:
         json.dump(videos_metadata, f)
 
+    print("Done.")
+
+    # overall success rate
+    success_rate = sum([outcomes.sum() for outcomes in results.values()]) / sum(
+        len(x) for x in task_to_idx_dict.values()
+    )
+    print(f"SR: {success_rate * 100:.1f}%")
 
 def main(args):
     # datamodule and dataset
@@ -226,12 +235,19 @@ def main(args):
         args.rollout_steps,
         args.save_dir,
         args.num_rollouts,
+        args.verbose,
     )
 
 
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
+    parser.add_argument(
+        "--verbose",
+        type=bool,
+        default=False,
+        help="Whether to print out the rollout steps and results.",
+    )
     parser.add_argument(
         "--save_dir",
         type=str,
