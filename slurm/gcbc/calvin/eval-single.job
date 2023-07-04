@@ -8,7 +8,6 @@
 #SBATCH --time=12:00:00
 #SBATCH --mem-per-gpu=120G
 #SBATCH --output=slurm/outputs/gcbc_eval_%A.out
-#SBATCH --constraint=scratch-node
 
 source "./slurm/.secrets"
 
