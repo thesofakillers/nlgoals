@@ -168,9 +168,10 @@ def evaluate_policy(
 
     # overall success rate
     success_rate = sum([outcomes.sum() for outcomes in results.values()]) / sum(
-        len(x) for x in task_to_idx_dict.values()
+        [len(outcome) for outcome in results.values()]
     )
     print(f"SR: {success_rate * 100:.1f}%")
+
 
 def main(args):
     # datamodule and dataset
