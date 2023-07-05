@@ -5,7 +5,7 @@ I am so horribly sorry about how terribly opaque this code is.
 You can thank the CALVIN authors
 """
 
-from typing import Set, Dict, Tuple
+from typing import Set, Dict, Tuple, Union
 from termcolor import colored
 import zipfile
 from tqdm.auto import tqdm
@@ -32,15 +32,29 @@ from nlgoals.interfaces.gcbc import (
 )
 
 
+def get_goal(
+    episode, traj_mode, tokenizer, device
+) -> Union[Dict[str, torch.Tensor], torch.Tensor]:
+    if traj_mode == "textual":
+        goal = {}
+        lang = episode["lang"]
+        proc_lang = tokenizer(lang, return_tensors="pt")
+        goal["input_ids"] = proc_lang["input_ids"].to(device)
+        goal["attention_mask"] = proc_lang["attention_mask"].to(device)
+    else:
+        goal = episode["rgb_obs"]["rgb_static"][-1].to(device)
+    return goal
+
+
 def rollout(
     env: CalvinEnvWrapper,
     reset_info: Dict,
     model: GCBC,
-    lang_annotation: str,
+    goal: Union[str, torch.Tensor],
+    traj_mode: str,
     rollout_steps: int,
     task_oracle: Tasks,
     task: str,
-    tokenizer,
     verbose: bool = False,
 ) -> Tuple[bool, np.ndarray]:
     rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
@@ -53,10 +67,9 @@ def rollout(
 
     model.reset()
     for _step in tqdm(range(rollout_steps), desc="Steps", disable=not verbose):
+        prepared_obs = calvin_obs_prepare(obs, model.device)
         # (1, 7) squeezed into (7,)
-        action = model.step(
-            calvin_obs_prepare(obs, lang_annotation, tokenizer, model.device), "textual"
-        ).squeeze()
+        action = model.step(prepared_obs, goal, traj_mode).squeeze()
         obs, _, _, current_info = env.step(action)
 
         # save observation for visualization
@@ -82,6 +95,7 @@ def evaluate_policy(
     task_oracle: Tasks,
     tokenizer,
     rollout_steps: int,
+    traj_mode: str,
     save_dir: str,
     num_rollouts: int = 100,
     verbose: bool = False,
@@ -98,6 +112,7 @@ def evaluate_policy(
         dataset: the dataset providing the starting states and transforms
         task_oracle: the task oracle to check if the task is solved
         tokenizer: the tokenizer to use for the textual input
+        traj_mode: either 'textual' or 'visual'
         rollout_steps: the number of steps to rollout for
         save_dir: directory where to save the results.npz and videos.npz
         num_rollouts: the number of rollouts to perform
@@ -129,17 +144,17 @@ def evaluate_policy(
                 )
                 continue
             reset_info = episode["state_info"]
-            lang_annotation = episode["lang"]
+            goal = get_goal(episode, traj_mode, tokenizer, model.device)
             was_success, video = rollout(
-                env,
-                reset_info,
-                model,
-                lang_annotation,
-                rollout_steps,
-                task_oracle,
-                task,
-                tokenizer,
-                verbose,
+                env=env,
+                reset_info=reset_info,
+                model=model,
+                goal=goal,
+                traj_mode=traj_mode,
+                rollout_steps=rollout_steps,
+                task_oracle=task_oracle,
+                task=task,
+                verbose=verbose,
             )
             results[task][i] = was_success
             # save first success video
@@ -151,6 +166,8 @@ def evaluate_policy(
     # save results
     print("saving...")
 
+    # organize by traj_mode
+    save_dir = os.path.join(save_dir, traj_mode)
     # make the save_dir if it doesn't exist
     os.makedirs(save_dir, exist_ok=True)
 
@@ -233,6 +250,7 @@ def main(args):
         dataset,
         task_oracle,
         tokenizer,
+        args.traj_mode,
         args.rollout_steps,
         args.save_dir,
         args.num_rollouts,
@@ -243,6 +261,12 @@ def main(args):
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
+    parser.add_argument(
+        "--traj_mode",
+        type=str,
+        choices=["textual", "visual"],
+        help="Which trajectory mode to use.",
+    )
     parser.add_argument(
         "--verbose",
         type=bool,

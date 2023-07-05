@@ -56,6 +56,7 @@ class GCBC(pl.LightningModule):
         self.save_hyperparameters()
 
         self.rolling_traj = rolling_traj
+        self.traj_embs = None
 
         self.traj_encoder = CLIPT(**traj_encoder_kwargs)
         self.set_traj_encoder(self.traj_encoder)
@@ -112,33 +113,33 @@ class GCBC(pl.LightningModule):
             param.requires_grad = False
 
     def reset(self):
-        """Resets hidden state"""
+        """Resets hidden state and trajectory embedding"""
         self.hidden_state = None
+        self.traj_embs = None
 
     def forward(
         self,
         batch: Dict[str, Dict[str, torch.Tensor]],
+        goal: Union[Dict[str, torch.Tensor], torch.Tensor],
         traj_mode: str = "visual",
-        final_frames: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Forward pass through the network.
 
         Args:
-            batch: Dict of Dicts with the following keys. The final frames have been
+            batch: Dict of tensors with the following keys. The final frames have been
                    separated, and the seq lens subtracted by 1.
-                - "perception": Dict of tensors of shape B x S x ..., with keys
-                    - "rgb_perc": B x S-1 x 3 x H x W, RGB frames of perceived states
-                    - "proprio_perc": B x S-1 x P, proprioceptive state
-                    - "seq_lens": B, sequence lengths (without final frame)
-                - "text": Dict of tensors of shape B x L with keys
+                - "rgb_perc": B x S-1 x 3 x H x W, RGB frames of perceived states
+                - "proprio_perc": B x S-1 x P, proprioceptive state
+                - "seq_lens": B, sequence lengths (without final frame)
+            goal: either dictionary or tensor. More specifically
+                - as a dictionary: Dict of text annotation tensors of shape B x L with keys
                     - "input_ids": B x L
                     - "attention_mask": B x L
                     where L is the max length of text sequences
-            traj_mode: "visual" or "textual", whether to use the visual or textual
-                trajectories. If "visual", the "text" key must be present in `batch`
-            final_frames: B X 3 X H X W, final frames of the episode. Only required if
-                traj_mode == "visual"
+                - as a tensor: B X 3 X H X W, final frames of the sequence.
+            traj_mode: "visual" or "textual", whether the goal is represented visually
+                or textually
 
         Returns:
             Tuple of packed tensors of shape (P x out_dim x mixture_size) with order
@@ -150,17 +151,17 @@ class GCBC(pl.LightningModule):
             "textual",
             "visual",
         }, "`traj_mode` must be textual or visual"
-        batch_size, max_seq_len = batch["perception"]["rgb_perc"].shape[:2]
-        seq_lens = batch["perception"]["seq_lens"]
+        batch_size, max_seq_len = batch["rgb_perc"].shape[:2]
+        seq_lens = batch["seq_lens"]
 
         # B x (S-1) x 3 x H x W
-        curr_frames = batch["perception"]["rgb_perc"]
+        curr_frames = batch["rgb_perc"]
 
         # B x (S-1) x input proprioceptive dims
-        curr_proprio_perc = batch["perception"]["proprio_perc"]
+        curr_proprio_perc = batch["proprio_perc"]
 
         # B * (S-1) x traj_encoder.emb_dim
-        traj_embs = self._get_traj_embs(batch, curr_frames, traj_mode, final_frames)
+        traj_embs = self._get_traj_embs(curr_frames, traj_mode, goal)
 
         # B * (S-1) x visual_encoder.emb_dim. Need to use reshape since we indexed
         curr_frames = curr_frames.reshape(-1, *curr_frames.shape[2:])
@@ -200,10 +201,9 @@ class GCBC(pl.LightningModule):
 
     def _get_traj_embs(
         self,
-        batch: Dict,
         curr_frames: torch.Tensor,
         traj_mode: str,
-        final_frames: Optional[torch.Tensor] = None,
+        goal: Union[Dict[str, torch.tensor], torch.Tensor],
     ) -> torch.Tensor:
         """
         Computes either textual or visual trajectory embeddings.
@@ -212,11 +212,9 @@ class GCBC(pl.LightningModule):
             traj_embs: B * (S-1) x traj_encoder.emb_dim
         """
         if traj_mode == "visual":
-            traj_embs = self._get_visual_traj_embs(curr_frames, final_frames)
+            traj_embs = self._get_visual_traj_embs(curr_frames, goal)
         elif traj_mode == "textual":
-            traj_embs = self._get_textual_traj_embs(
-                **batch["text"], curr_frames=curr_frames
-            )
+            traj_embs = self._get_textual_traj_embs(**goal, curr_frames=curr_frames)
         return traj_embs
 
     def _get_textual_traj_embs(self, input_ids, attention_mask, curr_frames):
@@ -236,12 +234,18 @@ class GCBC(pl.LightningModule):
         if self.rolling_traj:
             raise NotImplementedError
         else:
-            # B x traj_encoder.emb_dim
-            traj_embs = self.traj_encoder.encode_text_traj(
-                text_input_ids=input_ids, text_attn_mask=attention_mask
-            )
-            # same traj_emb for each timestep: B * (S-1) x traj_encoder.emb_dim
-            traj_embs = traj_embs.repeat_interleave(max_seq_len - 1, dim=0)
+            if self.traj_embs is not None:
+                # same traj_emb for each timestep
+                traj_embs = self.traj_embs
+            else:
+                # B x traj_encoder.emb_dim
+                traj_embs = self.traj_encoder.encode_text_traj(
+                    text_input_ids=input_ids, text_attn_mask=attention_mask
+                )
+                # same traj_emb for each timestep: B * (S-1) x traj_encoder.emb_dim
+                traj_embs = traj_embs.repeat_interleave(max_seq_len - 1, dim=0)
+                # cache traj_embs
+                self.traj_embs = traj_embs
         return traj_embs
 
     def _get_visual_traj_embs(
@@ -279,20 +283,26 @@ class GCBC(pl.LightningModule):
                 images=frames_and_goals.view(-1, *frames_and_goals.shape[2:])
             )
         else:
-            # appending goal state to the first frame; B x 2 x 3 x H x W
-            start_end = torch.cat(
-                [
-                    # B x 3 x H x W -> B x 1 x 3 x H x W
-                    curr_frames[:, 0].unsqueeze(1),
-                    # B x 3 x H x W -> B x 1 x 3 x H x W
-                    final_frames.unsqueeze(1),
-                ],
-                dim=1,
-            )
-            # B x traj_encoder.emb_dim
-            traj_embs = self.traj_encoder.encode_visual_traj(images=start_end)
-            # same traj_emb for each timestep: B * (S-1) x traj_encoder.emb_dim
-            traj_embs = traj_embs.repeat_interleave(max_seq_len, dim=0)
+            if self.traj_embs is not None:
+                # same traj_emb for each timestep, computed on first step
+                traj_embs = self.traj_embs
+            else:
+                # appending goal state to the first frame; B x 2 x 3 x H x W
+                start_end = torch.cat(
+                    [
+                        # B x 3 x H x W -> B x 1 x 3 x H x W
+                        curr_frames[:, 0].unsqueeze(1),
+                        # B x 3 x H x W -> B x 1 x 3 x H x W
+                        final_frames.unsqueeze(1),
+                    ],
+                    dim=1,
+                )
+                # B x traj_encoder.emb_dim
+                traj_embs = self.traj_encoder.encode_visual_traj(images=start_end)
+                # same traj_emb for each timestep: B * (S-1) x traj_encoder.emb_dim
+                traj_embs = traj_embs.repeat_interleave(max_seq_len, dim=0)
+                # cache traj_embs
+                self.traj_embs = traj_embs
         return traj_embs
 
     def _separate_final_step(self, batch: Dict) -> Tuple[Dict, torch.Tensor]:
@@ -315,6 +325,14 @@ class GCBC(pl.LightningModule):
         batch["perception"]["seq_lens"] = batch["perception"]["seq_lens"] - 1
 
         return batch, final_frames
+
+    def get_goal(
+        self, batch: Dict, traj_mode: str
+    ) -> Tuple[Dict, Union[Dict, torch.Tensor]]:
+        if traj_mode == "visual":
+            return self._separate_final_step(batch)
+        elif traj_mode == "textual":
+            return self._separate_final_step(batch)[0], batch["text"]
 
     def _fit_step(
         self,
@@ -341,12 +359,12 @@ class GCBC(pl.LightningModule):
         Returns:
             the loss for this batch
         """
-        # separate final frames from the rest of the frames
-        # B x S-1 x ...; B x 3 x H x W
-        batch, final_frames = self._separate_final_step(batch)
+        # separate final frames from the rest of the frames, get goal tensors
+        # B x S-1 x ...; (B x 3 x H x W or dict of B x L)
+        batch, goal = self.get_goal(batch, traj_mode)
 
         # P x out_dim x mixture_size
-        means, log_scales, mixture_logits = self(batch, traj_mode, final_frames)
+        means, log_scales, mixture_logits = self(batch["perception"], goal, traj_mode)
         # P x out_dim
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
             batch["actions"][:, :-1, :],
@@ -368,32 +386,32 @@ class GCBC(pl.LightningModule):
     def step(
         self,
         batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]],
+        goal: Union[Dict[str, torch.Tensor], torch.Tensor],
         traj_mode: str,
     ) -> torch.Tensor:
         """
         Predicts a next action for a given input (batch) of data
 
         Args:
-            batch: Dict, with the following keys
-                - 'perception': Dict of tensors of shape B x S x ..., with keys
-                    - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived state
-                    - "proprio_perc": B x S x 15, proprioceptive state
-                    - "seq_lens": B, sequence lengths
-                - 'text': Dict of tensors of shape B x L x ..., with keys
+            batch: Dict of tensors with the following keys. The final frames have been
+                   separated, and the seq lens subtracted by 1.
+                - "rgb_perc": B x S-1 x 3 x H x W, RGB frames of perceived states
+                - "proprio_perc": B x S-1 x P, proprioceptive state
+                - "seq_lens": B, sequence lengths (without final frame)
+            goal: either dictionary or tensor. More specifically
+                - as a dictionary: Dict of text annotation tensors of shape B x L with keys
                     - "input_ids": B x L
                     - "attention_mask": B x L
-            traj_mode: "visual" or "textual"
+                    where L is the max length of text sequences
+                - as a tensor: B X 3 X H X W, final frames of the sequence.
+            traj_mode: "visual" or "textual", whether the goal is represented visually
+                or textually
 
         Returns:
             pred_act: P x out_dim tensor of predicted actions
         """
-        # this if statement allows single step sampling (for textual trajectories)
-        if batch['perception']['rgb_perc'].shape[1] > 1:
-            batch, final_frames = self._separate_final_step(batch)
-        else:
-            final_frames = None
         # P x out_dim x mixture_size
-        means, log_scales, mixture_logits = self(batch, traj_mode, final_frames)
+        means, log_scales, mixture_logits = self(batch, goal, traj_mode)
         # P x out_dim
         pred_action = self.action_decoder.sample(means, log_scales, mixture_logits)
         return pred_action
