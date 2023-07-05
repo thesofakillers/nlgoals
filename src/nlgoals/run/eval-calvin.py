@@ -42,7 +42,8 @@ def get_goal(
         goal["input_ids"] = proc_lang["input_ids"].to(device)
         goal["attention_mask"] = proc_lang["attention_mask"].to(device)
     else:
-        goal = episode["rgb_obs"]["rgb_static"][-1].to(device)
+        # 1 x 3 x H x W
+        goal = episode["rgb_obs"]["rgb_static"][-1].unsqueeze(0).to(device)
     return goal
 
 
@@ -94,8 +95,8 @@ def evaluate_policy(
     dataset: Dataset,
     task_oracle: Tasks,
     tokenizer,
-    rollout_steps: int,
     traj_mode: str,
+    rollout_steps: int,
     save_dir: str,
     num_rollouts: int = 100,
     verbose: bool = False,
