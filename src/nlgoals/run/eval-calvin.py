@@ -10,7 +10,8 @@ from termcolor import colored
 import zipfile
 from tqdm.auto import tqdm
 import os
-import json
+import pickle
+from PIL import Image
 
 from omegaconf import OmegaConf
 import hydra
@@ -20,6 +21,7 @@ import numpy as np
 from calvin_agent.wrappers.calvin_env_wrapper import CalvinEnvWrapper
 from calvin_env.envs.tasks import Tasks
 from torch.utils.data import Dataset
+import torchvision as tv
 
 from nlgoals.models.gcbc import GCBC, gcbc_enum_to_class, GCBC_ENUM
 from nlgoals.models.clipt import CLIPT
@@ -30,6 +32,58 @@ from nlgoals.interfaces.gcbc import (
     calvin_gcbc_textual,
     calvin_gcbc_visual,
 )
+
+
+def normalize_tensor(tensor):
+    # move from -1, 1 to 0, 1
+    tensor = tensor / 2 + 0.5
+    return tensor
+
+
+def prep_video(video):
+    # cut off empty frames
+    frame_sums = np.sum(video, axis=(1, 2, 3))
+    where_0 = np.where(frame_sums == 0)[0]
+    end_frame = where_0[0] if len(where_0) > 0 else len(video)
+    video = video[:end_frame]
+    # put channel dimension last
+    video = video.transpose((0, 2, 3, 1))
+    # move from -1, 1 to 0, 1
+    video = normalize_tensor(video)
+    # convert to uint8
+    video = (video * 255).astype(np.uint8)
+    return video
+
+
+def save_video_textual(video: np.ndarray, save_dir, video_meta: Dict):
+    lang_goal: str = video_meta["goal"]
+    save_path = os.path.join(save_dir, f"{video_meta['episode_idx']}_{lang_goal}.mp4")
+    tv.io.write_video(save_path, video, fps=20)
+
+
+def save_video_visual(video: np.ndarray, save_dir, video_meta: Dict):
+    # video
+    video_name = f"{video_meta['episode_idx']}_video.mp4"
+    video_save_path = os.path.join(save_dir, video_name)
+    tv.io.write_video(video_save_path, video, fps=20)
+    # goal
+    image_name = f"{video_meta['episode_idx']}_goal.png"
+    image_save_path = os.path.join(save_dir, image_name)
+    image = video_meta["goal"]
+    image = normalize_tensor(image)
+    image = (image * 255).astype(np.uint8)
+    image = np.transpose(image, (1, 2, 0))
+    im = Image.fromarray(image)
+    im.save(image_save_path)
+
+
+def save_video(video: np.ndarray, traj_mode: str, save_dir, video_meta: Dict):
+    prepd_video = prep_video(video)
+
+    if traj_mode == "textual":
+        save_video_textual(prepd_video, save_dir, video_meta)
+    else:
+        save_video_visual(prepd_video, save_dir, video_meta)
 
 
 def get_goal(
@@ -59,7 +113,6 @@ def rollout(
     verbose: bool = False,
 ) -> Tuple[bool, np.ndarray]:
     rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
-
     # the starting state
     obs = env.reset(
         robot_obs=reset_info["robot_obs"][0], scene_obs=reset_info["scene_obs"][0]
@@ -122,13 +175,12 @@ def evaluate_policy(
     task_to_idx_dict = dataset.task_to_idx
     number_of_tasks = len(task_to_idx_dict)
 
-    videos = {
-        k: np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
-        for k in task_to_idx_dict.keys()
-    }
-    videos_metadata = {k: None for k in task_to_idx_dict.keys()}
-    results = {k: np.zeros(num_rollouts) for k in task_to_idx_dict.keys()}
-    evaluated_idxs = {k: np.zeros(num_rollouts) for k in task_to_idx_dict.keys()}
+    tasks = list(task_to_idx_dict.keys())
+
+    videos = {k: {"success": [], "fail": []} for k in tasks}
+    videos_metadata = {k: {"success": [], "fail": []} for k in tasks}
+    results = {k: np.zeros(num_rollouts) for k in tasks}
+    evaluated_idxs = {k: np.zeros(num_rollouts) for k in tasks}
 
     for task, idxs in tqdm(
         task_to_idx_dict.items(), desc="Tasks", total=number_of_tasks
@@ -158,10 +210,39 @@ def evaluate_policy(
                 verbose=verbose,
             )
             results[task][i] = was_success
-            # save first success video
-            if was_success and videos[task][0].sum() == 0:
-                videos[task] = video
-                videos_metadata[task] = int(idx)
+            # save first 3 videos
+            if was_success:
+                if len(videos[task]["success"]) < 3:
+                    videos[task]["success"].append(video)
+                    # parse goal
+                    goal = (
+                        episode["lang"]
+                        if traj_mode == "textual"
+                        else episode["rgb_obs"]["rgb_static"][-1]
+                        .squeeze()
+                        .cpu()
+                        .numpy()
+                    )
+                    # and keep track of it
+                    videos_metadata[task]["success"].append(
+                        {"episode_idx": int(idx), "goal": goal}
+                    )
+            else:
+                if len(videos[task]["fail"]) < 3:
+                    videos[task]["fail"].append(video)
+                    # parse goal
+                    goal = (
+                        episode["lang"]
+                        if traj_mode == "textual"
+                        else episode["rgb_obs"]["rgb_static"][-1]
+                        .squeeze()
+                        .cpu()
+                        .numpy()
+                    )
+                    # and keep track of it
+                    videos_metadata[task]["fail"].append(
+                        {"episode_idx": int(idx), "goal": goal}
+                    )
         print(f"{task}: {results[task].sum()} / {len(idxs)}")
 
     # save results
@@ -176,11 +257,28 @@ def evaluate_policy(
     np.savez(results_path, **results)
     evaluated_idxx_path = os.path.join(save_dir, "evaluated_idxs.npz")
     np.savez(evaluated_idxx_path, **evaluated_idxs)
-    videos_path = os.path.join(save_dir, "videos.npz")
-    np.savez(videos_path, **videos)
-    videos_metadata_path = os.path.join(save_dir, "videos_metadata.json")
-    with open(videos_metadata_path, "w") as f:
-        json.dump(videos_metadata, f)
+
+    videos_dir = os.path.join(save_dir, "videos")
+    for task in tasks:
+        task_dir = os.path.join(videos_dir, task)
+        # successes
+        success_dir = os.path.join(task_dir, "success")
+        os.makedirs(success_dir, exist_ok=True)
+        for video, video_meta in zip(
+            videos[task]["success"], videos_metadata[task]["success"]
+        ):
+            save_video(video, traj_mode, success_dir, video_meta)
+        # fails
+        fail_dir = os.path.join(task_dir, "fail")
+        os.makedirs(fail_dir, exist_ok=True)
+        for video, video_meta in zip(
+            videos[task]["fail"], videos_metadata[task]["fail"]
+        ):
+            save_video(video, traj_mode, fail_dir, video_meta)
+
+    videos_metadata_path = os.path.join(save_dir, "videos_metadata.pkl")
+    with open(videos_metadata_path, "wb") as f:
+        pickle.dump(videos_metadata, f)
 
     print("Done.")
 
