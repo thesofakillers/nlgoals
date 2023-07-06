@@ -245,6 +245,9 @@ def main(args):
     model.eval()
     _ = torch.set_grad_enabled(False)
 
+    model_checkpoint_name = os.path.splitext(os.path.basename(args.model_checkpoint))[0]
+    save_dir = os.path.join(args.save_dir, model_checkpoint_name)
+
     evaluate_policy(
         model,
         env,
@@ -253,7 +256,7 @@ def main(args):
         tokenizer,
         args.traj_mode,
         args.rollout_steps,
-        args.save_dir,
+        save_dir,
         args.num_rollouts,
         args.verbose,
     )
@@ -278,7 +281,7 @@ if __name__ == "__main__":
         "--save_dir",
         type=str,
         required=True,
-        help="Directory where to save the results.npz and videos.npz",
+        help="Directory where to save the <checkpoint>/results.npz and <checkpoint>/videos.npz",
     )
     parser.add_argument(
         "--num_rollouts",

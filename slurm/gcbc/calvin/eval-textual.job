@@ -39,4 +39,4 @@ srun python src/nlgoals/run/eval-calvin.py \
   --urdf_data_dir $calvin_env_path/data/ \
   --egl_dir_path $calvin_env_path/egl_check/ \
   --traj_mode textual \
-  --save_dir outputs/gcbc_eval/GCBC-CALVIN-s1
+  --save_dir outputs/gcbc_eval/
