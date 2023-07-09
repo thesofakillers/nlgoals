@@ -108,6 +108,11 @@ class GCBC(pl.LightningModule):
     def set_traj_encoder(self, traj_encoder: Union[nn.Module, pl.LightningModule]):
         """Public function for setting the trajectory encoder externally after init"""
         self.traj_encoder = traj_encoder
+        if self.rolling_traj:
+            assert traj_encoder.contextualize_text is True, (
+                "Trajectory encoder must handle contextualized text encodings"
+                "if rolling trajectories are desired"
+            )
         # and freeze it
         for param in self.traj_encoder.parameters():
             param.requires_grad = False
@@ -230,9 +235,22 @@ class GCBC(pl.LightningModule):
         Returns:
             traj_embs: B * (S-1) x traj_encoder.emb_dim
         """
-        max_seq_len = curr_frames.shape[1] + 1
+        max_seq_len = curr_frames.shape[1]
         if self.rolling_traj:
-            raise NotImplementedError
+            # (B * (S-1)) x 3 x H x W
+            curr_frames = curr_frames.view(-1, *curr_frames.shape[2:])
+            # repeat the same text for each frame
+            # (B * (S-1)) x L
+            input_ids = input_ids.repeat_interleave(max_seq_len, dim=0)
+            attention_mask = attention_mask.repeat_interleave(max_seq_len, dim=0)
+            # (B * (S-1)) x traj_encoder.emb_dim
+            traj_embs = self.traj_encoder.encode_text_traj(
+                text_input_ids=input_ids,
+                text_attention_mask=attention_mask,
+                curr_frames=curr_frames,
+            )
+            # B * (S-1) x traj_encoder.emb_dim
+            traj_embs = traj_embs.view(-1, max_seq_len, traj_embs.shape[-1])
         else:
             if self.traj_embs is not None:
                 # same traj_emb for each timestep
@@ -243,7 +261,7 @@ class GCBC(pl.LightningModule):
                     text_input_ids=input_ids, text_attn_mask=attention_mask
                 )
                 # same traj_emb for each timestep: B * (S-1) x traj_encoder.emb_dim
-                traj_embs = traj_embs.repeat_interleave(max_seq_len - 1, dim=0)
+                traj_embs = traj_embs.repeat_interleave(max_seq_len, dim=0)
                 # cache traj_embs
                 self.traj_embs = traj_embs
         return traj_embs
