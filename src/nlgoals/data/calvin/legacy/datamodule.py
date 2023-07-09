@@ -38,6 +38,8 @@ class CALVINDM(pl.LightningDataModule):
             val_split: fraction of the training set to use for validation
             seed: seed for the random split of the training set
             num_workers: number of workers for the dataloaders
+            custom_collate: whether to use the custom collate function
+                (Necessary when not uisng precomputed clip embs)
             lang_key: which key to use for the language annotation.
                 If not 'ann', `lang_key` is used for specifying
                 pre-computed clip embeddings. E.g. the `lang_key` 'foo'

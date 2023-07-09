@@ -40,7 +40,7 @@ def train(args):
             checkpoint_path=args.model_checkpoint,
             map_location=device,
             strict=False,
-            contextualized_text=args.clipt.contextualized_text,
+            contextualize_text=args.clipt.contextualize_text,
             freeze_vision=args.clipt.freeze_vision,
             freeze_lang=args.clipt.freeze_lang,
             precomputed_clip=args.clipt.precomputed_clip,

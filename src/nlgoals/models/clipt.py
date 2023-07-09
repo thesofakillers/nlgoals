@@ -25,7 +25,7 @@ class CLIPT(pl.LightningModule):
         num_frames: int = 2,
         precomputed_clip: bool = False,
         freeze_clip: bool = True,
-        contextualized_text: bool = True,
+        contextualize_text: bool = True,
         freeze_vision: bool = False,
         freeze_lang: bool = False,
         **kwargs,
@@ -39,7 +39,7 @@ class CLIPT(pl.LightningModule):
             precomputed_clip: whether to expect precomputed clip embeddings
             freeze_clip: whether to freeze CLIP model
                 if `precomputed_clip` is True, this is ignored. Defaults to True
-            contextualized_text: whether to provide current state context to textual
+            contextualize_text: whether to provide current state context to textual
                 trajectories. Default True.
             freeze_vision: whether to freeze vision encoder. Default False.
             freeze_lang: whether to freeze language encoder. Default False.
@@ -59,8 +59,8 @@ class CLIPT(pl.LightningModule):
             nn.ReLU(),
             nn.Linear(self.emb_dim, self.emb_dim),
         )
-        self.contextualized_text = contextualized_text
-        if self.contextualized_text:
+        self.contextualize_text = contextualize_text
+        if self.contextualize_text:
             self.textual_traj_encoder = nn.Sequential(
                 nn.Linear(self.emb_dim * 2, self.emb_dim),
                 nn.ReLU(),
@@ -126,10 +126,10 @@ class CLIPT(pl.LightningModule):
                 text_traj_emb: (batch_size, emb_dim)
                 temperature: ()
         """
-        visual_inputs = self.prepare_visual_inputs(self, batch)
+        visual_inputs = self.prepare_visual_inputs(batch)
         visual_traj_emb = self.encode_visual_traj(**visual_inputs, normalize=True)
 
-        textual_inputs = self.prepare_textual_inputs(self, batch)
+        textual_inputs = self.prepare_textual_inputs(batch)
         text_traj_emb = self.encode_text_traj(**textual_inputs, normalize=True)
 
         return {
@@ -268,14 +268,14 @@ class CLIPT(pl.LightningModule):
         Returns:
             loss: loss for this batch
         """
-        # import pdb; pdb.set_trace()
-        model_outputs = self.forward(**batch)
+        model_outputs = self.forward(batch)
+        batch_size = model_outputs["text_traj_emb"].shape[0]
         loss = clip_contrastive_loss(
             model_outputs["visual_traj_emb"],
             model_outputs["text_traj_emb"],
             model_outputs["temperature"],
         )
-        self.log(f"{phase}_loss", loss)
+        self.log(f"{phase}_loss", loss, batch_size=batch_size)
         return loss
 
     def training_step(
