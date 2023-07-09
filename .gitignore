@@ -1,4 +1,5 @@
 # user-defined
+*backup
 /profiles/
 /outputs/
 notebooks/*sandbox.ipynb
