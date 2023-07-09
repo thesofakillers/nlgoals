@@ -432,6 +432,19 @@ class GCBC(pl.LightningModule):
         optimizer = torch.optim.Adam(params_to_update, lr=self.lr)
         return optimizer
 
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]):
+        """
+        The traj encoder is trained separately, so we already have
+        access to its checkpoint and there is no need to save it again.
+
+        Note, when loading the model from checkpoint:
+            - set strict to False
+            - you will have to manually load the traj_encoder and call `set_traj_encoder`
+        """
+        for key in list(checkpoint["state_dict"].keys()):
+            if key.startswith("traj_encoder"):
+                del checkpoint["state_dict"][key]
+
     def test_step(self, batch, batch_idx):
         raise NotImplementedError("Evaluation is handled by an external script.")
 
