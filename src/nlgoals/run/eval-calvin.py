@@ -330,7 +330,7 @@ def main(args):
     task_oracle = hydra.utils.instantiate(task_oracle_cfg)
     # model
     ModelClass = gcbc_enum_to_class[args.model_variant]
-    model = ModelClass.load_from_checkpoint(args.model_checkpoint)
+    model = ModelClass.load_from_checkpoint(args.model_checkpoint, strict=False)
     if args.clipt_checkpoint is not None:
         clipt_state_dict = torch.load(args.clipt_checkpoint, map_location=device)[
             "state_dict"
