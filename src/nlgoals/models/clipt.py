@@ -25,6 +25,9 @@ class CLIPT(pl.LightningModule):
         num_frames: int = 2,
         precomputed_clip: bool = False,
         freeze_clip: bool = True,
+        contextualized_text: bool = True,
+        freeze_vision: bool = False,
+        freeze_lang: bool = False,
         **kwargs,
     ):
         """
@@ -35,7 +38,11 @@ class CLIPT(pl.LightningModule):
             num_frames: number of frames expected in input
             precomputed_clip: whether to expect precomputed clip embeddings
             freeze_clip: whether to freeze CLIP model
-                if `precomputed_clip` is True, this is ignored
+                if `precomputed_clip` is True, this is ignored. Defaults to True
+            contextualized_text: whether to provide current state context to textual
+                trajectories. Default True.
+            freeze_vision: whether to freeze vision encoder. Default False.
+            freeze_lang: whether to freeze language encoder. Default False.
         """
         super().__init__(**kwargs)
         self.save_hyperparameters()
@@ -47,11 +54,18 @@ class CLIPT(pl.LightningModule):
         self.emb_dim = self.clip_model.config.projection_dim
         self.num_frames = num_frames
         # MLP (n_images x emb_dim) -> (emb_dim) with ReLU activation in between
-        self.traj_encoder = nn.Sequential(
+        self.visual_traj_encoder = nn.Sequential(
             nn.Linear(self.emb_dim * self.num_frames, self.emb_dim),
             nn.ReLU(),
             nn.Linear(self.emb_dim, self.emb_dim),
         )
+        self.contextualized_text = contextualized_text
+        if self.contextualized_text:
+            self.textual_traj_encoder = nn.Sequential(
+                nn.Linear(self.emb_dim * 2, self.emb_dim),
+                nn.ReLU(),
+                nn.Linear(self.emb_dim, self.emb_dim),
+            )
 
         # "temperature parameter which controls the range of the logits in the softmax,
         # τ , is directly optimized during training as a log-parameterized
@@ -60,6 +74,18 @@ class CLIPT(pl.LightningModule):
         # https://github.com/mlfoundations/open_clip/blob/3b081484c360569179e270016b5549b7686d42ab/src/open_clip/model.py#L202
         self.temperature = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
         self.max_temp_value = 100
+
+        self.freeze_vision = freeze_vision
+        self.freeze_lang = freeze_lang
+        self.handle_freezing()
+
+    def handle_freezing(self):
+        if self.freeze_vision:
+            for param in self.visual_traj_encoder.parameters():
+                param.requires_grad = False
+        if self.freeze_lang:
+            for param in self.textual_traj_encoder.parameters():
+                param.requires_grad = False
 
     def _setup_clip(self, freeze_clip: bool):
         if self.precomputed_clip:
@@ -117,10 +143,12 @@ class CLIPT(pl.LightningModule):
     ) -> Dict[str, torch.Tensor]:
         textual_inputs = {}
         if self.precomputed_clip:
-            textual_inputs["text_traj_emb"] = batch["lang_emb"]
+            textual_inputs["lang_emb"] = batch["lang_emb"]
+            textual_inputs["image_embs"] = batch["image_embs"]
         else:
             textual_inputs["text_input_ids"] = batch["text_input_ids"]
             textual_inputs["text_attn_mask"] = batch["text_attn_mask"]
+            textual_inputs["images"] = batch["images"]
         return textual_inputs
 
     def prepare_visual_inputs(
@@ -133,11 +161,32 @@ class CLIPT(pl.LightningModule):
             visual_inputs["images"] = batch["images"]
         return visual_inputs
 
+    def _get_image_embs(self, images: torch.Tensor) -> torch.Tensor:
+        """
+        Given a batch of images, returns corresponding CLIP embeddings
+
+        Args:
+            images: (batch_size, num_frames, 3, H, W) tensor of images
+
+        Returns:
+            image_embs: (batch_size, num_frames, emb_dim) tensor of CLIP embeddings
+        """
+        # (num_frames, B, emb_dim), then we permute to get (B, num_frames, emb_dim)
+        image_embs = torch.stack(
+            [
+                self.clip_model.get_image_features(pixel_values=images[:, i, :, :, :])
+                for i in range(self.num_frames)
+            ]
+        ).permute(1, 0, 2)
+        return image_embs
+
     def encode_text_traj(
         self,
         text_input_ids: Optional[torch.Tensor] = None,
         text_attn_mask: Optional[torch.Tensor] = None,
-        text_traj_emb: Optional[torch.Tensor] = None,
+        images: Optional[torch.Tensor] = None,
+        lang_emb: Optional[torch.Tensor] = None,
+        image_embs: Optional[torch.Tensor] = None,
         normalize: bool = False,
     ) -> torch.Tensor:
         """
@@ -146,21 +195,37 @@ class CLIPT(pl.LightningModule):
         Args:
             text_input_ids: (batch_size, max_seq_len) tokenized text
             attention_mask: (batch_size, max_seq_len) (1 for tokens, 0 for padding)
-            text_traj_emb: (batch_size, emb_dim) Pre-computed CLIP embedding of text.
-                if provided, text_input_ids and text_attn_mask are ignored
+            images: (batch_size, num_frames, 3, H, W) images
+            lang_emb: (batch_size, emb_dim) Pre-computed CLIP embedding of text.
+                If provided, `text_input_ids` and `text_attn_mask` are ignored
+            image_embs: (batch_size, num_frames, emb_dim) Pre-computed CLIP embedding
+                of images. If provided, `images` is ignored
             normalize: whether to normalize the text trajectory embeddings
 
         Returns:
             text_traj_emb: (batch_size, emb_dim)
         """
-        assert text_traj_emb is not None or (
-            text_input_ids is not None and text_attn_mask is not None
-        ), "Must provide either text_emb or text_input_ids and text_attn_mask"
-
-        if text_traj_emb is None:
-            text_traj_emb = self.clip_model.get_text_features(
+        if lang_emb is None:
+            # B x emb_dim
+            lang_emb = self.clip_model.get_text_features(
                 input_ids=text_input_ids, attention_mask=text_attn_mask
             )
+            if self.contextualize_text:
+                # B x 1 x emb_dim; we want the middle dim so we can index it later
+                image_embs = self.clip_model.get_image_features(
+                    pixel_values=images[:, 0, :, :, :]
+                ).unsqueeze(1)
+        if self.contextualize_text:
+            # B x emb_dim
+            image_embs = image_embs[:, 0, :]
+            # B x (emb_dim + emb_dim)
+            contextualized_text = torch.cat([lang_emb, image_embs], dim=-1)
+            # B x emb_dim
+            text_traj_emb = self.textual_traj_encoder(contextualized_text)
+        else:
+            # In this case, the text traj embedding is just the CLIP text embedding
+            text_traj_emb = lang_emb
+
         return F.normalize(text_traj_emb, dim=-1) if normalize else text_traj_emb
 
     def encode_visual_traj(
@@ -185,20 +250,12 @@ class CLIPT(pl.LightningModule):
             images is not None or image_embs is not None
         ), "Must provide either images or image_embs"
         if image_embs is None:
-            # (num_frames, B, emb_dim), then we permute to get (B, num_frames, emb_dim)
-            image_embs = torch.stack(
-                [
-                    self.clip_model.get_image_features(
-                        pixel_values=images[:, i, :, :, :]
-                    )
-                    for i in range(self.num_frames)
-                ]
-            ).permute(1, 0, 2)
+            image_embs = self._get_image_embs(images)
         image_embs = image_embs.to(torch.float32)
         # (batch_size, num_frames x emb_dim)
         image_embs_vec = torch.flatten(image_embs, start_dim=1)
         # (batch_size, emb_dim)
-        visual_traj_emb = self.traj_encoder(image_embs_vec)
+        visual_traj_emb = self.visual_traj_encoder(image_embs_vec)
         # apply normalization if specified
         return F.normalize(visual_traj_emb, dim=-1) if normalize else visual_traj_emb
 
@@ -254,6 +311,7 @@ class CLIPT(pl.LightningModule):
         Note, when loading the model from checkpoint:
             - set strict to False
             - you will have to manually load the CLIP model state_dict if necessary
+                using e.g. self.set_clip()
         """
         if self.freeze_clip:
             for key in checkpoint["state_dict"].keys():
