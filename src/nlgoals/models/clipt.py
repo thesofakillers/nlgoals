@@ -220,6 +220,7 @@ class CLIPT(pl.LightningModule):
             image_embs = image_embs[:, 0, :]
             # B x (emb_dim + emb_dim)
             contextualized_text = torch.cat([lang_emb, image_embs], dim=-1)
+            contextualized_text = contextualized_text.to(torch.float32)
             # B x emb_dim
             text_traj_emb = self.textual_traj_encoder(contextualized_text)
         else:
