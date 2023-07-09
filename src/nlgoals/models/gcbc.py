@@ -1,5 +1,5 @@
 import enum
-from typing import Dict, Union, Tuple, Optional
+from typing import Dict, Union, Tuple, Any
 
 import torch.nn as nn
 import torch
