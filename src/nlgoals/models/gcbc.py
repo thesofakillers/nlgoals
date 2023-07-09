@@ -247,7 +247,7 @@ class GCBC(pl.LightningModule):
             traj_embs = self.traj_encoder.encode_text_traj(
                 text_input_ids=input_ids,
                 text_attention_mask=attention_mask,
-                curr_frames=curr_frames,
+                images=curr_frames,
             )
             # B * (S-1) x traj_encoder.emb_dim
             traj_embs = traj_embs.view(-1, max_seq_len, traj_embs.shape[-1])
