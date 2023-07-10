@@ -114,9 +114,7 @@ def rollout(
 ) -> Tuple[bool, np.ndarray]:
     rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
     # the starting state
-    obs = env.reset(
-        robot_obs=reset_info["robot_obs"][0], scene_obs=reset_info["scene_obs"][0]
-    )
+    obs = env.reset(**reset_info)
     start_info = env.get_info()
 
     model.reset()
@@ -151,6 +149,7 @@ def evaluate_policy(
     traj_mode: str,
     rollout_steps: int,
     save_dir: str,
+    suggestive_start: bool,
     num_rollouts: int = 100,
     verbose: bool = False,
 ):
@@ -186,17 +185,29 @@ def evaluate_policy(
         task_to_idx_dict.items(), desc="Tasks", total=number_of_tasks
     ):
         # sample subset of idxs
-        idxs = np.random.choice(idxs, size=num_rollouts, replace=False)
-        evaluated_idxs[task] = idxs
-        for i, idx in enumerate(tqdm(idxs, desc="Task instances")):
-            try:
-                episode = dataset[int(idx)]
-            except zipfile.BadZipFile as _e:
-                print(
-                    f"BadZipFile: Something went wrong with idx {idx} of task {task}. Skipping..."
-                )
-                continue
-            reset_info = episode["state_info"]
+        eval_idxs = np.random.choice(idxs, size=num_rollouts, replace=False)
+        evaluated_idxs[task] = eval_idxs
+        for i, idx in enumerate(tqdm(eval_idxs, desc="Task instances")):
+            # if BadZipFile, try another idx until it works (should be rare)
+            while True:
+                try:
+                    episode = dataset[int(idx)]
+                    # it works! we can break out of the while loop
+                    break
+                except zipfile.BadZipFile as _e:
+                    print(
+                        f"BadZipFile: Something went wrong with idx {idx} of task {task}."
+                        " Trying different idx..."
+                    )
+                    # avoid sampling already sampled idxs
+                    idx = np.random.choice(np.setdiff1d(idxs, eval_idxs), size=1)[0]
+                    continue
+            reset_info = {
+                "robot_obs": (
+                    episode["state_info"]["robot_obs"][0] if suggestive_start else None
+                ),
+                "scene_obs": episode["state_info"]["scene_obs"][0],
+            }
             goal = get_goal(episode, traj_mode, tokenizer, model.device)
             was_success, video = rollout(
                 env=env,
@@ -243,7 +254,7 @@ def evaluate_policy(
                     videos_metadata[task]["fail"].append(
                         {"episode_idx": int(idx), "goal": goal}
                     )
-        print(f"{task}: {results[task].sum()} / {len(idxs)}")
+        print(f"{task}: {results[task].sum()} / {len(eval_idxs)}")
 
     # save results
     print("saving...")
@@ -355,6 +366,7 @@ def main(args):
         args.traj_mode,
         args.rollout_steps,
         save_dir,
+        args.suggestive_start,
         args.num_rollouts,
         args.verbose,
     )
@@ -363,6 +375,12 @@ def main(args):
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
+    parser.add_argument(
+        "--suggestive_start",
+        type=bool,
+        default=True,
+        help="Whether to use suggestive starting robot positions.",
+    )
     parser.add_argument(
         "--traj_mode",
         type=str,

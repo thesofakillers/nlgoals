@@ -262,7 +262,7 @@ class GCBC(pl.LightningModule):
                 traj_embs = self.traj_encoder.encode_text_traj(
                     text_input_ids=input_ids,
                     text_attn_mask=attention_mask,
-                    images = start_frames,
+                    images=start_frames,
                 )
                 # same traj_emb for each timestep: B * (S-1) x traj_encoder.emb_dim
                 traj_embs = traj_embs.repeat_interleave(max_seq_len, dim=0)
