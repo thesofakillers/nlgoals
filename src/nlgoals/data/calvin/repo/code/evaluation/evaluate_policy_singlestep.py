@@ -42,7 +42,9 @@ def evaluate_policy_singlestep(model, env, datamodule, args, checkpoint):
         print(f"{task}: {results[task]} / {len(ids)}")
 
     # overall success rate
-    success_rate = sum(results.values()) / sum(len(x) for x in task_to_idx_dict.values())
+    success_rate = sum(results.values()) / sum(
+        len(x) for x in task_to_idx_dict.values()
+    )
     print(f"SR: {success_rate * 100:.1f}%")
 
 
