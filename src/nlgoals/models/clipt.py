@@ -221,6 +221,7 @@ class CLIPT(pl.LightningModule):
             # B x (emb_dim + emb_dim)
             contextualized_text = torch.cat([lang_emb, image_embs], dim=-1)
             contextualized_text = contextualized_text.to(torch.float32)
+            # contextualized_text[:, -768:] = 0 # ablation
             # B x emb_dim
             text_traj_emb = self.textual_traj_encoder(contextualized_text)
         else:
@@ -255,6 +256,7 @@ class CLIPT(pl.LightningModule):
         image_embs = image_embs.to(torch.float32)
         # (batch_size, num_frames x emb_dim)
         image_embs_vec = torch.flatten(image_embs, start_dim=1)
+        # image_embs_vec[:, -768:] = 0 # ablation
         # (batch_size, emb_dim)
         visual_traj_emb = self.visual_traj_encoder(image_embs_vec)
         # apply normalization if specified
