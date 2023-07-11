@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=CLIPT-E
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=00:40:00
+#SBATCH --mem-per-gpu=120G
+#SBATCH --output=slurm/outputs/clipt_eval_%A.out
+
+source "./slurm/.secrets"
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+srun python -u src/nlgoals/run/eval-clipt.py \
+  --data.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D/ \
+  --sample_size=256 \
+  --checkpoint_path checkpoints/clipt/clipt-v1.ckpt \
+  --save_dir outputs/clipt_eval/clipt-v1/ \
+  --clipt.contextualize_text False \
+  --clipt.precomputed_clip True
