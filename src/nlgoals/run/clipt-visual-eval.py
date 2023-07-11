@@ -2,63 +2,48 @@
 import os
 
 import jsonargparse
-from jsonargparse.optionals import typing_extensions_import
 import torch
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from nlgoals.data.transforms import CLIPTPrepare
+from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
+from nlgoals.data.calvin.transform_configs import CLIPT_PREPARE_CONFIG
 from nlgoals.data.calvin.legacy.datamodule import CALVINDM
 from nlgoals.models.clipt import CLIPT
 from nlgoals.utils import calc_accuracy_top_k
 
 
 def setup_dataloader(args):
-    clipt_prepare = CLIPTPrepare(
-        image_col="rgb_static",
-        input_ids_col="text_input_ids",
-        attn_mask_col="text_attn_mask",
-        clip_model_name=args.clip_name,
-        image_cols=["rgb_static"],
-        text_col="lang_ann",
-    )
+    transform_config = CLIPT_PREPARE_CONFIG[args.data.transform_variant]
+    transform_config["mode"] = args.data.transform_variant
+    transform_config["clip_model_name"] = args.clipt.clip_model_name
+    if args.data.transform_name is not None:
+        data_transform = TRANSFORM_MAP[args.data.transform_name.value](
+            **transform_config
+        )
+    else:
+        data_transform = None
 
-    calvin = CALVINDM(
-        args.data_path,
-        num_frames=2,
-        batch_size=args.batch_size,
-        val_split=0.1,
-        seed=42,
-        num_workers=args.num_workers,
-        frame_keys=["rgb_static"],
-        transform=clipt_prepare,
-    )
+    calvin = CALVINDM(**args.data.as_dict(), transform=data_transform)
 
     calvin.prepare_data()
-    calvin.setup(stage=args.split)
+    calvin.setup(stage="test")
 
-    if args.split == "debug":
-        dataloader = calvin.val_debug_dataloader()
-    else:
-        dataloader = calvin.test_dataloader()
+    dataloader = calvin.test_dataloader()
 
     return dataloader
 
 
 def setup_model(args):
-    clipt = CLIPT(
-        clip_model_name="laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
-        num_frames=2,
-        freeze_clip=True,
-    )
+    clipt = CLIPT(**args.clipt.as_dict())
 
-    checkpoint = torch.load(
+    state_dict = torch.load(
         args.checkpoint_path,
         map_location=torch.device(args.device),
-    )
-    clipt.load_state_dict(checkpoint["state_dict"])
+    )["state_dict"]
+    clipt.load_state_dict(state_dict, strict=False)
 
     return clipt
 
@@ -76,8 +61,8 @@ def setup(args):
 
 def compute_matrices(dataloader, model, device):
     print("Computing matrices...")
-    traj_vecs = []
-    text_vecs = []
+    visual_vecs = []
+    textual_vecs = []
 
     model.to(device)
     model.eval()
@@ -87,21 +72,24 @@ def compute_matrices(dataloader, model, device):
             for key in batch:
                 batch[key] = batch[key].to(device)
 
-            traj_vecs.append(model.encode_visual_traj(batch["images"], normalize=True))
-            text_vecs.append(
-                model.encode_text_traj(
-                    batch["text_input_ids"], batch["text_attn_mask"], normalize=True
-                )
+            visual_inputs = model.prepare_visual_inputs(batch)
+            visual_vecs.append(
+                model.encode_visual_traj(**visual_inputs, normalize=True)
             )
 
-        traj_tensor = torch.vstack(traj_vecs)
-        text_tensor = torch.vstack(text_vecs)
+            textual_inputs = model.prepare_textual_inputs(batch)
+            textual_vecs.append(
+                model.encode_text_traj(**textual_inputs, normalize=True)
+            )
 
-        similarity_matrix = text_tensor @ traj_tensor.T
+        visual_tensor = torch.vstack(visual_vecs)
+        textual_tensor = torch.vstack(textual_vecs)
+
+        similarity_matrix = textual_tensor @ visual_tensor.T
         probability_matrix = similarity_matrix.softmax(dim=1)
 
     print("Done.")
-    return similarity_matrix, probability_matrix, traj_tensor, text_tensor
+    return similarity_matrix, probability_matrix, visual_tensor, textual_tensor
 
 
 def visualize_matrices(similarity_matrix, probability_matrix, indices, save_dir):
@@ -205,6 +193,8 @@ def main(args):
     traj_tensor = traj_tensor[sample_idxs].detach().cpu().numpy()
     text_tensor = text_tensor[sample_idxs].detach().cpu().numpy()
 
+    os.makedirs(args.save_dir, exist_ok=True)
+
     visualize(
         similarity_matrix,
         probability_matrix,
@@ -249,8 +239,8 @@ def main(args):
     print(f"Accuracy@3: {acc_top_3:.3f}")
     print(f"Accuracy@5: {acc_top_5:.3f}")
     print(f"Accuracy@10: {acc_top_10:.3f}")
-    print(f"Accuracy@10: {acc_top_20:.3f}")
-    print(f"Accuracy@10: {acc_top_50:.3f}")
+    print(f"Accuracy@20: {acc_top_20:.3f}")
+    print(f"Accuracy@50: {acc_top_50:.3f}")
 
 
 if __name__ == "__main__":
@@ -258,41 +248,47 @@ if __name__ == "__main__":
 
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
+    # data
+    parser.add_class_arguments(CALVINDM, "data", skip={"transform"})
+
+    # transforms
     parser.add_argument(
-        "--clip-name",
-        type=str,
-        default="laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
-        help="CLIP model name on huggingface",
+        "--data.transform_name", type=TransformName, default="clipt-prepare"
     )
     parser.add_argument(
-        "--data-path",
+        "--data.transform_variant",
         type=str,
-        default="data/calvin/task_D_D",
-        help="Path to data directory",
+        default="without_clip",
+        choices=["without_clip", "with_clip"],
+        help=(
+            "Without clip: we are using precomputed clip embs. "
+            "With clip: we need to compute clip features."
+        ),
     )
+
+    # model
+    parser.add_class_arguments(CLIPT, "clipt")
     parser.add_argument(
-        "--checkpoint-path",
+        "--checkpoint_path",
         type=str,
-        default="checkpoints/clipt/clipt-v1.ckpt",
+        default="checkpoints/clipt/cclipt_frozen-vision.ckpt",
         help="Path to model checkpoint",
     )
-    parser.add_argument("--batch-size", type=int, default=1024, help="Batch size")
-    parser.add_argument("--num-workers", type=int, default=18, help="Number of workers")
+
     parser.add_argument(
-        "--save-dir",
+        "--save_dir",
         type=str,
         default="outputs/",
         help="Path to save figure",
     )
     parser.add_argument(
-        "--split", default="test", choices=["test", "debug"], help="Split to use"
-    )
-    parser.add_argument(
-        "--sample-size",
+        "--sample_size",
         default=256,
         help="how many samples to use for the plot",
         type=int,
     )
+
+    parser.link_arguments("clipt.num_frames", "data.num_frames", apply_on="parse")
 
     args = parser.parse_args()
     main(args)
