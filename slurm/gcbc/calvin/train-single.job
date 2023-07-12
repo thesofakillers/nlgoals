@@ -25,12 +25,14 @@ source activate nlgoals
 
 srun python src/nlgoals/run/train-gcbc.py \
   --model_variant CALVIN \
-  --data.config_name default.yaml \
-  --clipt_checkpoint checkpoints/clipt/clipt-v1.ckpt \
+  --clipt_checkpoint checkpoints/cclipt/cclipt-s42.ckpt \
   --clipt.precomputed_clip False \
-  --trainer.enable_progress_bar False \
+  --clipt.contextualize_text True \
+  --gcbc.rolling_traj True \
+  --data.config_name default.yaml \
   --data.data_dir=$data_dir \
   --trainer.logging.enable True \
+  --trainer.checkpoint.dirpath "checkpoints/gcbc_rolling" \
   --data.num_workers 4 \
   --data.batch_size 16 \
   --data.shared_memory True \
