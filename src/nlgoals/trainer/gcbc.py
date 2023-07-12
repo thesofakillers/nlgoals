@@ -11,6 +11,7 @@ class LoggingConfig:
 
 @dataclass
 class CheckpointConfig:
+    dirpath: str = os.path.join("checkpoints", "gcbc")
     monitor: str = "textual/val_loss"
     mode: str = "min"
     save_last: bool = True

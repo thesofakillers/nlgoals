@@ -80,7 +80,6 @@ def train(args):
     args.trainer.checkpoint.filename = (
         f"{model.name}-{'_'.join(model.datasets)}-s{args.seed}"
     )
-    args.trainer.checkpoint.dirpath = os.path.join("checkpoints", "gcbc")
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         **args.trainer.checkpoint.as_dict()
     )
