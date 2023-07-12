@@ -58,7 +58,7 @@ def train(args):
         group=script_host,
         config=args,
         log_model=False,
-        tags=["clipt"],
+        tags=["clipt" if not args.clipt.contextualize_text else "cclipt"],
     )
     early_stopping = pl.callbacks.early_stopping.EarlyStopping(
         monitor="val_loss", mode="min"
