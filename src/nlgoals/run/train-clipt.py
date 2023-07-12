@@ -71,12 +71,13 @@ def train(args):
     )
     trainer = pl.Trainer(
         max_epochs=args.trainer.max_epochs,
+        max_time={"hours": 1},
         accelerator=args.trainer.accelerator,
         devices=args.trainer.devices,
         enable_progress_bar=args.trainer.enable_progress_bar,
         deterministic=True,
         logger=logger,
-        callbacks=[early_stopping, checkpoint_callback],
+        callbacks=[checkpoint_callback],# early_stopping],
         log_every_n_steps=args.trainer.log_every_n_steps,
     )
 
