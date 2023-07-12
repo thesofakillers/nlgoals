@@ -77,7 +77,7 @@ def train(args):
         enable_progress_bar=args.trainer.enable_progress_bar,
         deterministic=True,
         logger=logger,
-        callbacks=[checkpoint_callback],# early_stopping],
+        callbacks=[checkpoint_callback],  # early_stopping],
         log_every_n_steps=args.trainer.log_every_n_steps,
     )
 
