@@ -237,8 +237,10 @@ class GCBC(pl.LightningModule):
         """
         max_seq_len = curr_frames.shape[1]
         if self.rolling_traj:
-            # (B * (S-1)) x 3 x H x W
-            curr_frames = curr_frames.view(-1, *curr_frames.shape[2:])
+            # (B * (S-1)) x 1 x 3 x H x W;
+            # reshape instead of view for contiguous reasons
+            # need to unsqueeze(1) to get additional dim necessary for encode_text_traj
+            curr_frames = curr_frames.reshape(-1, *curr_frames.shape[2:]).unsqueeze(1)
             # repeat the same text for each frame
             # (B * (S-1)) x L
             input_ids = input_ids.repeat_interleave(max_seq_len, dim=0)
@@ -246,11 +248,9 @@ class GCBC(pl.LightningModule):
             # (B * (S-1)) x traj_encoder.emb_dim
             traj_embs = self.traj_encoder.encode_text_traj(
                 text_input_ids=input_ids,
-                text_attention_mask=attention_mask,
+                text_attn_mask=attention_mask,
                 images=curr_frames,
             )
-            # B * (S-1) x traj_encoder.emb_dim
-            traj_embs = traj_embs.view(-1, max_seq_len, traj_embs.shape[-1])
         else:
             if self.traj_embs is not None:
                 # same traj_emb for each timestep
