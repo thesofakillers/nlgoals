@@ -20,6 +20,6 @@ source activate nlgoals
 srun python -u src/nlgoals/run/train-clipt.py \
   --data.data_dir /scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D/ \
   --trainer.checkpoint.filename cclipt \
-  --trainer.checkpoint.dirpath checkpoints/cclipt
+  --trainer.checkpoint.dirpath checkpoints/cclipt \
   --clipt.contextualize_text true \
-  --clipt.precomputed_clip true \
+  --clipt.precomputed_clip true
