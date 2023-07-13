@@ -42,6 +42,8 @@ def main(args):
         if args.backward:
             raise NotImplementedError
 
+        model.reset()
+
 
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
