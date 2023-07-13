@@ -5,7 +5,7 @@
 #SBATCH --job-name=GCBC-E-VIS
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=08:00:00
+#SBATCH --time=12:00:00
 #SBATCH --mem-per-gpu=120G
 #SBATCH --output=slurm/outputs/gcbc_eval_vis_%A.out
 
@@ -26,17 +26,18 @@ calvin_env_path=$HOME/repos/calvin_env
 
 srun python src/nlgoals/run/eval-calvin.py \
   --model_variant CALVIN \
-  --model_checkpoint checkpoints/gcbc/GCBC-CALVIN-s1.ckpt \
+  --model_checkpoint checkpoints/gcbc_rolling/last.ckpt \
   --data.config_name default.yaml \
   --data.data_dir=$data_dir \
   --data.num_workers 4 \
   --data.batch_size 16 \
   --data.shared_memory False \
-  --clipt_checkpoint checkpoints/clipt/clipt-v1.ckpt \
+  --clipt_checkpoint checkpoints/cclipt/cclipt-s42.ckpt \
   --rollout_steps 240 \
   --rollout_cfg_path $confs_path/default.yaml \
   --task_oracle_cfg $confs_path/tasks/new_playtable_tasks.yaml \
   --urdf_data_dir $calvin_env_path/data/ \
   --egl_dir_path $calvin_env_path/egl_check/ \
   --traj_mode visual \
-  --save_dir outputs/gcbc_eval/
+  --suggestive_start True \
+  --save_dir outputs/gcbc_rolling_eval/

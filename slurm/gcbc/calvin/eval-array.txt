@@ -1,0 +1,4 @@
+--suggestive_start True --traj_mode visual
+--suggestive_start True --traj_mode textual
+--suggestive_start False --traj_mode visual
+--suggestive_start False --traj_mode textual

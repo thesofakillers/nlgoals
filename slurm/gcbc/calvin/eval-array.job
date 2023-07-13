@@ -2,12 +2,13 @@
 
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=GCBC-E-TXT
+#SBATCH --job-name=GCBC-E
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --time=12:00:00
 #SBATCH --mem-per-gpu=120G
-#SBATCH --output=slurm/outputs/gcbc_eval_txt_%A.out
+#SBATCH --array=1-4%4
+#SBATCH --output=slurm/outputs/gcbc_eval_arr_%A_%a.out
 
 source "./slurm/.secrets"
 
@@ -24,6 +25,8 @@ source activate nlgoals
 confs_path=$HOME/repos/thesis/src/nlgoals/data/calvin/repo/conf/callbacks/rollout
 calvin_env_path=$HOME/repos/calvin_env
 
+HPARAMS_FILE=slurm/gcbc/calvin/eval-array.txt
+
 srun python src/nlgoals/run/eval-calvin.py \
   --model_variant CALVIN \
   --model_checkpoint checkpoints/gcbc_rolling/last.ckpt \
@@ -38,6 +41,5 @@ srun python src/nlgoals/run/eval-calvin.py \
   --task_oracle_cfg $confs_path/tasks/new_playtable_tasks.yaml \
   --urdf_data_dir $calvin_env_path/data/ \
   --egl_dir_path $calvin_env_path/egl_check/ \
-  --traj_mode textual \
-  --suggestive_start True \
-  --save_dir outputs/gcbc_rolling_eval/
+  --save_dir outputs/gcbc_rolling_eval/ \
+  $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
