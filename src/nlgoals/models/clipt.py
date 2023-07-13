@@ -171,13 +171,13 @@ class CLIPT(pl.LightningModule):
         Returns:
             image_embs: (batch_size, num_frames, emb_dim) tensor of CLIP embeddings
         """
-        # (num_frames, B, emb_dim), then we permute to get (B, num_frames, emb_dim)
-        image_embs = torch.stack(
-            [
-                self.clip_model.get_image_features(pixel_values=images[:, i, :, :, :])
-                for i in range(self.num_frames)
-            ]
-        ).permute(1, 0, 2)
+        batch_size, num_frames, _, _, _ = images.shape
+        # clip_model expects 4D tensors, so need to flatten to (B * num_frames, 3, H, W)
+        images = images.view(-1, *images.shape[2:])
+        # (B * num_frames, emb_dim)
+        image_embs = self.clip_model.get_image_features(pixel_values=images)
+        # (B, num_frames, emb_dim)
+        image_embs = image_embs.view(batch_size, num_frames, -1)
         return image_embs
 
     def encode_text_traj(
@@ -254,7 +254,7 @@ class CLIPT(pl.LightningModule):
         if image_embs is None:
             image_embs = self._get_image_embs(images)
         image_embs = image_embs.to(torch.float32)
-        # (batch_size, num_frames x emb_dim)
+        # concatenate frames (batch_size, num_frames * emb_dim)
         image_embs_vec = torch.flatten(image_embs, start_dim=1)
         # image_embs_vec[:, -768:] = 0 # ablation
         # (batch_size, emb_dim)
