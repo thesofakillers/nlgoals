@@ -1,4 +1,4 @@
-frame --dataset.split=training
-frame --dataset.split=validation
-text --dataset.split=training
-text --dataset.split=validation
+frame --dataset.data_dir=$data_dir --dataset.split=training
+frame --dataset.data_dir=$data_dir --dataset.split=validation
+text --dataset.data_dir=$data_dir --dataset.split=training
+text --dataset.data_dir=$data_dir --dataset.split=validation
