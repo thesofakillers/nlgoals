@@ -24,4 +24,4 @@ data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/pre_clip/task_D_D
 
 srun python -u src/nlgoals/run/pre-clip-calvin.py --seed=1 \
   --num_workers=8 \
-  $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
+  $(eval echo "$(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)")
