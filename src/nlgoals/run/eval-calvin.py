@@ -355,7 +355,11 @@ def main(args):
     _ = torch.set_grad_enabled(False)
 
     model_checkpoint_name = os.path.splitext(os.path.basename(args.model_checkpoint))[0]
-    save_dir = os.path.join(args.save_dir, model_checkpoint_name)
+    save_dir = os.path.join(
+        args.save_dir,
+        model_checkpoint_name,
+        "sug_starts" if args.suggestive_start else "non_sug_starts",
+    )
 
     evaluate_policy(
         model,
