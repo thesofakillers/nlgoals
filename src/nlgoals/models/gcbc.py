@@ -288,22 +288,20 @@ class GCBC(pl.LightningModule):
         # S-1
         max_seq_len = curr_frames.shape[1]
         if self.rolling_traj:
+            # B x (S-1) x 3 x H x W -> B x (S-1) X 1 X 3 X H X W
+            curr_frames = curr_frames.unsqueeze(2)
+            # B x 3 x H x W -> B x S-1 x 1 x 3 x H x W
+            final_frames = (
+                final_frames.unsqueeze(1)
+                .unsqueeze(2)
+                .expand(-1, max_seq_len, -1, -1, -1, -1)
+            )
             # appending goal state to each curr state; B x (S-1) x 2 x 3 x H x W
-            frames_and_goals = torch.cat(
-                [
-                    # B x (S-1) x 3 x H x W -> B x s-1 x 1 x 3 x H x W
-                    curr_frames.unsqueeze(2),
-                    # B x 3 x H x W -> B x S-1 x 1 x 3 x H x W
-                    final_frames.unsqueeze(1)
-                    .unsqueeze(2)
-                    .repeat(1, max_seq_len, 1, 1, 1, 1),
-                ],
-                dim=2,
-            )
-            # B * (S-1) x traj_encoder.emb_dim
-            traj_embs = self.traj_encoder.encode_visual_traj(
-                images=frames_and_goals.view(-1, *frames_and_goals.shape[2:])
-            )
+            frames_and_goals = torch.cat([curr_frames, final_frames], dim=2)
+            # reshaping for traj_encoder into (B * (S-1)) x 2 x 3 x H x W
+            frames_and_goals = frames_and_goals.reshape(-1, *frames_and_goals.shape[2:])
+            # finally can get traj_embs; B * (S-1) x traj_encoder.emb_dim
+            traj_embs = self.traj_encoder.encode_visual_traj(images=frames_and_goals)
         else:
             if self.traj_embs is not None:
                 # same traj_emb for each timestep, computed on first step
@@ -510,3 +508,8 @@ gcbc_enum_to_class = {
     "CALVIN": CALVIN_GCBC,
     GCBC_ENUM.CALVIN: CALVIN_GCBC,
 }
+
+if __name__ == "__main__":
+    import pytest
+
+    pytest.main()
