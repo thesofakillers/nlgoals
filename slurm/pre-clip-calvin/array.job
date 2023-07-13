@@ -5,7 +5,7 @@
 #SBATCH --job-name=PreCLIP
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=1:00:00
+#SBATCH --time=24:00:00
 #SBATCH --mem-per-gpu=120G
 #SBATCH --array=1-4%4
 #SBATCH --output=slurm/outputs/pre-clip-calvin_%A_%a.out
@@ -20,5 +20,8 @@ source activate nlgoals
 
 HPARAMS_FILE=slurm/pre-clip-calvin/array.txt
 
+data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/pre_clip/task_D_D
+
 srun python -u src/nlgoals/run/pre-clip-calvin.py --seed=1 \
+  --dataset.data_dir=$data_dir \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
