@@ -24,7 +24,7 @@ source activate nlgoals
 confs_path=$HOME/repos/thesis/src/nlgoals/data/calvin/repo/conf/callbacks/rollout
 calvin_env_path=$HOME/repos/calvin_env
 
-srun python src/nlgoals/run/eval-calvin.py \
+srun python src/nlgoals/run/eval-gcbc-calvin.py \
   --model_variant CALVIN \
   --model_checkpoint checkpoints/gcbc_rolling/last.ckpt \
   --data.config_name default.yaml \
