@@ -465,6 +465,22 @@ class GCBC(pl.LightningModule):
             if key.startswith("traj_encoder"):
                 del checkpoint["state_dict"][key]
 
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
+        """
+        The traj encoder is trained separately, so we already have access to its
+        checkpoint and load it separately with `set_traj_encoder`.
+
+        However, the PyTorch Lightning Trainer is strict about checkpoint loading (not
+        configurable), so it expects the loaded state_dict to match exactly the keys in
+        the model. See https://github.com/Lightning-AI/lightning/issues/13246
+
+        So, when loading the checkpoint, before loading it, we add all traj_encoder keys
+        to it, so that they match
+        """
+        for key in self.state_dict().keys():
+            if key.startswith("traj_encoder"):
+                checkpoint["state_dict"][key] = self.state_dict()[key]
+
     def test_step(self, batch, batch_idx):
         raise NotImplementedError("Evaluation is handled by an external script.")
 
