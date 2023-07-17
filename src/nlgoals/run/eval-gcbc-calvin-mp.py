@@ -6,7 +6,7 @@ WIP
 """
 
 from multiprocessing import Pool
-from typing import Set, Dict, Tuple, Union
+from typing import Set, Dict, Tuple, Union, Any
 from termcolor import colored
 import zipfile
 from tqdm.auto import tqdm
@@ -185,7 +185,7 @@ def evaluate_task(
     results = np.zeros(num_rollouts)
     # use tqdm only when using single process
     for i, idx in enumerate(
-        tqdm(eval_idxs, desc="Task instances", disable=not single_process)
+        tqdm(eval_idxs, desc="Rollouts", disable=not single_process)
     ):
         # if BadZipFile, try another idx until it works (should be rare)
         while True:
@@ -249,14 +249,73 @@ def evaluate_task(
     return (task, (eval_idxs, results, videos, videos_metadata))
 
 
-def evaluate_policy(
+def eval_policy_main_process(
     model: GCBC,
     dataset: Dataset,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
     rollout_steps: int,
-    save_dir: str,
+    rollout_cfg_path: str,
+    urdf_data_dir: str,
+    egl_dir_path: str,
+    suggestive_start: bool,
+    num_rollouts: int = 100,
+    verbose: bool = False,
+) -> Tuple[Dict[str, Any]]:
+    """
+    Returns:
+        A tuple of the following dictionaries with keys as tasks:
+        - results: whether each rollout resulted in a success or not
+        - evaluated_idxs: the idxs of the episodes that were evaluated
+        - videos: the videos of the first 3 successful and failed rollouts
+        - videos_metadata: the metadata of the first 3 successful and failed rollouts
+    """
+    task_to_idx_dict = dataset.task_to_idx
+
+    videos = {}
+    videos_metadata = {}
+    results = {}
+    evaluated_idxs = {}
+
+    target_device = model.device
+    model = model.to("cpu")
+    for task, idxs in tqdm(task_to_idx_dict.items(), desc="Tasks"):
+        eval_output = evaluate_task(
+            task,
+            idxs,
+            num_rollouts,
+            dataset,
+            suggestive_start,
+            traj_mode,
+            tokenizer,
+            model,
+            rollout_steps,
+            task_oracle,
+            verbose,
+            target_device,
+            rollout_cfg_path,
+            urdf_data_dir,
+            egl_dir_path,
+            True,
+        )[1]
+        task_eval_idxs, task_results, task_videos, task_videos_metadata = eval_output
+
+        videos[task] = task_videos
+        videos_metadata[task] = task_videos_metadata
+        results[task] = task_results
+        evaluated_idxs[task] = task_eval_idxs
+
+    return results, evaluated_idxs, videos, videos_metadata
+
+
+def eval_policy_multiprocess(
+    model: GCBC,
+    dataset: Dataset,
+    task_oracle: Tasks,
+    tokenizer,
+    traj_mode: str,
+    rollout_steps: int,
     rollout_cfg_path: str,
     urdf_data_dir: str,
     egl_dir_path: str,
@@ -265,27 +324,8 @@ def evaluate_policy(
     verbose: bool = False,
     num_workers: int = 8,
 ):
-    """
-    Evaluate a policy on the CALVIN environment
-    For a given dataset, goes through each of the starting states possible for a given
-    task, and lets the model interact with the environment until it either solves the
-    task or the rollout length is reached
-
-    Args:
-        model: the model to evaluate
-        env: the environment to evaluate on
-        dataset: the dataset providing the starting states and transforms
-        task_oracle: the task oracle to check if the task is solved
-        tokenizer: the tokenizer to use for the textual input
-        traj_mode: either 'textual' or 'visual'
-        rollout_steps: the number of steps to rollout for
-        save_dir: directory where to save the results.npz and videos.npz
-        num_rollouts: the number of rollouts to perform
-        verbose: whether to print the results of each rollout
-    """
+    """Same as `eval_policy_main_process` but uses multiprocessing."""
     task_to_idx_dict = dataset.task_to_idx
-
-    tasks = list(task_to_idx_dict.keys())
 
     videos = {}
     videos_metadata = {}
@@ -343,6 +383,67 @@ def evaluate_policy(
 
     pool.join()
 
+    return results, evaluated_idxs, videos, videos_metadata
+
+
+def eval_policy(
+    model: GCBC,
+    dataset: Dataset,
+    task_oracle: Tasks,
+    tokenizer,
+    traj_mode: str,
+    rollout_steps: int,
+    save_dir: str,
+    rollout_cfg_path: str,
+    urdf_data_dir: str,
+    egl_dir_path: str,
+    suggestive_start: bool,
+    num_rollouts: int = 100,
+    verbose: bool = False,
+    num_workers: int = 8,
+):
+    """
+    Evaluate a policy on the CALVIN environment
+    For a given dataset, goes through each of the starting states possible for a given
+    task, and lets the model interact with the environment until it either solves the
+    task or the rollout length is reached
+
+    Args:
+        model: the model to evaluate
+        env: the environment to evaluate on
+        dataset: the dataset providing the starting states and transforms
+        task_oracle: the task oracle to check if the task is solved
+        tokenizer: the tokenizer to use for the textual input
+        traj_mode: either 'textual' or 'visual'
+        rollout_steps: the number of steps to rollout for
+        save_dir: directory where to save the results.npz and videos.npz
+        num_rollouts: the number of rollouts to perform
+        verbose: whether to print the results of each rollout
+    """
+    policy_eval_args = (
+        model,
+        dataset,
+        task_oracle,
+        tokenizer,
+        traj_mode,
+        rollout_steps,
+        rollout_cfg_path,
+        urdf_data_dir,
+        egl_dir_path,
+        suggestive_start,
+        num_rollouts,
+        verbose,
+        num_workers,
+    )
+    if num_workers <= 0:
+        results, evaluated_idxs, videos, videos_metadata = eval_policy_main_process(
+            *policy_eval_args[:-1]
+        )
+    else:
+        results, evaluated_idxs, videos, videos_metadata = eval_policy_multiprocess(
+            *policy_eval_args,
+        )
+
     # save results
     print("saving...")
 
@@ -357,6 +458,7 @@ def evaluate_policy(
     np.savez(evaluated_idxx_path, **evaluated_idxs)
 
     videos_dir = os.path.join(save_dir, "videos")
+    tasks = dataset.task_to_idx.keys()
     for task in tasks:
         task_dir = os.path.join(videos_dir, task)
         # successes
@@ -438,7 +540,7 @@ def main(args):
         "sug_starts" if args.suggestive_start else "non_sug_starts",
     )
 
-    evaluate_policy(
+    eval_policy(
         model=model,
         dataset=dataset,
         task_oracle=task_oracle,
