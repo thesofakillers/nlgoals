@@ -42,4 +42,5 @@ srun python src/nlgoals/run/eval-gcbc-calvin.py \
   --urdf_data_dir $calvin_env_path/data/ \
   --egl_dir_path $calvin_env_path/egl_check/ \
   --save_dir outputs/gcbc_rolling_eval/ \
+  --num_workers 9 \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
