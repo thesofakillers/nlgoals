@@ -1,11 +1,12 @@
 """
-Evaluate a trained GCBC policy on the CALVIN environment/benchmark
+Batched evaluation of a trained GCBC policy on the CALVIN environment/benchmark using
+python multiprocessing.
 
-I am so horribly sorry about how terribly opaque this code is.
-You can thank the CALVIN authors
+WIP
 """
 
-from typing import Set, Dict, Tuple, Union
+from multiprocessing import Pool
+from typing import Set, Dict, Tuple, Union, Any
 from termcolor import colored
 import zipfile
 from tqdm.auto import tqdm
@@ -32,6 +33,20 @@ from nlgoals.interfaces.gcbc import (
     calvin_gcbc_textual,
     calvin_gcbc_visual,
 )
+
+
+def create_environment(rollout_cfg_path, urdf_data_dir, egl_dir_path, dataset, device):
+    rollout_cfg = OmegaConf.load(rollout_cfg_path)
+    env = hydra.utils.instantiate(
+        rollout_cfg.env_cfg,
+        dataset,
+        urdf_data_dir,
+        device,
+        egl_dir_path,
+        show_gui=False,
+        use_egl=True if device.type == "cuda" else False,
+    )
+    return env
 
 
 def normalize_tensor(tensor):
@@ -140,18 +155,252 @@ def rollout(
     return False, rollout_obs
 
 
-def evaluate_policy(
+def evaluate_task(
+    task,
+    idxs,
+    num_rollouts,
+    dataset,
+    suggestive_start,
+    traj_mode,
+    tokenizer,
+    model,
+    rollout_steps,
+    task_oracle,
+    verbose,
+    target_device,
+    rollout_cfg_path,
+    urdf_data_dir,
+    egl_dir_path,
+    single_process: bool = False,
+):
+    env = create_environment(
+        rollout_cfg_path, urdf_data_dir, egl_dir_path, dataset, target_device
+    )
+    # move model to target device
+    model.to(target_device)
+    # sample subset of idxs
+    eval_idxs = np.random.choice(idxs, size=num_rollouts, replace=False)
+    videos = {"success": [], "fail": []}
+    videos_metadata = {"success": [], "fail": []}
+    results = np.zeros(num_rollouts)
+    # use tqdm only when using single process
+    for i, idx in enumerate(
+        tqdm(eval_idxs, desc="Rollouts", disable=not single_process)
+    ):
+        # if BadZipFile, try another idx until it works (should be rare)
+        while True:
+            try:
+                episode = dataset[int(idx)]
+                # it works! we can break out of the while loop
+                break
+            except zipfile.BadZipFile as _e:
+                print(
+                    f"BadZipFile: Something went wrong with idx {idx} of task {task}."
+                    " Trying different idx..."
+                )
+                # avoid sampling already sampled idxs
+                idx = np.random.choice(np.setdiff1d(idxs, eval_idxs), size=1)[0]
+                continue
+        reset_info = {
+            "robot_obs": (
+                episode["state_info"]["robot_obs"][0] if suggestive_start else None
+            ),
+            "scene_obs": episode["state_info"]["scene_obs"][0],
+        }
+        goal = get_goal(episode, traj_mode, tokenizer, model.device)
+        was_success, video = rollout(
+            env=env,
+            reset_info=reset_info,
+            model=model,
+            goal=goal,
+            traj_mode=traj_mode,
+            rollout_steps=rollout_steps,
+            task_oracle=task_oracle,
+            task=task,
+            verbose=verbose,
+        )
+        results[i] = was_success
+        # save first 3 videos
+        if was_success:
+            if len(videos["success"]) < 3:
+                videos["success"].append(video)
+                # parse goal
+                goal = (
+                    episode["lang"]
+                    if traj_mode == "textual"
+                    else episode["rgb_obs"]["rgb_static"][-1].squeeze().cpu().numpy()
+                )
+                # and keep track of it
+                videos_metadata["success"].append(
+                    {"episode_idx": int(idx), "goal": goal}
+                )
+        else:
+            if len(videos["fail"]) < 3:
+                videos["fail"].append(video)
+                # parse goal
+                goal = (
+                    episode["lang"]
+                    if traj_mode == "textual"
+                    else episode["rgb_obs"]["rgb_static"][-1].squeeze().cpu().numpy()
+                )
+                # and keep track of it
+                videos_metadata["fail"].append({"episode_idx": int(idx), "goal": goal})
+    print(f"{task}: {results.sum()} / {len(eval_idxs)}")
+    return (task, (eval_idxs, results, videos, videos_metadata))
+
+
+def eval_policy_main_process(
     model: GCBC,
-    env: CalvinEnvWrapper,
+    dataset: Dataset,
+    task_oracle: Tasks,
+    tokenizer,
+    traj_mode: str,
+    rollout_steps: int,
+    rollout_cfg_path: str,
+    urdf_data_dir: str,
+    egl_dir_path: str,
+    suggestive_start: bool,
+    num_rollouts: int = 100,
+    verbose: bool = False,
+) -> Tuple[Dict[str, Any]]:
+    """
+    Returns:
+        A tuple of the following dictionaries with keys as tasks:
+        - results: whether each rollout resulted in a success or not
+        - evaluated_idxs: the idxs of the episodes that were evaluated
+        - videos: the videos of the first 3 successful and failed rollouts
+        - videos_metadata: the metadata of the first 3 successful and failed rollouts
+    """
+    task_to_idx_dict = dataset.task_to_idx
+
+    videos = {}
+    videos_metadata = {}
+    results = {}
+    evaluated_idxs = {}
+
+    target_device = model.device
+    model = model.to("cpu")
+    for task, idxs in tqdm(task_to_idx_dict.items(), desc="Tasks"):
+        eval_output = evaluate_task(
+            task,
+            idxs,
+            num_rollouts,
+            dataset,
+            suggestive_start,
+            traj_mode,
+            tokenizer,
+            model,
+            rollout_steps,
+            task_oracle,
+            verbose,
+            target_device,
+            rollout_cfg_path,
+            urdf_data_dir,
+            egl_dir_path,
+            True,
+        )[1]
+        task_eval_idxs, task_results, task_videos, task_videos_metadata = eval_output
+
+        videos[task] = task_videos
+        videos_metadata[task] = task_videos_metadata
+        results[task] = task_results
+        evaluated_idxs[task] = task_eval_idxs
+
+    return results, evaluated_idxs, videos, videos_metadata
+
+
+def eval_policy_multiprocess(
+    model: GCBC,
+    dataset: Dataset,
+    task_oracle: Tasks,
+    tokenizer,
+    traj_mode: str,
+    rollout_steps: int,
+    rollout_cfg_path: str,
+    urdf_data_dir: str,
+    egl_dir_path: str,
+    suggestive_start: bool,
+    num_rollouts: int = 100,
+    verbose: bool = False,
+    num_workers: int = 8,
+):
+    """Same as `eval_policy_main_process` but uses multiprocessing."""
+    task_to_idx_dict = dataset.task_to_idx
+
+    videos = {}
+    videos_metadata = {}
+    results = {}
+    evaluated_idxs = {}
+
+    pool = Pool(processes=num_workers)
+    task_results = []
+    # model to CPU before creating child processes
+    target_device = model.device
+    model = model.to("cpu")
+    for task, idxs in task_to_idx_dict.items():
+        res = pool.apply_async(
+            evaluate_task,
+            (
+                task,
+                idxs,
+                num_rollouts,
+                dataset,
+                suggestive_start,
+                traj_mode,
+                tokenizer,
+                model,
+                rollout_steps,
+                task_oracle,
+                verbose,
+                target_device,
+                rollout_cfg_path,
+                urdf_data_dir,
+                egl_dir_path,
+                num_workers == 1,
+            ),
+        )
+        task_results.append(res)
+
+    pool.close()
+
+    pbar = tqdm(total=len(task_results), desc="Tasks")
+
+    for res in task_results:
+        task, (
+            task_eval_idxs,
+            task_results,
+            task_videos,
+            task_videos_metadata,
+        ) = res.get()
+
+        results[task] = task_results
+        evaluated_idxs[task] = task_eval_idxs
+        videos[task] = task_videos
+        videos_metadata[task] = task_videos_metadata
+        pbar.update()
+
+    pbar.close()
+
+    pool.join()
+
+    return results, evaluated_idxs, videos, videos_metadata
+
+
+def eval_policy(
+    model: GCBC,
     dataset: Dataset,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
     rollout_steps: int,
     save_dir: str,
+    rollout_cfg_path: str,
+    urdf_data_dir: str,
+    egl_dir_path: str,
     suggestive_start: bool,
     num_rollouts: int = 100,
     verbose: bool = False,
+    num_workers: int = 8,
 ):
     """
     Evaluate a policy on the CALVIN environment
@@ -171,90 +420,29 @@ def evaluate_policy(
         num_rollouts: the number of rollouts to perform
         verbose: whether to print the results of each rollout
     """
-    task_to_idx_dict = dataset.task_to_idx
-    number_of_tasks = len(task_to_idx_dict)
-
-    tasks = list(task_to_idx_dict.keys())
-
-    videos = {k: {"success": [], "fail": []} for k in tasks}
-    videos_metadata = {k: {"success": [], "fail": []} for k in tasks}
-    results = {k: np.zeros(num_rollouts) for k in tasks}
-    evaluated_idxs = {k: np.zeros(num_rollouts) for k in tasks}
-
-    for task, idxs in tqdm(
-        task_to_idx_dict.items(), desc="Tasks", total=number_of_tasks
-    ):
-        # sample subset of idxs
-        eval_idxs = np.random.choice(idxs, size=num_rollouts, replace=False)
-        evaluated_idxs[task] = eval_idxs
-        for i, idx in enumerate(tqdm(eval_idxs, desc="Task instances")):
-            # if BadZipFile, try another idx until it works (should be rare)
-            while True:
-                try:
-                    episode = dataset[int(idx)]
-                    # it works! we can break out of the while loop
-                    break
-                except zipfile.BadZipFile as _e:
-                    print(
-                        f"BadZipFile: Something went wrong with idx {idx} of task {task}."
-                        " Trying different idx..."
-                    )
-                    # avoid sampling already sampled idxs
-                    idx = np.random.choice(np.setdiff1d(idxs, eval_idxs), size=1)[0]
-                    continue
-            reset_info = {
-                "robot_obs": (
-                    episode["state_info"]["robot_obs"][0] if suggestive_start else None
-                ),
-                "scene_obs": episode["state_info"]["scene_obs"][0],
-            }
-            goal = get_goal(episode, traj_mode, tokenizer, model.device)
-            was_success, video = rollout(
-                env=env,
-                reset_info=reset_info,
-                model=model,
-                goal=goal,
-                traj_mode=traj_mode,
-                rollout_steps=rollout_steps,
-                task_oracle=task_oracle,
-                task=task,
-                verbose=verbose,
-            )
-            results[task][i] = was_success
-            # save first 3 videos
-            if was_success:
-                if len(videos[task]["success"]) < 3:
-                    videos[task]["success"].append(video)
-                    # parse goal
-                    goal = (
-                        episode["lang"]
-                        if traj_mode == "textual"
-                        else episode["rgb_obs"]["rgb_static"][-1]
-                        .squeeze()
-                        .cpu()
-                        .numpy()
-                    )
-                    # and keep track of it
-                    videos_metadata[task]["success"].append(
-                        {"episode_idx": int(idx), "goal": goal}
-                    )
-            else:
-                if len(videos[task]["fail"]) < 3:
-                    videos[task]["fail"].append(video)
-                    # parse goal
-                    goal = (
-                        episode["lang"]
-                        if traj_mode == "textual"
-                        else episode["rgb_obs"]["rgb_static"][-1]
-                        .squeeze()
-                        .cpu()
-                        .numpy()
-                    )
-                    # and keep track of it
-                    videos_metadata[task]["fail"].append(
-                        {"episode_idx": int(idx), "goal": goal}
-                    )
-        print(f"{task}: {results[task].sum()} / {len(eval_idxs)}")
+    policy_eval_args = (
+        model,
+        dataset,
+        task_oracle,
+        tokenizer,
+        traj_mode,
+        rollout_steps,
+        rollout_cfg_path,
+        urdf_data_dir,
+        egl_dir_path,
+        suggestive_start,
+        num_rollouts,
+        verbose,
+        num_workers,
+    )
+    if num_workers <= 0:
+        results, evaluated_idxs, videos, videos_metadata = eval_policy_main_process(
+            *policy_eval_args[:-1]
+        )
+    else:
+        results, evaluated_idxs, videos, videos_metadata = eval_policy_multiprocess(
+            *policy_eval_args,
+        )
 
     # save results
     print("saving...")
@@ -270,6 +458,7 @@ def evaluate_policy(
     np.savez(evaluated_idxx_path, **evaluated_idxs)
 
     videos_dir = os.path.join(save_dir, "videos")
+    tasks = dataset.task_to_idx.keys()
     for task in tasks:
         task_dir = os.path.join(videos_dir, task)
         # successes
@@ -326,16 +515,6 @@ def main(args):
         else torch.device("cpu")
     )
     # environment
-    rollout_cfg = OmegaConf.load(args.rollout_cfg_path)
-    env = hydra.utils.instantiate(
-        rollout_cfg.env_cfg,
-        dataset,
-        args.urdf_data_dir,
-        device,
-        args.egl_dir_path,
-        show_gui=False,
-        use_egl=True if device.type == "cuda" else False,
-    )
     # task oracle
     task_oracle_cfg = OmegaConf.load(args.task_oracle_cfg)
     task_oracle = hydra.utils.instantiate(task_oracle_cfg)
@@ -361,24 +540,33 @@ def main(args):
         "sug_starts" if args.suggestive_start else "non_sug_starts",
     )
 
-    evaluate_policy(
-        model,
-        env,
-        dataset,
-        task_oracle,
-        tokenizer,
-        args.traj_mode,
-        args.rollout_steps,
-        save_dir,
-        args.suggestive_start,
-        args.num_rollouts,
-        args.verbose,
+    eval_policy(
+        model=model,
+        dataset=dataset,
+        task_oracle=task_oracle,
+        tokenizer=tokenizer,
+        traj_mode=args.traj_mode,
+        rollout_steps=args.rollout_steps,
+        save_dir=save_dir,
+        rollout_cfg_path=args.rollout_cfg_path,
+        urdf_data_dir=args.urdf_data_dir,
+        egl_dir_path=args.egl_dir_path,
+        suggestive_start=args.suggestive_start,
+        num_rollouts=args.num_rollouts,
+        verbose=args.verbose,
+        num_workers=args.num_workers,
     )
 
 
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        default=8,
+        help="Number of workers for batched rollouts.",
+    )
     parser.add_argument(
         "--suggestive_start",
         type=bool,
