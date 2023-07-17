@@ -35,6 +35,20 @@ from nlgoals.interfaces.gcbc import (
 )
 
 
+def create_environment(rollout_cfg_path, urdf_data_dir, egl_dir_path, dataset, device):
+    rollout_cfg = OmegaConf.load(rollout_cfg_path)
+    env = hydra.utils.instantiate(
+        rollout_cfg.env_cfg,
+        dataset,
+        urdf_data_dir,
+        device,
+        egl_dir_path,
+        show_gui=False,
+        use_egl=True if device.type == "cuda" else False,
+    )
+    return env
+
+
 def normalize_tensor(tensor):
     # move from -1, 1 to 0, 1
     tensor = tensor / 2 + 0.5
@@ -143,7 +157,6 @@ def rollout(
 
 def evaluate_task(
     task,
-    env,
     idxs,
     num_rollouts,
     dataset,
@@ -155,8 +168,14 @@ def evaluate_task(
     task_oracle,
     verbose,
     target_device,
+    rollout_cfg_path,
+    urdf_data_dir,
+    egl_dir_path,
     single_process: bool = False,
 ):
+    env = create_environment(
+        rollout_cfg_path, urdf_data_dir, egl_dir_path, dataset, target_device
+    )
     # move model to target device
     model.to(target_device)
     # sample subset of idxs
@@ -232,13 +251,15 @@ def evaluate_task(
 
 def evaluate_policy(
     model: GCBC,
-    env: CalvinEnvWrapper,
     dataset: Dataset,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
     rollout_steps: int,
     save_dir: str,
+    rollout_cfg_path: str,
+    urdf_data_dir: str,
+    egl_dir_path: str,
     suggestive_start: bool,
     num_rollouts: int = 100,
     verbose: bool = False,
@@ -281,7 +302,6 @@ def evaluate_policy(
             evaluate_task,
             (
                 task,
-                env,
                 idxs,
                 num_rollouts,
                 dataset,
@@ -293,6 +313,9 @@ def evaluate_policy(
                 task_oracle,
                 verbose,
                 target_device,
+                rollout_cfg_path,
+                urdf_data_dir,
+                egl_dir_path,
                 num_workers == 1,
             ),
         )
@@ -303,12 +326,17 @@ def evaluate_policy(
     pbar = tqdm(total=len(task_results), desc="Tasks")
 
     for res in task_results:
-        task, (eval_idxs, results, videos, videos_metadata) = res.get()
+        task, (
+            task_eval_idxs,
+            task_results,
+            task_videos,
+            task_videos_metadata,
+        ) = res.get()
 
-        results[task] = results
-        evaluated_idxs[task] = eval_idxs
-        videos[task] = videos
-        videos_metadata[task] = videos_metadata
+        results[task] = task_results
+        evaluated_idxs[task] = task_eval_idxs
+        videos[task] = task_videos
+        videos_metadata[task] = task_videos_metadata
         pbar.update()
 
     pbar.close()
@@ -385,16 +413,6 @@ def main(args):
         else torch.device("cpu")
     )
     # environment
-    rollout_cfg = OmegaConf.load(args.rollout_cfg_path)
-    env = hydra.utils.instantiate(
-        rollout_cfg.env_cfg,
-        dataset,
-        args.urdf_data_dir,
-        device,
-        args.egl_dir_path,
-        show_gui=False,
-        use_egl=True if device.type == "cuda" else False,
-    )
     # task oracle
     task_oracle_cfg = OmegaConf.load(args.task_oracle_cfg)
     task_oracle = hydra.utils.instantiate(task_oracle_cfg)
@@ -421,18 +439,20 @@ def main(args):
     )
 
     evaluate_policy(
-        model,
-        env,
-        dataset,
-        task_oracle,
-        tokenizer,
-        args.traj_mode,
-        args.rollout_steps,
-        save_dir,
-        args.suggestive_start,
-        args.num_rollouts,
-        args.verbose,
-        args.num_workers,
+        model=model,
+        dataset=dataset,
+        task_oracle=task_oracle,
+        tokenizer=tokenizer,
+        traj_mode=args.traj_mode,
+        rollout_steps=args.rollout_steps,
+        save_dir=save_dir,
+        rollout_cfg_path=args.rollout_cfg_path,
+        urdf_data_dir=args.urdf_data_dir,
+        egl_dir_path=args.egl_dir_path,
+        suggestive_start=args.suggestive_start,
+        num_rollouts=args.num_rollouts,
+        verbose=args.verbose,
+        num_workers=args.num_workers,
     )
 
 
