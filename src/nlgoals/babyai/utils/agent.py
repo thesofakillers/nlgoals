@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 import torch
 from .. import utils
-from babyai.bot import Bot
-from babyai.model import ACModel
+from minigrid.utils.baby_ai_bot import BabyAIBot
 from random import Random
 
 
@@ -51,25 +50,24 @@ class ModelAgent(Agent):
     def act_batch(self, many_obs):
         if self.memory is None:
             self.memory = torch.zeros(
-                len(many_obs), self.model.memory_size, device=self.device)
+                len(many_obs), self.model.memory_size, device=self.device
+            )
         elif self.memory.shape[0] != len(many_obs):
             raise ValueError("stick to one batch size for the lifetime of an agent")
         preprocessed_obs = self.obss_preprocessor(many_obs, device=self.device)
 
         with torch.no_grad():
             model_results = self.model(preprocessed_obs, self.memory)
-            dist = model_results['dist']
-            value = model_results['value']
-            self.memory = model_results['memory']
+            dist = model_results["dist"]
+            value = model_results["value"]
+            self.memory = model_results["memory"]
 
         if self.argmax:
             action = dist.probs.argmax(1)
         else:
             action = dist.sample()
 
-        return {'action': action,
-                'dist': dist,
-                'value': value}
+        return {"action": action, "dist": dist, "value": value}
 
     def act(self, obs):
         return self.act_batch([obs])
@@ -78,9 +76,9 @@ class ModelAgent(Agent):
         if isinstance(done, tuple):
             for i in range(len(done)):
                 if done[i]:
-                    self.memory[i, :] *= 0.
+                    self.memory[i, :] *= 0.0
         else:
-            self.memory *= (1 - done)
+            self.memory *= 1 - done
 
 
 class RandomAgent:
@@ -93,16 +91,16 @@ class RandomAgent:
     def act(self, obs):
         action = self.rng.randint(0, self.number_of_actions - 1)
         # To be consistent with how a ModelAgent's output of `act`:
-        return {'action': torch.tensor(action),
-                'dist': None,
-                'value': None}
+        return {"action": torch.tensor(action), "dist": None, "value": None}
 
 
 class DemoAgent(Agent):
     """A demonstration-based agent. This agent behaves using demonstrations."""
 
     def __init__(self, demos_name, env_name, origin):
-        self.demos_path = utils.get_demos_path(demos_name, env_name, origin, valid=False)
+        self.demos_path = utils.get_demos_path(
+            demos_name, env_name, origin, valid=False
+        )
         self.demos = utils.load_demos(self.demos_path)
         self.demos = utils.demos.transform_demos(self.demos)
         self.demo_id = 0
@@ -110,11 +108,11 @@ class DemoAgent(Agent):
 
     @staticmethod
     def check_obss_equality(obs1, obs2):
-        if not(obs1.keys() == obs2.keys()):
+        if not (obs1.keys() == obs2.keys()):
             return False
         for key in obs1.keys():
             if type(obs1[key]) in (str, int):
-                if not(obs1[key] == obs2[key]):
+                if not (obs1[key] == obs2[key]):
                     return False
             else:
                 if not (obs1[key] == obs2[key]).all():
@@ -125,9 +123,11 @@ class DemoAgent(Agent):
         if self.demo_id >= len(self.demos):
             raise ValueError("No demonstration remaining")
         expected_obs = self.demos[self.demo_id][self.step_id][0]
-        assert DemoAgent.check_obss_equality(obs, expected_obs), "The observations do not match"
+        assert DemoAgent.check_obss_equality(
+            obs, expected_obs
+        ), "The observations do not match"
 
-        return {'action': self.demos[self.demo_id][self.step_id][1]}
+        return {"action": self.demos[self.demo_id][self.step_id][1]}
 
     def analyze_feedback(self, reward, done):
         self.step_id += 1
@@ -144,19 +144,21 @@ class BotAgent:
         self.on_reset()
 
     def on_reset(self):
-        self.bot = Bot(self.env)
+        self.bot = BabyAIBot(self.env)
 
     def act(self, obs=None, update_internal_state=True, *args, **kwargs):
         action = self.bot.replan()
-        return {'action': action}
+        return {"action": action}
 
     def analyze_feedback(self, reward, done):
         pass
 
 
-def load_agent(env, model_name, demos_name=None, demos_origin=None, argmax=True, env_name=None):
+def load_agent(
+    env, model_name, demos_name=None, demos_origin=None, argmax=True, env_name=None
+):
     # env_name needs to be specified for demo agents
-    if model_name == 'BOT':
+    if model_name == "BOT":
         return BotAgent(env)
     elif model_name is not None:
         obss_preprocessor = utils.ObssPreprocessor(model_name, env.observation_space)

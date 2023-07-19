@@ -20,79 +20,9 @@ import time
 import numpy as np
 import blosc
 import torch
+from torch._C import _import_ir_module_from_package
 
 import nlgoals.babyai.utils as utils
-
-# Parse arguments
-
-parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument(
-    "--env", required=True, help="name of the environment to be run (REQUIRED)"
-)
-parser.add_argument(
-    "--model", default="BOT", help="name of the trained model (REQUIRED)"
-)
-parser.add_argument(
-    "--demos",
-    default=None,
-    help="path to save demonstrations (based on --model and --origin by default)",
-)
-parser.add_argument(
-    "--episodes",
-    type=int,
-    default=1000,
-    help="number of episodes to generate demonstrations for",
-)
-parser.add_argument(
-    "--valid-episodes",
-    type=int,
-    default=512,
-    help="number of validation episodes to generate demonstrations for",
-)
-parser.add_argument("--seed", type=int, default=0, help="start random seed")
-parser.add_argument(
-    "--argmax",
-    action="store_true",
-    default=False,
-    help="action with highest probability is selected",
-)
-parser.add_argument(
-    "--log-interval", type=int, default=100, help="interval between progress reports"
-)
-parser.add_argument(
-    "--save-interval",
-    type=int,
-    default=10000,
-    help="interval between demonstrations saving",
-)
-parser.add_argument(
-    "--filter-steps",
-    type=int,
-    default=0,
-    help="filter out demos with number of steps more than filter-steps",
-)
-parser.add_argument(
-    "--on-exception",
-    type=str,
-    default="warn",
-    choices=("warn", "crash"),
-    help="How to handle exceptions during demo generation",
-)
-
-parser.add_argument(
-    "--job-script",
-    type=str,
-    default=None,
-    help="The script that launches make_agent_demos.py at a cluster.",
-)
-parser.add_argument(
-    "--jobs", type=int, default=0, help="Split generation in that many jobs"
-)
-
-args = parser.parse_args()
-logger = logging.getLogger(__name__)
-
-# Set seed for all randomness sources
 
 
 def print_demo_lengths(demos):
@@ -266,13 +196,87 @@ def generate_demos_cluster():
     utils.save_demos(all_demos, demos_path)
 
 
-logging.basicConfig(level="INFO", format="%(asctime)s: %(levelname)s: %(message)s")
-logger.info(args)
-# Training demos
-if args.jobs == 0:
-    generate_demos(args.episodes, False, args.seed)
-else:
-    generate_demos_cluster()
-# Validation demos
-if args.valid_episodes:
-    generate_demos(args.valid_episodes, True, int(1e9))
+if __name__ == "__main__":
+    # Parse arguments
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "--env", required=True, help="name of the environment to be run (REQUIRED)"
+    )
+    parser.add_argument(
+        "--model", default="BOT", help="name of the trained model (REQUIRED)"
+    )
+    parser.add_argument(
+        "--demos",
+        default=None,
+        help="path to save demonstrations (based on --model and --origin by default)",
+    )
+    parser.add_argument(
+        "--episodes",
+        type=int,
+        default=1000,
+        help="number of episodes to generate demonstrations for",
+    )
+    parser.add_argument(
+        "--valid-episodes",
+        type=int,
+        default=512,
+        help="number of validation episodes to generate demonstrations for",
+    )
+    parser.add_argument("--seed", type=int, default=0, help="start random seed")
+    parser.add_argument(
+        "--argmax",
+        action="store_true",
+        default=False,
+        help="action with highest probability is selected",
+    )
+    parser.add_argument(
+        "--log-interval",
+        type=int,
+        default=100,
+        help="interval between progress reports",
+    )
+    parser.add_argument(
+        "--save-interval",
+        type=int,
+        default=10000,
+        help="interval between demonstrations saving",
+    )
+    parser.add_argument(
+        "--filter-steps",
+        type=int,
+        default=0,
+        help="filter out demos with number of steps more than filter-steps",
+    )
+    parser.add_argument(
+        "--on-exception",
+        type=str,
+        default="warn",
+        choices=("warn", "crash"),
+        help="How to handle exceptions during demo generation",
+    )
+
+    parser.add_argument(
+        "--job-script",
+        type=str,
+        default=None,
+        help="The script that launches make_agent_demos.py at a cluster.",
+    )
+    parser.add_argument(
+        "--jobs", type=int, default=0, help="Split generation in that many jobs"
+    )
+
+    args = parser.parse_args()
+    logger = logging.getLogger(__name__)
+
+    logging.basicConfig(level="INFO", format="%(asctime)s: %(levelname)s: %(message)s")
+    logger.info(args)
+    # Training demos
+    if args.jobs == 0:
+        generate_demos(args.episodes, False, args.seed)
+    else:
+        generate_demos_cluster()
+    # Validation demos
+    if args.valid_episodes:
+        generate_demos(args.valid_episodes, True, int(1e9))

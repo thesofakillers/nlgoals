@@ -3,7 +3,7 @@ import json
 import numpy
 import re
 import torch
-import babyai.rl
+import nlgoals.babyai.rl
 
 from .. import utils
 
