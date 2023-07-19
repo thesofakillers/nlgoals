@@ -8,8 +8,6 @@ The agent can either be a trained model or the heuristic expert (bot).
 Demonstration generation can take a long time, but it can be parallelized
 if you have a cluster at your disposal. Provide a script that launches
 make_agent_demos.py at your cluster as --job-script and the number of jobs as --jobs.
-
-
 """
 
 import argparse
@@ -23,7 +21,7 @@ import numpy as np
 import blosc
 import torch
 
-import babyai.utils as utils
+import nlgoals.babyai.utils as utils
 
 # Parse arguments
 
