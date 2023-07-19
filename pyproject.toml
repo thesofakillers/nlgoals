@@ -26,6 +26,7 @@ numpy = "<1.24"
 pyhash = "^0.9.3"
 # torchmetrics = "<0.7"
 torch = "^2.0.1"
+minigrid = {git = "https://github.com/thesofakillers/Minigrid.git", rev = "giulio"}
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.6.1"
