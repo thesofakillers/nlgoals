@@ -21,21 +21,48 @@ from babyai.imitation import ImitationLearning
 
 # Parse arguments
 parser = ArgumentParser()
-parser.add_argument("--demos", default=None,
-                    help="demos filename (REQUIRED or demos-origin or multi-demos required)")
-parser.add_argument("--demos-origin", required=False,
-                    help="origin of the demonstrations: human | agent (REQUIRED or demos or multi-demos required)")
-parser.add_argument("--episodes", type=int, default=0,
-                    help="number of episodes of demonstrations to use"
-                         "(default: 0, meaning all demos)")
-parser.add_argument("--multi-env", nargs='*', default=None,
-                  help="name of the environments used for validation/model loading")
-parser.add_argument("--multi-demos", nargs='*', default=None,
-                    help="demos filenames for envs to train on (REQUIRED when multi-env is specified)")
-parser.add_argument("--multi-episodes", type=int, nargs='*', default=None,
-                    help="number of episodes of demos to use from each file (REQUIRED when multi-env is specified)")
-parser.add_argument("--save-interval", type=int, default=1,
-                    help="number of epochs between two saves (default: 1, 0 means no saving)")
+parser.add_argument(
+    "--demos",
+    default=None,
+    help="demos filename (REQUIRED or demos-origin or multi-demos required)",
+)
+parser.add_argument(
+    "--demos-origin",
+    required=False,
+    help="origin of the demonstrations: human | agent (REQUIRED or demos or multi-demos required)",
+)
+parser.add_argument(
+    "--episodes",
+    type=int,
+    default=0,
+    help="number of episodes of demonstrations to use"
+    "(default: 0, meaning all demos)",
+)
+parser.add_argument(
+    "--multi-env",
+    nargs="*",
+    default=None,
+    help="name of the environments used for validation/model loading",
+)
+parser.add_argument(
+    "--multi-demos",
+    nargs="*",
+    default=None,
+    help="demos filenames for envs to train on (REQUIRED when multi-env is specified)",
+)
+parser.add_argument(
+    "--multi-episodes",
+    type=int,
+    nargs="*",
+    default=None,
+    help="number of episodes of demos to use from each file (REQUIRED when multi-env is specified)",
+)
+parser.add_argument(
+    "--save-interval",
+    type=int,
+    default=1,
+    help="number of epochs between two saves (default: 1, 0 means no saving)",
+)
 
 
 def main(args):
@@ -51,30 +78,40 @@ def main(args):
     il_learn = ImitationLearning(args)
 
     # Define logger and Tensorboard writer
-    header = (["update", "frames", "FPS", "duration", "entropy", "policy_loss", "train_accuracy"]
-              + ["validation_accuracy"])
+    header = [
+        "update",
+        "frames",
+        "FPS",
+        "duration",
+        "entropy",
+        "policy_loss",
+        "train_accuracy",
+    ] + ["validation_accuracy"]
     if args.multi_env is None:
         header.extend(["validation_return", "validation_success_rate"])
     else:
         header.extend(["validation_return_{}".format(env) for env in args.multi_env])
-        header.extend(["validation_success_rate_{}".format(env) for env in args.multi_env])
+        header.extend(
+            ["validation_success_rate_{}".format(env) for env in args.multi_env]
+        )
     writer = None
     if args.tb:
         from tensorboardX import SummaryWriter
+
         writer = SummaryWriter(utils.get_log_dir(args.model))
 
     # Define csv writer
     csv_writer = None
-    csv_path = os.path.join(utils.get_log_dir(args.model), 'log.csv')
+    csv_path = os.path.join(utils.get_log_dir(args.model), "log.csv")
     first_created = not os.path.exists(csv_path)
     # we don't buffer data going in the csv log, cause we assume
     # that one update will take much longer that one write to the log
-    csv_writer = csv.writer(open(csv_path, 'a', 1))
+    csv_writer = csv.writer(open(csv_path, "a", 1))
     if first_created:
         csv_writer.writerow(header)
 
     # Get the status path
-    status_path = os.path.join(utils.get_log_dir(args.model), 'status.json')
+    status_path = os.path.join(utils.get_log_dir(args.model), "status.json")
 
     # Log command, availability of CUDA, and model
     logger.info(args)
