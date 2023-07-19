@@ -478,6 +478,49 @@ webencodings = "*"
 css = ["tinycss2 (>=1.1.0,<1.2)"]
 
 [[package]]
+name = "blosc"
+version = "1.11.1"
+description = "Blosc data compressor"
+category = "dev"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "blosc-1.11.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:345577759e5e1cd0905faf89ad1dbcc60bb7a56b759985a417c5b0cab0e0117a"},
+    {file = "blosc-1.11.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:8907404c3058ac4a767a0a8b279c4c5aaf90431b7238f5b9b464eebe50b91010"},
+    {file = "blosc-1.11.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:41578759a913122ba63c24750cb53f861a557a0946f5bb80ad62625e95c7f45a"},
+    {file = "blosc-1.11.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bba4cfbc0a86788eb38acc05eb35ba97e2897441416c5f927f243ed7b4b406b6"},
+    {file = "blosc-1.11.1-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:705df0302ba73293b6109800110994841d5de4491318a3b06c5bbcec32756939"},
+    {file = "blosc-1.11.1-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:bef546a039a1d984c6d2ed516ffcbc2a09dbbba61a0951c5197fad3f718095b1"},
+    {file = "blosc-1.11.1-cp310-cp310-win32.whl", hash = "sha256:5d0ceff7a19f3c5c42d9d5ec13a90ae0b69cb2731e797a58ca0e3b25018cbb69"},
+    {file = "blosc-1.11.1-cp310-cp310-win_amd64.whl", hash = "sha256:f889715e28bbdc2f927a546f8debf403947cea1e3dd8f15e1428b66701416ee6"},
+    {file = "blosc-1.11.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:88c2eba2c9c013e44d5841660f7832425ebdc0bcfce9e11c59a8eb732f28cf9d"},
+    {file = "blosc-1.11.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:8321241c37f25ad4a21e3e0731246753b557dd8910eaee32bf7510eeee03648a"},
+    {file = "blosc-1.11.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:417fb44fd50887e4b3e2f8fc91f350c791bf0e39a1b4d45a41071fc416fb767a"},
+    {file = "blosc-1.11.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a74c7bc804c608de4dc53c873f8ef5b481b9e3b0b6381e7d3fcff92683de9547"},
+    {file = "blosc-1.11.1-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:94010a4fc094dda5a9abd9546e1f97af9a7dbd903a6eee39dd13244c7c419412"},
+    {file = "blosc-1.11.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:dfbb2bb0a3a69006ad0c627247b53e8ed5f844fc5cd5f09979f1e174f6dc4a6e"},
+    {file = "blosc-1.11.1-cp311-cp311-win32.whl", hash = "sha256:7b40a99add3120a26bc92e7a751a01e4aa854fc1835e0d12e9cf77dbf5498a2a"},
+    {file = "blosc-1.11.1-cp311-cp311-win_amd64.whl", hash = "sha256:751a4ad8b4696d1c54f05a5255fe911d72f424cd03a9ce97525d67f40946b2ea"},
+    {file = "blosc-1.11.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:cf25b0aaf209411ad7ff65f42ee6c42e87d2a9161990743cb21ea264a4509e7b"},
+    {file = "blosc-1.11.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:2078f8d4500c83387a0e1c3f750c9a6d4848a80e1bf07ec1fd9c87bb1e2e2e92"},
+    {file = "blosc-1.11.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:038ab5690c016a15cc5bf47977ae57b9cb4517f5df3eccd895c2d6c6656da6e6"},
+    {file = "blosc-1.11.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8e2283eb29c5938bfc63ae4091e0b3df5ef0492f83b9ffffa184532d1e5e7f8c"},
+    {file = "blosc-1.11.1-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:1bfc0a2cd115aa6eac75b841840b00fee0dd7bf77793650bdf470e12cf105627"},
+    {file = "blosc-1.11.1-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:31ed162c9cc916c393eb9dada1beb632b11d4646afdf708c1c3f9d38402a4fab"},
+    {file = "blosc-1.11.1-cp38-cp38-win32.whl", hash = "sha256:b113c900cfb47272b63f0dbee95016e24720d24d46009aa558e131128fb26aa5"},
+    {file = "blosc-1.11.1-cp38-cp38-win_amd64.whl", hash = "sha256:da627a51bc2947a698097ac0ccf2f6e51a3aed77f2d4297295365ef8a18d748e"},
+    {file = "blosc-1.11.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:69cf3d2bc196befe4adddc3cca08315fd9e05208887b9fe031942e204d48ed49"},
+    {file = "blosc-1.11.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:270cf6aa4da391950e0140cc9ee9ced8562e04d4eb1473fa42fc454b81eaeb80"},
+    {file = "blosc-1.11.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:24dfeafbbe0b4b6a028fcfd22c3920be738d6ef9e9d2ffcb2b66153f18ad455d"},
+    {file = "blosc-1.11.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bf07fccaa1d76fdb03d4eed641a71f2f54be1d1bffba9300bab4c8f437017b46"},
+    {file = "blosc-1.11.1-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:c793b3e33d025161bd3f8dcacc9bdfa011218eafbc607e195360456d3306ebf9"},
+    {file = "blosc-1.11.1-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:aa129006fabeec63a1e54d30863e0a0330ec72caedbd5a5c282121796e84e1a0"},
+    {file = "blosc-1.11.1-cp39-cp39-win32.whl", hash = "sha256:213ce859c89625c64776c8a59c6b235bca6dea81c185a273703366e733880ff5"},
+    {file = "blosc-1.11.1-cp39-cp39-win_amd64.whl", hash = "sha256:9c6371779ca9ec469735b05ee0a119cc431d72008f9f2813ca73d4acf2b39b2f"},
+    {file = "blosc-1.11.1.tar.gz", hash = "sha256:c22119b27bae1063a697f639028b422d55811b0880c3fc0149cbdea791d0b276"},
+]
+
+[[package]]
 name = "Calvin"
 version = "0.0.2"
 description = "CALVIN - A benchmark for Language-Conditioned Policy Learning for Long-Horizon Robot Manipulation Tasks"
@@ -1084,7 +1127,7 @@ tests = ["asttokens", "littleutils", "pytest", "rich"]
 name = "farama-notifications"
 version = "0.0.4"
 description = "Notifications for all Farama Foundation maintained libraries."
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 files = [
@@ -1520,7 +1563,7 @@ test = ["gym (==0.17.2)", "gym-retro (==0.8.0)", "mpi4py (==3.0.3)", "pytest (==
 name = "gymnasium"
 version = "0.29.0"
 description = "A standard API for reinforcement learning and a diverse set of reference environments (formerly Gym)."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -2688,7 +2731,7 @@ traitlets = "*"
 name = "minigrid"
 version = "2.3.0"
 description = "Minimalistic gridworld reinforcement learning environments."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = []
@@ -3951,7 +3994,7 @@ files = [
 name = "pygame"
 version = "2.5.0"
 description = "Python Game Development"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -6124,4 +6167,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "f7875b72d25f95523972d10c6d043bda00c6a0e6678080210b2cefe7aa3efad6"
+content-hash = "70bc07133b63c57acbea7187f17451e5c6fc5558679e70f3ea7db684dbb473dc"

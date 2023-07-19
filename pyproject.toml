@@ -26,7 +26,6 @@ numpy = "<1.24"
 pyhash = "^0.9.3"
 # torchmetrics = "<0.7"
 torch = "^2.0.1"
-minigrid = {git = "https://github.com/thesofakillers/Minigrid.git", rev = "giulio"}
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.6.1"
@@ -50,6 +49,10 @@ numba = "^0.56.4"
 diffusers = "^0.14.0"
 accelerate = "^0.17.1"
 safetensors = "^0.3.0"
+
+[tool.poetry.group.babyai.dependencies]
+minigrid = { git = "https://github.com/thesofakillers/Minigrid.git", rev = "giulio" }
+blosc = "^1.11.1"
 
 [build-system]
 requires = ["poetry-core"]
