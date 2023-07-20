@@ -38,6 +38,7 @@ class CalvinDataModule(pl.LightningDataModule):
         shuffle_val: bool = False,
         num_workers: int = 0,
         clip_model_name: str = "laion/CLIP-ViT-L-14-laion2B-s32B-b82K",
+        instantiate_collator=True,
         **kwargs: Dict,  # absorb any other arguments
     ):
         super().__init__()
@@ -60,7 +61,8 @@ class CalvinDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.clip_model_name = clip_model_name
         self.clip_img_transform = CLIPImageTransform(clip_model_name)
-        self.collator = Collator(clip_model_name)
+        if instantiate_collator:
+            self.collator = Collator(clip_model_name)
 
         self.use_shm = "shm_dataset" in self.datasets_cfg.items()[0][1]["_target_"]
 

@@ -5,6 +5,7 @@ python multiprocessing.
 WIP
 """
 
+from argparse import Namespace
 from multiprocessing import Pool
 from typing import Set, Dict, Tuple, Union, Any
 from termcolor import colored
@@ -33,6 +34,32 @@ from nlgoals.interfaces.gcbc import (
     calvin_gcbc_textual,
     calvin_gcbc_visual,
 )
+
+
+def create_dataset(data_args, collator: bool):
+    hydra.core.global_hydra.GlobalHydra.instance().clear()
+    hydra.initialize_config_module(
+        config_module="nlgoals.data.calvin.repo.conf.datamodule"
+    )
+    datamodule_cfg = hydra.compose(
+        config_name=data_args.config_name,
+        overrides=[] if data_args.shared_memory is True else ["datasets=vision_lang"],
+    )
+    datamodule_cfg.batch_size = data_args.batch_size
+    datamodule_cfg.num_workers = data_args.num_workers
+    datamodule_cfg.root_data_dir = data_args.data_dir
+    datamodule = hydra.utils.instantiate(datamodule_cfg, instantiate_collator=collator)
+    datamodule.prepare_data()
+    datamodule.setup()
+    if collator:
+        tokenizer = datamodule.collator.text_processor
+        datamodule.collator.custom_collate_fn = calvin_gcbc_collate
+    else:
+        tokenizer = None
+
+    dataset = datamodule.val_datasets["lang"]
+
+    return dataset, tokenizer
 
 
 def create_environment(rollout_cfg_path, urdf_data_dir, egl_dir_path, dataset, device):
@@ -159,7 +186,7 @@ def evaluate_task(
     task,
     idxs,
     num_rollouts,
-    dataset,
+    data_args,
     suggestive_start,
     traj_mode,
     tokenizer,
@@ -173,6 +200,7 @@ def evaluate_task(
     egl_dir_path,
     single_process: bool = False,
 ):
+    dataset = create_dataset(data_args, False)[0]
     env = create_environment(
         rollout_cfg_path, urdf_data_dir, egl_dir_path, dataset, target_device
     )
@@ -252,6 +280,7 @@ def evaluate_task(
 def eval_policy_main_process(
     model: GCBC,
     dataset: Dataset,
+    data_args: Namespace,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
@@ -285,7 +314,7 @@ def eval_policy_main_process(
             task,
             idxs,
             num_rollouts,
-            dataset,
+            data_args,
             suggestive_start,
             traj_mode,
             tokenizer,
@@ -312,6 +341,7 @@ def eval_policy_main_process(
 def eval_policy_multiprocess(
     model: GCBC,
     dataset: Dataset,
+    data_args: Namespace,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
@@ -344,7 +374,7 @@ def eval_policy_multiprocess(
                 task,
                 idxs,
                 num_rollouts,
-                dataset,
+                data_args,
                 suggestive_start,
                 traj_mode,
                 tokenizer,
@@ -389,6 +419,7 @@ def eval_policy_multiprocess(
 def eval_policy(
     model: GCBC,
     dataset: Dataset,
+    data_args: Namespace,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
@@ -423,6 +454,7 @@ def eval_policy(
     policy_eval_args = (
         model,
         dataset,
+        data_args,
         task_oracle,
         tokenizer,
         traj_mode,
@@ -490,24 +522,7 @@ def eval_policy(
 
 
 def main(args):
-    # datamodule and dataset
-    hydra.core.global_hydra.GlobalHydra.instance().clear()
-    hydra.initialize_config_module(
-        config_module="nlgoals.data.calvin.repo.conf.datamodule"
-    )
-    datamodule_cfg = hydra.compose(
-        config_name=args.data.config_name,
-        overrides=[] if args.data.shared_memory is True else ["datasets=vision_lang"],
-    )
-    datamodule_cfg.batch_size = args.data.batch_size
-    datamodule_cfg.num_workers = args.data.num_workers
-    datamodule_cfg.root_data_dir = args.data.data_dir
-    datamodule = hydra.utils.instantiate(datamodule_cfg)
-    datamodule.collator.custom_collate_fn = calvin_gcbc_collate
-    datamodule.prepare_data()
-    datamodule.setup()
-    dataset = datamodule.val_dataloader().dataset.datasets["lang"]
-    tokenizer = datamodule.collator.text_processor
+    dataset, tokenizer = create_dataset(args.data, True)
     # device
     device = (
         torch.device("cuda:" + str(0))
@@ -543,6 +558,7 @@ def main(args):
     eval_policy(
         model=model,
         dataset=dataset,
+        data_args=args.data,
         task_oracle=task_oracle,
         tokenizer=tokenizer,
         traj_mode=args.traj_mode,
