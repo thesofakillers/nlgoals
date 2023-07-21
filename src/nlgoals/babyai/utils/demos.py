@@ -1,7 +1,6 @@
 import os
 import pickle
 
-from .. import utils
 import blosc
 
 
