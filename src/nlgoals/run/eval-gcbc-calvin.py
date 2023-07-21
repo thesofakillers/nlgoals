@@ -6,7 +6,6 @@ WIP
 """
 
 from argparse import Namespace
-from multiprocessing import Pool
 from typing import Set, Dict, Tuple, Union, Any
 from termcolor import colored
 import zipfile
@@ -184,9 +183,10 @@ def rollout(
 
 def evaluate_task(
     task,
+    dataset,
+    env,
     idxs,
     num_rollouts,
-    data_args,
     suggestive_start,
     traj_mode,
     tokenizer,
@@ -195,15 +195,7 @@ def evaluate_task(
     task_oracle,
     verbose,
     target_device,
-    rollout_cfg_path,
-    urdf_data_dir,
-    egl_dir_path,
-    single_process: bool = False,
 ):
-    dataset = create_dataset(data_args, False)[0]
-    env = create_environment(
-        rollout_cfg_path, urdf_data_dir, egl_dir_path, dataset, target_device
-    )
     # move model to target device
     model.to(target_device)
     # sample subset of idxs
@@ -212,9 +204,7 @@ def evaluate_task(
     videos_metadata = {"success": [], "fail": []}
     results = np.zeros(num_rollouts)
     # use tqdm only when using single process
-    for i, idx in enumerate(
-        tqdm(eval_idxs, desc="Rollouts", disable=not single_process)
-    ):
+    for i, idx in enumerate(tqdm(eval_idxs, desc="Rollouts", disable=not verbose)):
         # if BadZipFile, try another idx until it works (should be rare)
         while True:
             try:
@@ -277,17 +267,14 @@ def evaluate_task(
     return (task, (eval_idxs, results, videos, videos_metadata))
 
 
-def eval_policy_main_process(
+def eval_policy(
     model: GCBC,
+    env,
     dataset: Dataset,
-    data_args: Namespace,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
     rollout_steps: int,
-    rollout_cfg_path: str,
-    urdf_data_dir: str,
-    egl_dir_path: str,
     suggestive_start: bool,
     num_rollouts: int = 100,
     verbose: bool = False,
@@ -312,9 +299,10 @@ def eval_policy_main_process(
     for task, idxs in tqdm(task_to_idx_dict.items(), desc="Tasks"):
         eval_output = evaluate_task(
             task,
+            dataset,
+            env,
             idxs,
             num_rollouts,
-            data_args,
             suggestive_start,
             traj_mode,
             tokenizer,
@@ -323,10 +311,6 @@ def eval_policy_main_process(
             task_oracle,
             verbose,
             target_device,
-            rollout_cfg_path,
-            urdf_data_dir,
-            egl_dir_path,
-            True,
         )[1]
         task_eval_idxs, task_results, task_videos, task_videos_metadata = eval_output
 
@@ -338,100 +322,18 @@ def eval_policy_main_process(
     return results, evaluated_idxs, videos, videos_metadata
 
 
-def eval_policy_multiprocess(
+def eval_and_save(
     model: GCBC,
+    env,
     dataset: Dataset,
-    data_args: Namespace,
-    task_oracle: Tasks,
-    tokenizer,
-    traj_mode: str,
-    rollout_steps: int,
-    rollout_cfg_path: str,
-    urdf_data_dir: str,
-    egl_dir_path: str,
-    suggestive_start: bool,
-    num_rollouts: int = 100,
-    verbose: bool = False,
-    num_workers: int = 8,
-):
-    """Same as `eval_policy_main_process` but uses multiprocessing."""
-    task_to_idx_dict = dataset.task_to_idx
-
-    videos = {}
-    videos_metadata = {}
-    results = {}
-    evaluated_idxs = {}
-
-    pool = Pool(processes=num_workers)
-    task_results = []
-    # model to CPU before creating child processes
-    target_device = model.device
-    model = model.to("cpu")
-    for task, idxs in task_to_idx_dict.items():
-        res = pool.apply_async(
-            evaluate_task,
-            (
-                task,
-                idxs,
-                num_rollouts,
-                data_args,
-                suggestive_start,
-                traj_mode,
-                tokenizer,
-                model,
-                rollout_steps,
-                task_oracle,
-                verbose,
-                target_device,
-                rollout_cfg_path,
-                urdf_data_dir,
-                egl_dir_path,
-                num_workers == 1,
-            ),
-        )
-        task_results.append(res)
-
-    pool.close()
-
-    pbar = tqdm(total=len(task_results), desc="Tasks")
-
-    for res in task_results:
-        task, (
-            task_eval_idxs,
-            task_results,
-            task_videos,
-            task_videos_metadata,
-        ) = res.get()
-
-        results[task] = task_results
-        evaluated_idxs[task] = task_eval_idxs
-        videos[task] = task_videos
-        videos_metadata[task] = task_videos_metadata
-        pbar.update()
-
-    pbar.close()
-
-    pool.join()
-
-    return results, evaluated_idxs, videos, videos_metadata
-
-
-def eval_policy(
-    model: GCBC,
-    dataset: Dataset,
-    data_args: Namespace,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
     rollout_steps: int,
     save_dir: str,
-    rollout_cfg_path: str,
-    urdf_data_dir: str,
-    egl_dir_path: str,
     suggestive_start: bool,
     num_rollouts: int = 100,
     verbose: bool = False,
-    num_workers: int = 8,
 ):
     """
     Evaluate a policy on the CALVIN environment
@@ -448,33 +350,22 @@ def eval_policy(
         traj_mode: either 'textual' or 'visual'
         rollout_steps: the number of steps to rollout for
         save_dir: directory where to save the results.npz and videos.npz
+        suggestive_start: whether to use the suggestive start or not
         num_rollouts: the number of rollouts to perform
         verbose: whether to print the results of each rollout
     """
-    policy_eval_args = (
+    results, evaluated_idxs, videos, videos_metadata = eval_policy(
         model,
+        env,
         dataset,
-        data_args,
         task_oracle,
         tokenizer,
         traj_mode,
         rollout_steps,
-        rollout_cfg_path,
-        urdf_data_dir,
-        egl_dir_path,
         suggestive_start,
         num_rollouts,
         verbose,
-        num_workers,
     )
-    if num_workers <= 0:
-        results, evaluated_idxs, videos, videos_metadata = eval_policy_main_process(
-            *policy_eval_args[:-1]
-        )
-    else:
-        results, evaluated_idxs, videos, videos_metadata = eval_policy_multiprocess(
-            *policy_eval_args,
-        )
 
     # save results
     print("saving...")
@@ -530,6 +421,9 @@ def main(args):
         else torch.device("cpu")
     )
     # environment
+    env = create_environment(
+        args.rollout_cfg_path, args.urdf_data_dir, args.egl_dir_path, dataset, device
+    )
     # task oracle
     task_oracle_cfg = OmegaConf.load(args.task_oracle_cfg)
     task_oracle = hydra.utils.instantiate(task_oracle_cfg)
@@ -546,6 +440,7 @@ def main(args):
     model.prepare_visual_batch = calvin_gcbc_visual
     model.prepare_textual_batch = calvin_gcbc_textual
     model.eval()
+    model.to(device)
     _ = torch.set_grad_enabled(False)
 
     model_checkpoint_name = os.path.splitext(os.path.basename(args.model_checkpoint))[0]
@@ -555,34 +450,24 @@ def main(args):
         "sug_starts" if args.suggestive_start else "non_sug_starts",
     )
 
-    eval_policy(
+    eval_and_save(
         model=model,
+        env=env,
         dataset=dataset,
-        data_args=args.data,
         task_oracle=task_oracle,
         tokenizer=tokenizer,
         traj_mode=args.traj_mode,
         rollout_steps=args.rollout_steps,
         save_dir=save_dir,
-        rollout_cfg_path=args.rollout_cfg_path,
-        urdf_data_dir=args.urdf_data_dir,
-        egl_dir_path=args.egl_dir_path,
         suggestive_start=args.suggestive_start,
         num_rollouts=args.num_rollouts,
         verbose=args.verbose,
-        num_workers=args.num_workers,
     )
 
 
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument(
-        "--num_workers",
-        type=int,
-        default=8,
-        help="Number of workers for batched rollouts.",
-    )
     parser.add_argument(
         "--suggestive_start",
         type=bool,
