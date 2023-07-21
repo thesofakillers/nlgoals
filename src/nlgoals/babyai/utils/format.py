@@ -35,9 +35,9 @@ class Vocabulary:
         json.dump(self.vocab, open(path, "w"))
 
     def copy_vocab_from(self, other):
-        '''
+        """
         Copy the vocabulary of another Vocabulary object to the current object.
-        '''
+        """
         self.vocab.update(other.vocab)
 
 
@@ -54,7 +54,7 @@ class InstructionsPreprocessor(object):
                 old_vocab = Vocabulary(load_vocab_from)
                 self.vocab.copy_vocab_from(old_vocab)
             else:
-                raise FileNotFoundError('No pre-trained model under the specified name')
+                raise FileNotFoundError("No pre-trained model under the specified name")
 
     def __call__(self, obss, device=None):
         raw_instrs = []
@@ -69,7 +69,7 @@ class InstructionsPreprocessor(object):
         instrs = numpy.zeros((len(obss), max_instr_len))
 
         for i, instr in enumerate(raw_instrs):
-            instrs[i, :len(instr)] = instr
+            instrs[i, : len(instr)] = instr
 
         instrs = torch.tensor(instrs, device=device, dtype=torch.long)
         return instrs
@@ -102,10 +102,7 @@ class ObssPreprocessor:
         self.image_preproc = RawImagePreprocessor()
         self.instr_preproc = InstructionsPreprocessor(model_name, load_vocab_from)
         self.vocab = self.instr_preproc.vocab
-        self.obs_space = {
-            "image": 147,
-            "instr": self.vocab.max_size
-        }
+        self.obs_space = {"image": 147, "instr": self.vocab.max_size}
 
     def __call__(self, obss, device=None):
         obs_ = babyai.rl.DictList()
@@ -122,13 +119,14 @@ class ObssPreprocessor:
 class IntObssPreprocessor(object):
     def __init__(self, model_name, obs_space, load_vocab_from=None):
         image_obs_space = obs_space.spaces["image"]
-        self.image_preproc = IntImagePreprocessor(image_obs_space.shape[-1],
-                                                  max_high=image_obs_space.high.max())
+        self.image_preproc = IntImagePreprocessor(
+            image_obs_space.shape[-1], max_high=image_obs_space.high.max()
+        )
         self.instr_preproc = InstructionsPreprocessor(load_vocab_from or model_name)
         self.vocab = self.instr_preproc.vocab
         self.obs_space = {
             "image": self.image_preproc.max_size,
-            "instr": self.vocab.max_size
+            "instr": self.vocab.max_size,
         }
 
     def __call__(self, obss, device=None):

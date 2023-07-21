@@ -16,6 +16,7 @@ def get_log_path(log_name):
 
 def synthesize(array):
     import collections
+
     d = collections.OrderedDict()
     d["mean"] = numpy.mean(array)
     d["std"] = numpy.std(array)
@@ -33,6 +34,6 @@ def configure_logging(log_name):
         format="%(name)s: %(asctime)s: %(message)s",
         handlers=[
             logging.FileHandler(filename=path),
-            logging.StreamHandler(sys.stdout)
-        ]
+            logging.StreamHandler(sys.stdout),
+        ],
     )

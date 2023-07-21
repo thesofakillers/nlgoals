@@ -1,6 +1,7 @@
 from multiprocessing import Process, Pipe
 import gym
 
+
 def worker(conn, env):
     while True:
         cmd, data = conn.recv()
@@ -14,6 +15,7 @@ def worker(conn, env):
             conn.send(obs)
         else:
             raise NotImplementedError
+
 
 class ParallelEnv(gym.Env):
     """A concurrent execution of environments in multiple processes."""
@@ -48,7 +50,9 @@ class ParallelEnv(gym.Env):
         obs, reward, done, info = self.envs[0].step(actions[0])
         if done:
             obs = self.envs[0].reset()
-        results = zip(*[(obs, reward, done, info)] + [local.recv() for local in self.locals])
+        results = zip(
+            *[(obs, reward, done, info)] + [local.recv() for local in self.locals]
+        )
         return results
 
     def render(self):
