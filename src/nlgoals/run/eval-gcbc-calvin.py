@@ -5,7 +5,6 @@ python multiprocessing.
 WIP
 """
 
-from argparse import Namespace
 from typing import Set, Dict, Tuple, Union, Any
 from termcolor import colored
 import zipfile
@@ -216,6 +215,7 @@ def evaluate_task(
     model.to(target_device)
     # sample subset of idxs
     eval_idxs = np.random.choice(idxs, size=num_rollouts, replace=False)
+    save_eval_idxs = eval_idxs.copy()
     videos = {"success": [], "fail": []}
     videos_metadata = {"success": [], "fail": []}
     results = np.zeros(num_rollouts)
@@ -225,6 +225,7 @@ def evaluate_task(
         while True:
             try:
                 episode = dataset[int(idx)]
+                save_eval_idxs[i] = idx
                 # it works! we can break out of the while loop
                 break
             except zipfile.BadZipFile as _e:
@@ -233,7 +234,7 @@ def evaluate_task(
                     " Trying different idx..."
                 )
                 # avoid sampling already sampled idxs
-                idx = np.random.choice(np.setdiff1d(idxs, eval_idxs), size=1)[0]
+                idx = np.random.choice(np.setdiff1d(idxs, save_eval_idxs), size=1)[0]
                 continue
         reset_info = {
             "robot_obs": (
@@ -280,7 +281,7 @@ def evaluate_task(
                 # and keep track of it
                 videos_metadata["fail"].append({"episode_idx": int(idx), "goal": goal})
     print(f"{task}: {results.sum()} / {len(eval_idxs)}")
-    return (task, (eval_idxs, results, videos, videos_metadata))
+    return (task, (save_eval_idxs, results, videos, videos_metadata))
 
 
 def eval_policy(
