@@ -5,9 +5,9 @@
 #SBATCH --job-name=GCBC-E
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=12:00:00
+#SBATCH --time=03:00:00
 #SBATCH --mem-per-gpu=120G
-#SBATCH --array=1-4%4
+#SBATCH --array=1-136%136
 #SBATCH --output=slurm/outputs/gcbc_eval_arr_%A_%a.out
 
 source "./slurm/.secrets"
@@ -42,5 +42,4 @@ srun python src/nlgoals/run/eval-gcbc-calvin.py \
   --urdf_data_dir $calvin_env_path/data/ \
   --egl_dir_path $calvin_env_path/egl_check/ \
   --save_dir outputs/gcbc_rolling_eval/ \
-  --num_workers 9 \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)

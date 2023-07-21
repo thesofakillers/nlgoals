@@ -34,6 +34,22 @@ from nlgoals.interfaces.gcbc import (
     calvin_gcbc_visual,
 )
 
+# fmt: off
+TASK_NAMES = (
+    "close_drawer", "lift_blue_block_drawer", "lift_blue_block_slider",
+    "lift_blue_block_table", "lift_pink_block_drawer", "lift_pink_block_slider",
+    "lift_pink_block_table", "lift_red_block_drawer", "lift_red_block_slider",
+    "lift_red_block_table", "move_slider_left", "move_slider_right", "open_drawer",
+    "place_in_drawer", "place_in_slider", "push_blue_block_left",
+    "push_blue_block_right", "push_into_drawer", "push_pink_block_left",
+    "push_pink_block_right", "push_red_block_left", "push_red_block_right",
+    "rotate_blue_block_left", "rotate_blue_block_right", "rotate_pink_block_left",
+    "rotate_pink_block_right", "rotate_red_block_left", "rotate_red_block_right",
+    "stack_block", "turn_off_led", "turn_off_lightbulb", "turn_on_led",
+    "turn_on_lightbulb", "unstack_block",
+)
+# fmt: on
+
 
 def create_dataset(data_args, collator: bool):
     hydra.core.global_hydra.GlobalHydra.instance().clear()
@@ -204,7 +220,7 @@ def evaluate_task(
     videos_metadata = {"success": [], "fail": []}
     results = np.zeros(num_rollouts)
     # use tqdm only when using single process
-    for i, idx in enumerate(tqdm(eval_idxs, desc="Rollouts", disable=not verbose)):
+    for i, idx in enumerate(tqdm(eval_idxs, desc="Rollouts")):
         # if BadZipFile, try another idx until it works (should be rare)
         while True:
             try:
@@ -271,6 +287,7 @@ def eval_policy(
     model: GCBC,
     env,
     dataset: Dataset,
+    task: str,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
@@ -289,43 +306,35 @@ def eval_policy(
     """
     task_to_idx_dict = dataset.task_to_idx
 
-    videos = {}
-    videos_metadata = {}
-    results = {}
-    evaluated_idxs = {}
-
     target_device = model.device
     model = model.to("cpu")
-    for task, idxs in tqdm(task_to_idx_dict.items(), desc="Tasks"):
-        eval_output = evaluate_task(
-            task,
-            dataset,
-            env,
-            idxs,
-            num_rollouts,
-            suggestive_start,
-            traj_mode,
-            tokenizer,
-            model,
-            rollout_steps,
-            task_oracle,
-            verbose,
-            target_device,
-        )[1]
-        task_eval_idxs, task_results, task_videos, task_videos_metadata = eval_output
 
-        videos[task] = task_videos
-        videos_metadata[task] = task_videos_metadata
-        results[task] = task_results
-        evaluated_idxs[task] = task_eval_idxs
+    idxs = task_to_idx_dict[task]
 
-    return results, evaluated_idxs, videos, videos_metadata
+    eval_output = evaluate_task(
+        task,
+        dataset,
+        env,
+        idxs,
+        num_rollouts,
+        suggestive_start,
+        traj_mode,
+        tokenizer,
+        model,
+        rollout_steps,
+        task_oracle,
+        verbose,
+        target_device,
+    )
+
+    return eval_output
 
 
 def eval_and_save(
     model: GCBC,
     env,
     dataset: Dataset,
+    task_name: str,
     task_oracle: Tasks,
     tokenizer,
     traj_mode: str,
@@ -336,7 +345,7 @@ def eval_and_save(
     verbose: bool = False,
 ):
     """
-    Evaluate a policy on the CALVIN environment
+    Evaluate a policy on the CALVIN environment for a given task
     For a given dataset, goes through each of the starting states possible for a given
     task, and lets the model interact with the environment until it either solves the
     task or the rollout length is reached
@@ -345,6 +354,7 @@ def eval_and_save(
         model: the model to evaluate
         env: the environment to evaluate on
         dataset: the dataset providing the starting states and transforms
+        task_name: the name of the task we wish to evaluate
         task_oracle: the task oracle to check if the task is solved
         tokenizer: the tokenizer to use for the textual input
         traj_mode: either 'textual' or 'visual'
@@ -354,10 +364,11 @@ def eval_and_save(
         num_rollouts: the number of rollouts to perform
         verbose: whether to print the results of each rollout
     """
-    results, evaluated_idxs, videos, videos_metadata = eval_policy(
+    eval_output = eval_policy(
         model,
         env,
         dataset,
+        task_name,
         task_oracle,
         tokenizer,
         traj_mode,
@@ -366,50 +377,42 @@ def eval_and_save(
         num_rollouts,
         verbose,
     )
+    (task, (eval_idxs, results, videos, videos_metadata)) = eval_output
 
     # save results
     print("saving...")
 
-    # organize by traj_mode
-    save_dir = os.path.join(save_dir, traj_mode)
+    # organize by sug_start/traj_mode/task
+    save_dir = os.path.join(save_dir, traj_mode, task)
     # make the save_dir if it doesn't exist
     os.makedirs(save_dir, exist_ok=True)
 
+    # results: sug_start/traj_mode/task/results.npz
     results_path = os.path.join(save_dir, "results.npz")
-    np.savez(results_path, **results)
-    evaluated_idxx_path = os.path.join(save_dir, "evaluated_idxs.npz")
-    np.savez(evaluated_idxx_path, **evaluated_idxs)
+    np.savez(results_path, results)
+    # evaluated_idxs: sug_start/traj_mode/task/evaluated_idxs.npz
+    eval_idxs_path = os.path.join(save_dir, "evaluated_idxs.npz")
+    np.savez(eval_idxs_path, eval_idxs)
 
+    # videos: sug_start/traj_mode/task/videos/
     videos_dir = os.path.join(save_dir, "videos")
-    tasks = dataset.task_to_idx.keys()
-    for task in tasks:
-        task_dir = os.path.join(videos_dir, task)
-        # successes
-        success_dir = os.path.join(task_dir, "success")
-        os.makedirs(success_dir, exist_ok=True)
-        for video, video_meta in zip(
-            videos[task]["success"], videos_metadata[task]["success"]
-        ):
-            save_video(video, traj_mode, success_dir, video_meta)
-        # fails
-        fail_dir = os.path.join(task_dir, "fail")
-        os.makedirs(fail_dir, exist_ok=True)
-        for video, video_meta in zip(
-            videos[task]["fail"], videos_metadata[task]["fail"]
-        ):
-            save_video(video, traj_mode, fail_dir, video_meta)
+    # /success
+    success_dir = os.path.join(videos_dir, "success")
+    os.makedirs(success_dir, exist_ok=True)
+    for video, video_meta in zip(videos["success"], videos_metadata["success"]):
+        save_video(video, traj_mode, success_dir, video_meta)
+    # /fail
+    fail_dir = os.path.join(videos_dir, "fail")
+    os.makedirs(fail_dir, exist_ok=True)
+    for video, video_meta in zip(videos["fail"], videos_metadata["fail"]):
+        save_video(video, traj_mode, fail_dir, video_meta)
 
+    # video metadata: sug_start/traj_mode/task/videos_metadata.pkl
     videos_metadata_path = os.path.join(save_dir, "videos_metadata.pkl")
     with open(videos_metadata_path, "wb") as f:
         pickle.dump(videos_metadata, f)
 
     print("Done.")
-
-    # overall success rate
-    success_rate = sum([outcomes.sum() for outcomes in results.values()]) / sum(
-        [len(outcomes) for outcomes in results.values()]
-    )
-    print(f"SR: {success_rate * 100:.1f}%")
 
 
 def main(args):
@@ -454,6 +457,7 @@ def main(args):
         model=model,
         env=env,
         dataset=dataset,
+        task_name=args.task_name,
         task_oracle=task_oracle,
         tokenizer=tokenizer,
         traj_mode=args.traj_mode,
@@ -468,6 +472,13 @@ def main(args):
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
+    parser.add_argument(
+        "--task_name",
+        type=str,
+        required=True,
+        help="Which task to evaluate the policy on",
+        choices=TASK_NAMES,
+    )
     parser.add_argument(
         "--suggestive_start",
         type=bool,
