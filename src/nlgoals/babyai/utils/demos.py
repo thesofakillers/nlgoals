@@ -24,7 +24,8 @@ def load_demos(path, raise_not_found=True):
 
 
 def save_demos(demos, path):
-    utils.create_folders_if_necessary(path)
+    path_dir = os.path.dirname(path)
+    os.makedirs(path_dir, exist_ok=True)
     pickle.dump(demos, open(path, "wb"))
 
 

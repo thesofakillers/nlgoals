@@ -39,7 +39,8 @@ def generate_demos(n_episodes, valid, seed):
     # env instance
     env: RoomGridLevel = gym.make(args.env)
 
-    demos_path = utils.get_demos_path(args.save_dir, args.env, "agent", valid)
+    demos_path = utils.get_demos_path(args.save_path, args.env, "agent", valid)
+    print(demos_path)
     demos = []
 
     checkpoint_time = time.time()
@@ -143,7 +144,7 @@ if __name__ == "__main__":
         "--model", default="BOT", help="name of the trained model (REQUIRED)"
     )
     parser.add_argument(
-        "--save-dir",
+        "--save-path",
         default=None,
         help="path to save demonstrations (based on --model and --origin by default)",
     )
