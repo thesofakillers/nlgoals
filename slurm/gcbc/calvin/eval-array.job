@@ -5,7 +5,7 @@
 #SBATCH --job-name=GCBC-E
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=03:00:00
+#SBATCH --time=02:00:00
 #SBATCH --mem-per-gpu=120G
 #SBATCH --array=1-136%136
 #SBATCH --output=slurm/outputs/gcbc_eval_arr_%A_%a.out
