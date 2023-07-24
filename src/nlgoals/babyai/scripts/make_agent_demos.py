@@ -17,6 +17,7 @@ import time
 import gymnasium as gym
 from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 from minigrid.utils.baby_ai_bot import BabyAIBot
+from minigrid.wrappers import FullyObsWrapper, RGBImgObsWrapper
 import numpy as np
 import blosc
 import torch
@@ -38,6 +39,7 @@ def generate_demos(n_episodes, valid, seed):
 
     # env instance
     env: RoomGridLevel = gym.make(args.env)
+    env = RGBImgObsWrapper(env)
 
     demos_path = utils.get_demos_path(args.save_path, args.env, "agent", valid)
     print(demos_path)
@@ -54,6 +56,7 @@ def generate_demos(n_episodes, valid, seed):
             break
 
         done = False
+        final_step = False
         if just_crashed:
             logger.info(
                 "reset the environment to find a mission that the bot can solve"
@@ -70,10 +73,12 @@ def generate_demos(n_episodes, valid, seed):
         directions = []
 
         try:
-            while not done:
+            while not final_step:
                 action = agent.replan()
                 if isinstance(action, torch.Tensor):
                     action = action.item()
+                if done:
+                    final_step = True
                 new_obs, reward, done, _, _ = env.step(action)
 
                 actions.append(action)
@@ -124,6 +129,8 @@ def generate_demos(n_episodes, valid, seed):
             utils.save_demos(demos, demos_path)
             logger.info("{} demos saved".format(len(demos)))
             print_demo_lengths(demos[-100:])
+
+        curr_seed += 1
 
     # Save last batch of demos
     logger.info("Saving demos...")
