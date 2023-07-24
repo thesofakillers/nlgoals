@@ -38,7 +38,7 @@ def generate_demos(n_episodes, valid, seed):
     utils.seed(seed)
 
     # env instance
-    env: RoomGridLevel = gym.make(args.env)
+    env: RoomGridLevel = gym.make(args.env, highlight=False)
     env = RGBImgObsWrapper(env)
 
     demos_path = utils.get_demos_path(args.save_path, args.env, "agent", valid)
