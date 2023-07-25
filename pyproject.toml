@@ -27,6 +27,7 @@ pyhash = "^0.9.3"
 # torchmetrics = "<0.7"
 torch = "^2.0.1"
 pytorch-lightning = ">=1.9.2"
+av = "^10.0.0"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.6.1"
