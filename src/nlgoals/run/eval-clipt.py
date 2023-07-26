@@ -12,7 +12,7 @@ from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.data.calvin.transform_configs import CLIPT_PREPARE_CONFIG
 from nlgoals.data.calvin.legacy.datamodule import CALVINDM
 from nlgoals.models.clipt import CLIPT
-from nlgoals.utils import calc_accuracy_top_k
+from nlgoals.utils.misc import calc_accuracy_top_k
 
 
 def setup_dataloader(args):

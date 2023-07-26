@@ -20,7 +20,7 @@ from nlgoals.data.calvin.repo.code.datasets.utils.shared_memory_utils import (
     save_shm_lookup,
     SharedMemoryLoader,
 )
-from nlgoals.utils import pad_with_repetition, pad_with_zeros
+from nlgoals.utils.misc import pad_with_repetition, pad_with_zeros
 
 DEFAULT_TRANSFORM = OmegaConf.create({"train": None, "val": None})
 # this URL doesn't work anymore lol
