@@ -61,51 +61,53 @@ def generate_episode(seed, seed_offset, envs_size):
     curr_seed = seed
     # keep trying until we get a successful episode
     while not mission_success:
-        done = False
-        final_step = False
+        try:
+            done = False
+            final_step = False
 
-        obs = env.reset(seed=curr_seed)[0]
-        agent = BabyAIBot(env)
+            obs = env.reset(seed=curr_seed)[0]
+            agent = BabyAIBot(env)
 
-        actions = []
-        mission = obs["mission"]
-        images = []
-        directions = []
-        rewards = []
+            actions = []
+            mission = obs["mission"]
+            images = []
+            directions = []
+            rewards = []
 
-        while not final_step:
-            action = agent.replan()
-            if isinstance(action, torch.Tensor):
-                action = action.item()
-            if done:
-                final_step = True
-            new_obs, reward, done, _, _ = env.step(action)
+            while not final_step:
+                action = agent.replan()
+                if isinstance(action, torch.Tensor):
+                    action = action.item()
+                if done:
+                    final_step = True
+                new_obs, reward, done, _, _ = env.step(action)
 
-            if done and reward > 0:
-                mission_success = True
+                if done and reward > 0:
+                    mission_success = True
 
-            actions.append(action)
-            images.append(obs["image"])
-            directions.append(obs["direction"])
-            rewards.append(reward)
+                actions.append(action)
+                images.append(obs["image"])
+                directions.append(obs["direction"])
+                rewards.append(reward)
 
-            obs = new_obs
-        # if our demos was succesful, save it
-        if mission_success:
-            return (
-                mission,
-                env_name,
-                blosc.pack_array(np.array(images)),
-                directions,
-                actions,
-                rewards,
-            )
-        # handle unsuccessful demos
-        else:
-            if args.on_exception == "crash":
-                raise Exception("mission failed, the seed is {}".format(curr_seed))
+                obs = new_obs
+            # if our demos was succesful, save it
+            if mission_success:
+                return (
+                    mission,
+                    env_name,
+                    blosc.pack_array(np.array(images)),
+                    directions,
+                    actions,
+                    rewards,
+                )
+            # handle unsuccessful demos
+            else:
+                raise Exception
+        except (Exception, AssertionError):
             curr_seed += seed_offset
-            logger.info("mission failed")
+            logger.info("Mission either failed or crashed, trying again...")
+            continue
 
 
 def generate_demos(
@@ -162,13 +164,13 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
-        "--envs-size",
+        "--envs_size",
         choices=["small", "large"],
         default="small",
         help="Whether to use small or large environments",
     )
     parser.add_argument(
-        "--save-path",
+        "--save_path",
         default=None,
         help="path to save demonstrations (based on --model and --origin by default)",
     )
@@ -179,20 +181,13 @@ if __name__ == "__main__":
         help="number of episodes to generate demonstrations for",
     )
     parser.add_argument(
-        "--valid-episodes",
+        "--val_episodes",
         type=int,
         help="number of validation episodes to generate demonstrations for",
     )
     parser.add_argument("--seed", type=int, default=0, help="start random seed")
     parser.add_argument(
-        "--on-exception",
-        type=str,
-        default="warn",
-        choices=("warn", "crash"),
-        help="How to handle exceptions during demo generation",
-    )
-    parser.add_argument(
-        "--num-workers",
+        "--num_workers",
         type=int,
         default=1,
         help="Number of workers to use for generating demos",
@@ -205,7 +200,7 @@ if __name__ == "__main__":
     # Training demos
     generate_demos(args.episodes, False, args.seed, args.envs_size, args.num_workers)
     # Validation demos
-    if args.valid_episodes:
+    if args.val_episodes:
         generate_demos(
-            args.valid_episodes, True, int(1e9), args.envs_size, args.num_workers
+            args.val_episodes, True, int(1e9), args.envs_size, args.num_workers
         )
