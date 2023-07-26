@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#SBATCH --partition=thin
+#SBATCH --job-name=BBYAI-S
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=32
+#SBATCH --time=02:00:00
+#SBATCH --mem=56G
+#SBATCH --output=slurm/outputs/environment_install_%A.out
+
+source "./slurm/.secrets"
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+save_dir=/scratch-shared/gstarace/repos/thesis/data/babyai/play/small
+
+srun python src/nlgoals/run/babyai/make_agent_demos.py \
+  --envs-size small \
+  --save-path $save_dir \
+  --episodes 700000 \
+  --val_episodes 40000 \
+  --num-workers 32
