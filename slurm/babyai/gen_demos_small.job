@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --time=00:30:00
 #SBATCH --mem=56G
-#SBATCH --output=slurm/outputs/environment_install_%A.out
+#SBATCH --output=slurm/outputs/babyai_demos_small_%A.out
 
 source "./slurm/.secrets"
 
