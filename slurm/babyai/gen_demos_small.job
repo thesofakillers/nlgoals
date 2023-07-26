@@ -23,4 +23,4 @@ srun python src/nlgoals/run/babyai/make_agent_demos.py \
   --save_path $save_dir \
   --episodes 700000 \
   --val_episodes 40000 \
-  --num-workers 32
+  --num_workers 32
