@@ -2803,7 +2803,7 @@ testing = ["matplotlib (>=3.0)", "pytest (>=7.0.1)", "pytest-mock (>=3.10.0)"]
 type = "git"
 url = "https://github.com/thesofakillers/Minigrid.git"
 reference = "giulio"
-resolved_reference = "c4152b3f64e1b0260c58fda2ad2b87bdb66280d3"
+resolved_reference = "a377e1b43ec34a922f46a170bbccf742794c3f97"
 
 [[package]]
 name = "mistune"
