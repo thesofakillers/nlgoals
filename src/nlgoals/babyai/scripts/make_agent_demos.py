@@ -57,6 +57,7 @@ def generate_demos(n_episodes, valid, seed):
 
         done = False
         final_step = False
+        mission_success = False
         if just_crashed:
             logger.info(
                 "reset the environment to find a mission that the bot can solve"
@@ -81,13 +82,16 @@ def generate_demos(n_episodes, valid, seed):
                     final_step = True
                 new_obs, reward, done, _, _ = env.step(action)
 
+                if done and reward > 0:
+                    mission_success = True
+
                 actions.append(action)
                 images.append(obs["image"])
                 directions.append(obs["direction"])
 
                 obs = new_obs
             # if our demos was succesful, save it
-            if reward > 0 and (
+            if mission_success > 0 and (
                 args.filter_steps == 0 or len(images) <= args.filter_steps
             ):
                 demos.append(
@@ -95,7 +99,7 @@ def generate_demos(n_episodes, valid, seed):
                 )
                 just_crashed = False
             # handle unsuccessful demos
-            if reward == 0:
+            if not mission_success:
                 if args.on_exception == "crash":
                     raise Exception("mission failed, the seed is {}".format(curr_seed))
                 just_crashed = True
