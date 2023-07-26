@@ -72,6 +72,7 @@ def generate_demos(n_episodes, valid, seed):
         mission = obs["mission"]
         images = []
         directions = []
+        rewards = []
 
         try:
             while not final_step:
@@ -88,6 +89,7 @@ def generate_demos(n_episodes, valid, seed):
                 actions.append(action)
                 images.append(obs["image"])
                 directions.append(obs["direction"])
+                rewards.append(reward)
 
                 obs = new_obs
             # if our demos was succesful, save it
@@ -95,7 +97,13 @@ def generate_demos(n_episodes, valid, seed):
                 args.filter_steps == 0 or len(images) <= args.filter_steps
             ):
                 demos.append(
-                    (mission, blosc.pack_array(np.array(images)), directions, actions)
+                    (
+                        mission,
+                        blosc.pack_array(np.array(images)),
+                        directions,
+                        actions,
+                        rewards,
+                    )
                 )
                 just_crashed = False
             # handle unsuccessful demos
