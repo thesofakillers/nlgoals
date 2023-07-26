@@ -202,7 +202,6 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     logging.basicConfig(level="INFO", format="%(asctime)s: %(levelname)s: %(message)s")
-    logger.info(args)
     # Training demos
     generate_demos(args.episodes, False, args.seed, args.envs_size, args.num_workers)
     # Validation demos
