@@ -17,5 +17,5 @@ module load Anaconda3/2022.05
 
 source activate nlgoals
 
-srun python -u src/nlgoals/run/train-clipt.py \
+srun python -u src/nlgoals/run/calvin/train-clipt.py \
   --data.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D/
