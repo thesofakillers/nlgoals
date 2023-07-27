@@ -1,9 +1,11 @@
 """Datamodule for serving BabyAI data."""
-from typing import Optional, Callable
+from typing import Optional, Any, List, Dict
 import os
 
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
+import torch
+from torch.nn.utils.rnn import pad_sequence
 
 from nlgoals.data.babyai.dataset import BabyAIDataset
 
@@ -18,7 +20,9 @@ class BabyAIDM(LightningDataModule):
         use_first_last_frames: bool = False,
         batch_size: int = 64,
         num_workers: int = 18,
-        transform: Optional[Callable] = None,
+        custom_collate: bool = True,
+        transform: Optional[Any] = None,
+        **kwargs,
     ):
         """
         Args:
@@ -26,8 +30,11 @@ class BabyAIDM(LightningDataModule):
                 path/to/data.pkl and path/to/data_valid.pkl
             batch_size: batch size for the dataloaders
             num_workers: number of workers for the dataloaders
+            custom_collate: whether to use custom collate function
+                (Necessary when not using precomputed clip embs)
             transform: transform to apply to the data
         """
+        super().__init__()
         self.data_path = data_path
         self.train_path = self.data_path + ".pkl"
         self.val_path = self.data_path + "_valid.pkl"
@@ -37,8 +44,11 @@ class BabyAIDM(LightningDataModule):
 
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.custom_collate = custom_collate
 
         self.transform = transform
+
+        self.is_setup = False
 
     def prepare_data(self) -> None:
         """Checks that the data exists"""
@@ -63,8 +73,9 @@ class BabyAIDM(LightningDataModule):
             self.train_path, self.envs_size, self.transform, self.use_first_last_frames
         )
         self.val_dataset: Dataset = BabyAIDataset(
-            self.val_dataset, self.envs_size, self.transform, self.use_first_last_frames
+            self.val_path, self.envs_size, self.transform, self.use_first_last_frames
         )
+        self.is_setup = True
 
     def train_dataloader(self):
         return DataLoader(
@@ -72,6 +83,7 @@ class BabyAIDM(LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=True,
+            collate_fn=self._get_collate_fn(),
         )
 
     def val_dataloader(self):
@@ -80,4 +92,49 @@ class BabyAIDM(LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,
+            collate_fn=self._get_collate_fn(),
         )
+
+    def _get_collate_fn(self):
+        collate_fn = self._collate_fn if self.custom_collate else None
+        return collate_fn
+
+    @staticmethod
+    def _collate_fn(batch: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:
+        """
+        Takes care of padding token_ids and attn_mask so that we can batch
+
+        Args:
+            batch: list of items, where each item has keys 'images', 'text_input_ids'
+            and 'text_attn_mask'.
+
+        Returns:
+            batch: batch of data with padded text_input_ids and text_attn_mask as
+            tensors
+        """
+        # first reshape from list of dicts into a dict of lists
+        batch_dict = {key: [item[key] for item in batch] for key in batch[0]}
+        # the pad values are hardcoded for now, should use the tokenizer.pad_token_id at some point
+        batch_dict["text_input_ids"] = pad_sequence(
+            batch_dict["text_input_ids"], batch_first=True, padding_value=49407
+        )
+        batch_dict["text_attn_mask"] = pad_sequence(
+            batch_dict["text_attn_mask"], batch_first=True, padding_value=0
+        )
+        batch_dict["images"] = torch.stack(batch_dict["images"], dim=0)
+        # ready
+        return batch_dict
+
+
+if __name__ == "__main__":
+    import jsonargparse
+
+    parser = jsonargparse.ArgumentParser()
+
+    parser.add_class_arguments(BabyAIDM, "data")
+
+    args = parser.parse_args()
+
+    dm = BabyAIDM(**args.data)
+    dm.prepare_data()
+    dm.setup()
