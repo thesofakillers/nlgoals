@@ -23,6 +23,24 @@ from nlgoals.babyai.utils.log import (
 from nlgoals.babyai.utils.model import get_model_dir, load_model, save_model
 
 
+SIZE_TO_ENVS = {
+    "large": [
+        "BabyAI-GoToOpen-v0",
+        "BabyAI-Pickup-v0",
+        "BabyAI-Open-v0",
+        "BabyAI-SynthLoc-v0",
+        "BabyAI-Synth-v0",
+    ],
+    "small": [
+        "BabyAI-GoToObj-v0",
+        "BabyAI-GoToLocal-v0",
+        "BabyAI-PickupDist-v0",
+        "BabyAI-PickupLoc-v0",
+        "BabyAI-PutNextLocal-v0",
+    ],
+}
+
+
 def storage_dir():
     # defines the storage directory to be in the root (Same level as babyai folder)
     return os.environ.get("BABYAI_STORAGE", ".")

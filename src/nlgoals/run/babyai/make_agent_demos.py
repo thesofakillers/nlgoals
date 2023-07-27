@@ -21,23 +21,6 @@ from tqdm.auto import tqdm
 
 import nlgoals.babyai.utils as utils
 
-SIZE_TO_ENVS = {
-    "large": [
-        "BabyAI-GoToOpen-v0",
-        "BabyAI-Pickup-v0",
-        "BabyAI-Open-v0",
-        "BabyAI-SynthLoc-v0",
-        "BabyAI-Synth-v0",
-    ],
-    "small": [
-        "BabyAI-GoToObj-v0",
-        "BabyAI-GoToLocal-v0",
-        "BabyAI-PickupDist-v0",
-        "BabyAI-PickupLoc-v0",
-        "BabyAI-PutNextLocal-v0",
-    ],
-}
-
 
 def print_demo_lengths(demos):
     num_frames_per_episode = [len(demo[3]) for demo in demos]
@@ -49,7 +32,7 @@ def print_demo_lengths(demos):
 
 
 def generate_episode(seed, seed_offset, envs_size):
-    possible_envs = SIZE_TO_ENVS[envs_size]
+    possible_envs = utils.SIZE_TO_ENVS[envs_size]
 
     # sample a random environment
     env_name = np.random.choice(possible_envs)
