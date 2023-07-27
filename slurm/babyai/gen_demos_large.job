@@ -4,7 +4,7 @@
 #SBATCH --job-name=BBYAI-L
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
-#SBATCH --time=01:00:00
+#SBATCH --time=00:30:00
 #SBATCH --mem=56G
 #SBATCH --output=slurm/outputs/babyai_demos_large_%A.out
 
@@ -21,6 +21,6 @@ save_dir=/scratch-shared/gstarace/repos/thesis/data/babyai/play/large
 srun python src/nlgoals/run/babyai/make_agent_demos.py \
   --envs_size large \
   --save_path $save_dir \
-  --episodes 5000 \
-  --val_episodes 1000 \
+  --episodes 50000 \
+  --val_episodes 4000 \
   --num_workers 32
