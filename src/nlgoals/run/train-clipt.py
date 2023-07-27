@@ -9,11 +9,7 @@ from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.models.clipt import CLIPT
 from nlgoals.trainer.clipt import TrainerConfig
 from nlgoals.data.calvin.legacy.datamodule import CALVINDM
-from nlgoals.data.babyai.datamodule import BabyAIDM
-from nlgoals.interfaces.clipt import (
-    CALVIN_CLIPT_PREPARE_CONFIG,
-    BABYAI_CLIPT_PREPARE_CONFIG,
-)
+from nlgoals.interfaces.clipt import CALVIN_CLIPT_PREPARE_CONFIG
 
 
 def train(args):
