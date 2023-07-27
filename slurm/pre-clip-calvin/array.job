@@ -22,6 +22,6 @@ HPARAMS_FILE=slurm/pre-clip-calvin/array.txt
 
 data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/pre_clip/task_D_D
 
-srun python -u src/nlgoals/run/pre-clip-calvin.py --seed=1 \
+srun python -u src/nlgoals/run/calvin/pre-clip.py --seed=1 \
   --num_workers=8 \
   $(eval echo "$(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)")

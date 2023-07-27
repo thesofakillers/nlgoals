@@ -20,7 +20,7 @@ source activate nlgoals
 
 HPARAMS_FILE=slurm/eval-task_classifier/array.txt
 
-srun python -u src/nlgoals/run/eval-task_classifier.py \
+srun python -u src/nlgoals/run/calvin/eval-task_classifier.py \
   --data.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D/ \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
 

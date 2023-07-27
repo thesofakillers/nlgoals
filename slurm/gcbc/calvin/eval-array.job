@@ -27,7 +27,7 @@ calvin_env_path=$HOME/repos/calvin_env
 
 HPARAMS_FILE=slurm/gcbc/calvin/eval-array.txt
 
-srun python src/nlgoals/run/eval-gcbc-calvin.py \
+srun python src/nlgoals/run/calvin/eval-gcbc.py \
   --model_variant CALVIN \
   --model_checkpoint checkpoints/gcbc_rolling/last.ckpt \
   --data.config_name default.yaml \

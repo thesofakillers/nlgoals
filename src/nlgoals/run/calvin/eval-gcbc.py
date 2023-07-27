@@ -1,8 +1,6 @@
 """
 Batched evaluation of a trained GCBC policy on the CALVIN environment/benchmark using
 python multiprocessing.
-
-WIP
 """
 
 from typing import Set, Dict, Tuple, Union, Any
