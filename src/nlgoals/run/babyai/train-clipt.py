@@ -58,7 +58,7 @@ def train(args):
         group=script_host,
         config=args,
         log_model=False,
-        tags=["clipt" if not args.clipt.contextualize_text else "cclipt"],
+        tags=["clipt" if not args.clipt.contextualize_text else "cclipt", "babyai"],
     )
     early_stopping = pl.callbacks.early_stopping.EarlyStopping(
         monitor="val_loss", mode="min"
@@ -106,13 +106,12 @@ if __name__ == "__main__":
         "--data.transform_variant",
         type=str,
         default="without_clip",
+        choices=["without_clip", "with_clip"],
     )
 
     parser.add_dataclass_arguments(TrainerConfig, "trainer")
     parser.add_argument("--seed", type=int, default=42)
 
-    parser.link_arguments("seed", "data.seed", apply_on="parse")
-    parser.link_arguments("data.num_frames", "clipt.num_frames", apply_on="parse")
     parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
