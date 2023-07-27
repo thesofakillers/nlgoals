@@ -24,7 +24,6 @@ import nlgoals.babyai.utils as utils
 SIZE_TO_ENVS = {
     "large": [
         "BabyAI-GoToOpen-v0",
-        "BabyAI-Unlock-v0",
         "BabyAI-Pickup-v0",
         "BabyAI-Open-v0",
         "BabyAI-SynthLoc-v0",
