@@ -9,14 +9,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
-from nlgoals.data.calvin.transform_configs import CLIPT_PREPARE_CONFIG
+from nlgoals.interfaces.clipt import CALVIN_CLIPT_PREPARE_CONFIG
 from nlgoals.data.calvin.legacy.datamodule import CALVINDM
 from nlgoals.models.clipt import CLIPT
 from nlgoals.utils.misc import calc_accuracy_top_k
 
 
 def setup_dataloader(args):
-    transform_config = CLIPT_PREPARE_CONFIG[args.data.transform_variant]
+    transform_config = CALVIN_CLIPT_PREPARE_CONFIG[args.data.transform_variant]
     transform_config["mode"] = args.data.transform_variant
     transform_config["clip_model_name"] = args.clipt.clip_model_name
     if args.data.transform_name is not None:

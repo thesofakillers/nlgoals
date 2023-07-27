@@ -1,4 +1,4 @@
-CLIPT_PREPARE_CONFIG = {
+CALVIN_CLIPT_PREPARE_CONFIG = {
     # CLIPT without CLIP (i.e. using precomputed embeddings)
     "without_clip": {
         "image_col": "rgb_static",

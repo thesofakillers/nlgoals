@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 import torch
 
 from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
-from nlgoals.data.calvin.transform_configs import CLIPT_PREPARE_CONFIG
+from nlgoals.interfaces.clipt import CALVIN_CLIPT_PREPARE_CONFIG
 from nlgoals.data.calvin.legacy.datamodule import CALVINDM
 from nlgoals.models.task_classifier import TaskClassifier
 from nlgoals.models.clipt import CLIPT
@@ -29,7 +29,7 @@ def train(args):
     # disable tokenizer parallelism because we have multiple workers
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     # transforms
-    transform_config = CLIPT_PREPARE_CONFIG[args.data.transform_variant]
+    transform_config = CALVIN_CLIPT_PREPARE_CONFIG[args.data.transform_variant]
     transform_config["mode"] = args.data.transform_variant
     if args.data.transform_name is not None:
         data_transform = TRANSFORM_MAP[args.data.transform_name.value](

@@ -9,7 +9,11 @@ from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.models.clipt import CLIPT
 from nlgoals.trainer.clipt import TrainerConfig
 from nlgoals.data.calvin.legacy.datamodule import CALVINDM
-from nlgoals.data.calvin.transform_configs import CLIPT_PREPARE_CONFIG
+from nlgoals.data.babyai.datamodule import BabyAIDM
+from nlgoals.interfaces.clipt import (
+    CALVIN_CLIPT_PREPARE_CONFIG,
+    BABYAI_CLIPT_PREPARE_CONFIG,
+)
 
 
 def train(args):
@@ -24,7 +28,7 @@ def train(args):
     # disable tokenizer parallelism because we have multiple workers
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     # transforms
-    transform_config = CLIPT_PREPARE_CONFIG[args.data.transform_variant]
+    transform_config = CALVIN_CLIPT_PREPARE_CONFIG[args.data.transform_variant]
     transform_config["mode"] = args.data.transform_variant
     if args.data.transform_name is not None:
         data_transform = TRANSFORM_MAP[args.data.transform_name.value](
@@ -33,7 +37,7 @@ def train(args):
     else:
         data_transform = None
     # datamodule
-    calvin_dm = CALVINDM(**args.data.as_dict(), transform=data_transform)
+    datamodule = CALVINDM(**args.data.as_dict(), transform=data_transform)
     # model
     if args.model_checkpoint is not None:
         model = CLIPT.load_from_checkpoint(
@@ -81,7 +85,7 @@ def train(args):
         log_every_n_steps=args.trainer.log_every_n_steps,
     )
 
-    trainer.fit(model, calvin_dm)
+    trainer.fit(model, datamodule)
 
 
 if __name__ == "__main__":
