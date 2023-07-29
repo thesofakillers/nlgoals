@@ -34,6 +34,8 @@ def train(args):
         data_transform = None
     # datamodule
     datamodule = BabyAIDM(**args.data.as_dict(), transform=data_transform)
+    datamodule.prepare_data()
+    datamodule.setup(stage=None if not args.debug else "debug")
     # model
     if args.model_checkpoint is not None:
         model = CLIPT.load_from_checkpoint(
