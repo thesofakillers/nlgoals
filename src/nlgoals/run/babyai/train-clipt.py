@@ -69,6 +69,11 @@ def train(args):
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         **args.trainer.checkpoint.as_dict()
     )
+    callbacks = (
+        [checkpoint_callback]
+        if not trainer.enable_early_stopping
+        else [checkpoint_callback, early_stopping]
+    )
     trainer = pl.Trainer(
         max_epochs=args.trainer.max_epochs,
         max_time={"hours": 1},
@@ -77,7 +82,7 @@ def train(args):
         enable_progress_bar=args.trainer.enable_progress_bar,
         deterministic=True,
         logger=logger,
-        callbacks=[checkpoint_callback],  # early_stopping],
+        callbacks=callbacks,
         log_every_n_steps=args.trainer.log_every_n_steps,
     )
 

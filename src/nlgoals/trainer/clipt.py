@@ -24,6 +24,7 @@ class TrainerConfig:
     accelerator: Accelerator = "auto"
     devices: int = 1
     enable_progress_bar: bool = False
+    enable_early_stopping: bool = False
     logging: LoggingConfig = LoggingConfig()
     checkpoint: CheckpointConfig = CheckpointConfig()
     log_every_n_steps: int = 50
