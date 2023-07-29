@@ -80,6 +80,8 @@ class BabyAIDM(pl.LightningDataModule):
             )
 
     def setup(self, stage: Optional[str] = None):
+        if self.is_setup:
+            return
         self.train_dataset: Dataset = BabyAIDataset(
             self.train_path, self.envs_size, self.transform, self.use_first_last_frames
         )
