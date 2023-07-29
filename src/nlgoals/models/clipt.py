@@ -317,7 +317,7 @@ class CLIPT(pl.LightningModule):
                 using e.g. self.set_clip()
         """
         if self.freeze_clip:
-            for key in checkpoint["state_dict"].keys():
+            for key in list(checkpoint["state_dict"].keys()):
                 if key.startswith("clip_model"):
                     del checkpoint["state_dict"][key]
 
