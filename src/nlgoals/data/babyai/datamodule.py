@@ -93,6 +93,12 @@ class BabyAIDM(pl.LightningDataModule):
         if self.val_subset is not None:
             # no permutation for val, to be able to compare results
             self.val_dataset = Subset(self.val_dataset, range(self.val_subset))
+
+        # return only 100 and 10 samples if debug
+        if stage == "debug":
+            self.train_dataset = Subset(self.train_dataset, range(100))
+            self.val_dataset = Subset(self.val_dataset, range(10))
+
         self.is_setup = True
 
     def train_dataloader(self):
