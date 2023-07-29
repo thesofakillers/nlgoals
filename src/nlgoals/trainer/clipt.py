@@ -28,3 +28,4 @@ class TrainerConfig:
     logging: LoggingConfig = LoggingConfig()
     checkpoint: CheckpointConfig = CheckpointConfig()
     log_every_n_steps: int = 50
+    precision: int = 16
