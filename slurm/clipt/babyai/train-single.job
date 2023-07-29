@@ -24,6 +24,7 @@ srun python -u src/nlgoals/run/babyai/train-clipt.py \
   --data.val_subset 2000 \
   --clipt.contextualize_text false \
   --data.use_first_last_frames true \
-  --trainer.enable_progress_bar true \
-  --trainer.logging.enable false \
+  --trainer.enable_early_stopping true \
+  --trainer.enable_progress_bar false \
+  --trainer.logging.enable true \
   --trainer.checkpoint.dirpath checkpoints/babyai/clipt
