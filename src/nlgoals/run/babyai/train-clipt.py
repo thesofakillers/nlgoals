@@ -71,7 +71,7 @@ def train(args):
     )
     callbacks = (
         [checkpoint_callback]
-        if not trainer.enable_early_stopping
+        if not args.trainer.enable_early_stopping
         else [checkpoint_callback, early_stopping]
     )
     trainer = pl.Trainer(
@@ -84,6 +84,7 @@ def train(args):
         logger=logger,
         callbacks=callbacks,
         log_every_n_steps=args.trainer.log_every_n_steps,
+        precision=args.trainer.precision,
     )
 
     trainer.fit(model, datamodule)
