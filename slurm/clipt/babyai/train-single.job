@@ -20,6 +20,8 @@ source activate nlgoals
 srun python -u src/nlgoals/run/babyai/train-clipt.py \
   --data.data_path=/scratch-shared/gstarace/repos/thesis/data/babyai/play/small \
   --data.transform_variant with_clip \
+  --data.train_subset 10000 \
+  --data.val_subset 2000 \
   --clipt.contextualize_text false \
   --data.use_first_last_frames true \
   --trainer.enable_progress_bar true \

@@ -2,15 +2,15 @@
 from typing import Optional, Any, List, Dict
 import os
 
-from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset
+import pytorch_lightning as pl
+from torch.utils.data import DataLoader, Dataset, Subset
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
 from nlgoals.data.babyai.dataset import BabyAIDataset
 
 
-class BabyAIDM(LightningDataModule):
+class BabyAIDM(pl.LightningDataModule):
     """LightningDataModule for BabyAI data"""
 
     def __init__(
@@ -21,6 +21,9 @@ class BabyAIDM(LightningDataModule):
         batch_size: int = 64,
         num_workers: int = 18,
         custom_collate: bool = True,
+        seed: int = 42,
+        train_subset: Optional[int] = None,
+        val_subset: Optional[int] = None,
         transform: Optional[Any] = None,
         **kwargs,
     ):
@@ -32,6 +35,9 @@ class BabyAIDM(LightningDataModule):
             num_workers: number of workers for the dataloaders
             custom_collate: whether to use custom collate function
                 (Necessary when not using precomputed clip embs)
+            seed: random seed
+            train_subset: number of training examples to use. If None, all are used.
+            val_subset: number of validation examples to use. If None, all are used.
             transform: transform to apply to the data
         """
         super().__init__()
@@ -46,12 +52,17 @@ class BabyAIDM(LightningDataModule):
         self.num_workers = num_workers
         self.custom_collate = custom_collate
 
+        self.seed = seed
+        self.train_subset = train_subset
+        self.val_subset = val_subset
+
         self.transform = transform
 
         self.is_setup = False
 
     def prepare_data(self) -> None:
         """Checks that the data exists"""
+        pl.seed_everything(self.seed)
         if self.is_setup:
             return
         missing_data_instr = (
@@ -72,9 +83,16 @@ class BabyAIDM(LightningDataModule):
         self.train_dataset: Dataset = BabyAIDataset(
             self.train_path, self.envs_size, self.transform, self.use_first_last_frames
         )
+        if self.train_subset is not None:
+            train_idxs = torch.randperm(len(self.train_dataset))[: self.train_subset]
+            self.train_dataset = Subset(self.train_dataset, train_idxs)
+
         self.val_dataset: Dataset = BabyAIDataset(
             self.val_path, self.envs_size, self.transform, self.use_first_last_frames
         )
+        if self.val_subset is not None:
+            # no permutation for val, to be able to compare results
+            self.val_dataset = Subset(self.val_dataset, range(self.val_subset))
         self.is_setup = True
 
     def train_dataloader(self):
