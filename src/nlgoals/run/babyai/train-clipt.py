@@ -52,11 +52,12 @@ def train(args):
         model = CLIPT(**args.clipt.as_dict())
     # trainer
     script_host = "slurm" if "SLURM_JOB_ID" in os.environ else "local"
+    wandb_id = args.wandb_id if args.wandb_id and args.resume_training else None
     logger = pl.loggers.WandbLogger(
         job_type="train" if not args.debug else "debug",
         entity="giulio-uva",
         project="nlgoals",
-        id=args.wandb_id,
+        id=wandb_id,
         resume="must" if args.wandb_id is not None else None,
         mode="disabled" if not args.trainer.logging.enable else "online",
         group=script_host,
@@ -90,7 +91,12 @@ def train(args):
         precision=args.trainer.precision,
     )
 
-    trainer.fit(model, datamodule, ckpt_path=args.model_checkpoint)
+    ckpt_path = (
+        args.model_checkpoint
+        if args.model_checkpoint and args.resume_training
+        else None
+    )
+    trainer.fit(model, datamodule, ckpt_path=ckpt_path)
 
 
 if __name__ == "__main__":
@@ -100,10 +106,16 @@ if __name__ == "__main__":
         "--model_checkpoint",
         type=str,
         required=False,
-        help="Path to model checkpoint, to resume training",
+        help="Path to model checkpoint",
     )
     parser.add_argument(
         "--wandb_id", type=str, default=None, help="To resume logging to the same run"
+    )
+    parser.add_argument(
+        "--resume_training",
+        action="store_true",
+        default=False,
+        help="Whether to resume training/logging from checkpoint",
     )
 
     parser.add_class_arguments(CLIPT, "clipt")
