@@ -321,6 +321,22 @@ class CLIPT(pl.LightningModule):
                 if key.startswith("clip_model"):
                     del checkpoint["state_dict"][key]
 
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        """
+        CLIP is pretrained, so we already have access to its
+        checkpoint and load it separately with `set_clip`.
+
+        However, the PyTorch Lightning Trainer is strict about checkpoint loading (not
+        configurable), so it expects the loaded state_dict to match exactly the keys in
+        the model. See https://github.com/Lightning-AI/lightning/issues/13246
+
+        So, when loading the checkpoint, before loading it, we add all clip keys
+        to it, so that they match
+        """
+        for key in self.state_dict().keys():
+            if key.startswith("clip_model"):
+                checkpoint["state_dict"][key] = self.state_dict()[key]
+
 
 if __name__ == "__main__":
     import pytest
