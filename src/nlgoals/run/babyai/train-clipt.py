@@ -56,6 +56,8 @@ def train(args):
         job_type="train" if not args.debug else "debug",
         entity="giulio-uva",
         project="nlgoals",
+        id=args.wandb_id,
+        resume="must" if args.wandb_id is not None else None,
         mode="disabled" if not args.trainer.logging.enable else "online",
         group=script_host,
         config=args,
@@ -78,7 +80,6 @@ def train(args):
     )
     trainer = pl.Trainer(
         max_epochs=args.trainer.max_epochs,
-        max_time={"hours": 1},
         accelerator=args.trainer.accelerator,
         devices=args.trainer.devices,
         enable_progress_bar=args.trainer.enable_progress_bar,
@@ -89,7 +90,7 @@ def train(args):
         precision=args.trainer.precision,
     )
 
-    trainer.fit(model, datamodule)
+    trainer.fit(model, datamodule, ckpt_path=args.model_checkpoint)
 
 
 if __name__ == "__main__":
@@ -100,6 +101,9 @@ if __name__ == "__main__":
         type=str,
         required=False,
         help="Path to model checkpoint, to resume training",
+    )
+    parser.add_argument(
+        "--wandb_id", type=str, default=None, help="To resume logging to the same run"
     )
 
     parser.add_class_arguments(CLIPT, "clipt")
