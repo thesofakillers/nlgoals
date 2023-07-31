@@ -3,7 +3,7 @@ from typing import Optional, Any, List, Dict
 import os
 
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader, Dataset, Subset
+from torch.utils.data import DataLoader, Dataset, Subset, random_split
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
@@ -19,11 +19,12 @@ class BabyAIDM(pl.LightningDataModule):
         envs_size: str = "small",
         use_first_last_frames: bool = False,
         batch_size: int = 64,
+        val_split: float = 0.1,
         num_workers: int = 18,
         custom_collate: bool = True,
         seed: int = 42,
         train_subset: Optional[int] = None,
-        val_subset: Optional[int] = None,
+        test_subset: Optional[int] = None,
         transform: Optional[Any] = None,
         **kwargs,
     ):
@@ -31,19 +32,22 @@ class BabyAIDM(pl.LightningDataModule):
         Args:
             data_path: path to data, e.g "path/to/data", such that two files exist:
                 path/to/data.pkl and path/to/data_valid.pkl
+            envs_size: size of the environment, e.g. "small", "large"
+            use_first_last_frames: whether to use only the first and last frames
             batch_size: batch size for the dataloaders
+            val_split: fraction of the training set to use for validation
             num_workers: number of workers for the dataloaders
             custom_collate: whether to use custom collate function
                 (Necessary when not using precomputed clip embs)
             seed: random seed
             train_subset: number of training examples to use. If None, all are used.
-            val_subset: number of validation examples to use. If None, all are used.
+            test_subset: number of test examples to use. If None, all are used.
             transform: transform to apply to the data
         """
         super().__init__()
         self.data_path = data_path
         self.train_path = self.data_path + ".pkl"
-        self.val_path = self.data_path + "_valid.pkl"
+        self.test_path = self.data_path + "_valid.pkl"
 
         self.envs_size = envs_size
         self.use_first_last_frames = use_first_last_frames
@@ -54,7 +58,8 @@ class BabyAIDM(pl.LightningDataModule):
 
         self.seed = seed
         self.train_subset = train_subset
-        self.val_subset = val_subset
+        self.test_subset = test_subset
+        self.val_split = val_split
 
         self.transform = transform
 
@@ -74,32 +79,67 @@ class BabyAIDM(pl.LightningDataModule):
             raise FileNotFoundError(
                 f"Training data not found at {self.train_path}." + missing_data_instr
             )
-        if not os.path.exists(self.val_path):
+        if not os.path.exists(self.test_path):
             raise FileNotFoundError(
-                f"Validation data not found at {self.val_path}." + missing_data_instr
+                f"Validation data not found at {self.test_path}." + missing_data_instr
             )
 
     def setup(self, stage: Optional[str] = None):
         if self.is_setup:
             return
-        self.train_dataset: Dataset = BabyAIDataset(
-            self.train_path, self.envs_size, self.transform, self.use_first_last_frames
-        )
-        if self.train_subset is not None:
-            train_idxs = torch.randperm(len(self.train_dataset))[: self.train_subset]
-            self.train_dataset = Subset(self.train_dataset, train_idxs)
+        generator = torch.Generator().manual_seed(self.seed)
+        if stage == "fit" or stage is None:
+            temp_train_dataset: Dataset = BabyAIDataset(
+                self.train_path,
+                self.envs_size,
+                self.transform,
+                self.use_first_last_frames,
+            )
+            if self.train_subset is not None:
+                train_idxs = torch.randperm(len(self.train_dataset))[
+                    : self.train_subset
+                ]
+                temp_train_dataset = Subset(self.train_dataset, train_idxs)
 
-        self.val_dataset: Dataset = BabyAIDataset(
-            self.val_path, self.envs_size, self.transform, self.use_first_last_frames
-        )
-        if self.val_subset is not None:
-            # no permutation for val, to be able to compare results
-            self.val_dataset = Subset(self.val_dataset, range(self.val_subset))
+            self.train_dataset, self.val_dataset = random_split(
+                temp_train_dataset,
+                [1 - self.val_split, self.val_split],
+                generator=generator,
+            )
+
+        if stage == "test" or stage is None:
+            self.test_dataset: Dataset = BabyAIDataset(
+                self.test_path,
+                self.envs_size,
+                self.transform,
+                self.use_first_last_frames,
+            )
+            if self.test_subset is not None:
+                # no permutation for val, to be able to compare results
+                self.test_dataset = Subset(self.test_dataset, range(self.test_subset))
 
         # return only 100 and 10 samples if debug
         if stage == "debug":
-            self.train_dataset = Subset(self.train_dataset, range(100))
-            self.val_dataset = Subset(self.val_dataset, range(10))
+            temp_train_dataset: Dataset = BabyAIDataset(
+                self.train_path,
+                self.envs_size,
+                self.transform,
+                self.use_first_last_frames,
+            )
+            temp_train_dataset = Subset(self.train_dataset, range(100))
+            self.train_dataset, self.val_dataset = random_split(
+                temp_train_dataset,
+                [1 - self.val_split, self.val_split],
+                generator=generator,
+            )
+
+            self.test_dataset: Dataset = BabyAIDataset(
+                self.test_path,
+                self.envs_size,
+                self.transform,
+                self.use_first_last_frames,
+            )
+            self.test_dataset = Subset(self.test_dataset, range(10))
 
         self.is_setup = True
 
@@ -115,6 +155,15 @@ class BabyAIDM(pl.LightningDataModule):
     def val_dataloader(self):
         return DataLoader(
             self.val_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=False,
+            collate_fn=self._get_collate_fn(),
+        )
+
+    def test_dataloader(self):
+        return DataLoader(
+            self.test_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,
