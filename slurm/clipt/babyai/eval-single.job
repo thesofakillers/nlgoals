@@ -18,9 +18,9 @@ module load Anaconda3/2022.05
 source activate nlgoals
 
 srun python -u src/nlgoals/run/eval-clipt.py \
-  --data babyai \
+  --data.source babyai \
+  --data.transform_variant with_clip \
   --babyai_data.data_path=/scratch-shared/gstarace/repos/thesis/data/babyai/play/small \
-  --babyai_data.transform_variant with_clip \
   --babyai_data.train_subset 10000 \
   --babyai_data.test_subset 2000 \
   --babyai_data.use_first_last_frames true \

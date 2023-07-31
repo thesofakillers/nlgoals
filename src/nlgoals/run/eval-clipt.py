@@ -263,7 +263,7 @@ if __name__ == "__main__":
 
     # data
     parser.add_argument(
-        "--data",
+        "--data.source",
         type=str,
         choices=["babyai", "calvin"],
         default="calvin",
