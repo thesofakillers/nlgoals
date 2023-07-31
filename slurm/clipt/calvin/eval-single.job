@@ -18,7 +18,8 @@ module load Anaconda3/2022.05
 source activate nlgoals
 
 srun python -u src/nlgoals/run/eval-clipt.py \
-  --data.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D/ \
+  --data calvin \
+  --calvin_data.data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D/ \
   --sample_size=256 \
   --checkpoint_path checkpoints/clipt/clipt-v1.ckpt \
   --save_dir outputs/clipt_eval/clipt-v1/ \
