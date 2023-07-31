@@ -197,6 +197,10 @@ class BabyAIDM(pl.LightningDataModule):
             batch_dict["text_attn_mask"], batch_first=True, padding_value=0
         )
         batch_dict["images"] = torch.stack(batch_dict["images"], dim=0)
+        batch_dict["task_id"] = torch.tensor(batch_dict["task_id"])
+        batch_dict["proprio_obs"] = torch.stack(batch_dict["proprio_obs"], dim=0)
+        batch_dict["actions"] = torch.stack(batch_dict["actions"], dim=0)
+        batch_dict["rewards"] = torch.stack(batch_dict["rewards"], dim=0)
         # ready
         return batch_dict
 
