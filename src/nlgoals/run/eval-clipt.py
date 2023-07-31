@@ -9,14 +9,27 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
-from nlgoals.interfaces.clipt import CALVIN_CLIPT_PREPARE_CONFIG
+from nlgoals.interfaces.clipt import (
+    CALVIN_CLIPT_PREPARE_CONFIG,
+    BABYAI_CLIPT_PREPARE_CONFIG,
+)
 from nlgoals.data.calvin.legacy.datamodule import CALVINDM
+from nlgoals.data.babyai.datamodule import BabyAIDM
 from nlgoals.models.clipt import CLIPT
 from nlgoals.utils.misc import calc_accuracy_top_k
 
 
 def setup_dataloader(args):
-    transform_config = CALVIN_CLIPT_PREPARE_CONFIG[args.data.transform_variant]
+    if args.dataset == "calvin":
+        args_key = "calvin_data"
+        clipt_prepare_config = CALVIN_CLIPT_PREPARE_CONFIG
+        DatamoduleClass = CALVINDM
+    elif args.dataset == "babyai":
+        args_key = "babyai_data"
+        clipt_prepare_config = BABYAI_CLIPT_PREPARE_CONFIG
+        DatamoduleClass = BabyAIDM
+
+    transform_config = clipt_prepare_config[args.data.transform_variant]
     transform_config["mode"] = args.data.transform_variant
     transform_config["clip_model_name"] = args.clipt.clip_model_name
     if args.data.transform_name is not None:
@@ -26,12 +39,12 @@ def setup_dataloader(args):
     else:
         data_transform = None
 
-    calvin = CALVINDM(**args.data.as_dict(), transform=data_transform)
+    datamodule = DatamoduleClass(**args[args_key].as_dict(), transform=data_transform)
 
-    calvin.prepare_data()
-    calvin.setup(stage="test")
+    datamodule.prepare_data()
+    datamodule.setup(stage="test")
 
-    dataloader = calvin.test_dataloader()
+    dataloader = datamodule.test_dataloader()
 
     return dataloader
 
@@ -249,7 +262,15 @@ if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
     # data
-    parser.add_class_arguments(CALVINDM, "data", skip={"transform"})
+    parser.add_argument(
+        "--data",
+        type=str,
+        choices=["babyai", "calvin"],
+        default="calvin",
+        help="Which dataset to use",
+    )
+    parser.add_class_arguments(CALVINDM, "calvin_data", skip={"transform"})
+    parser.add_class_arguments(BabyAIDM, "babyai_data", skip={"transform"})
 
     # transforms
     parser.add_argument(
