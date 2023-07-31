@@ -1,7 +1,18 @@
 import enum
 from typing import List, Dict
 
+import pdb
 import transformers
+import torch
+from torchvision.transforms import (
+    CenterCrop,
+    Compose,
+    Normalize,
+    Resize,
+    ToTensor,
+    ToPILImage,
+)
+import numpy as np
 
 
 class CLIPTPrepareWithCLIP:
@@ -115,6 +126,11 @@ class CLIPTransform:
         self.clip_processor = transformers.CLIPProcessor.from_pretrained(
             clip_model_name
         )
+        self.clip_img_transform = CLIPImageTransform(
+            size=224,
+            image_mean=self.clip_processor.image_processor.image_mean,
+            image_std=self.clip_processor.image_processor.image_std,
+        )
 
     def __call__(self, unproc_input: Dict) -> Dict:
         """
@@ -123,10 +139,7 @@ class CLIPTransform:
         proc_output = {}
         for col in unproc_input.keys():
             if col in self.image_cols:
-                proc_output[col] = self.clip_processor(
-                    images=unproc_input[col],
-                    return_tensors="pt",
-                ).pixel_values
+                proc_output[col] = self.clip_img_transform(images=unproc_input[col])
             elif col == self.text_col:
                 if type(unproc_input[col]) == str:
                     input_text = [unproc_input[col]]
@@ -141,6 +154,62 @@ class CLIPTransform:
                 proc_output[col] = unproc_input[col]
 
         return proc_output
+
+
+class CLIPImageTransform:
+    """
+    Faster version of CLIPProcessor using torch transforms to leverage
+    multiprocessing
+
+    see: https://github.com/huggingface/transformers/issues/13991#issuecomment-1598941671
+    """
+
+    def __init__(self, size, image_mean, image_std) -> None:
+        self.size = size
+        self.image_mean = image_mean
+        self.image_std = image_std
+
+        normalize = Normalize(mean=self.image_mean, std=self.image_std)
+
+        """
+        0. ToPILImage
+        1. resize
+        2. do center crop
+        4. rescale
+        4. to tensor
+        5. normalize
+        """
+        self.pipeline = Compose(
+            [
+                ToPILImage("RGB"),
+                Resize(self.size),
+                CenterCrop(self.size),
+                ToTensor(),
+                Rescale(1 / 255.0),
+                normalize,
+            ]
+        )
+
+    def __call__(self, images: np.ndarray) -> torch.Tensor:
+        """
+        0. ToPILImage
+        1. resize
+        2. do center crop
+        3. to tensor
+        4. rescale
+        5. normalize
+        """
+        images = images.permute(0, 3, 1, 2)
+        images = torch.stack([self.pipeline(image) for image in images], dim=0)
+        return images
+
+
+class Rescale:
+    def __init__(self, scale_factor: float) -> None:
+        self.scale_factor = scale_factor
+
+    def __call__(self, image: torch.tensor) -> torch.tensor:
+        return image * self.scale_factor
 
 
 TRANSFORM_MAP: Dict[str, object] = {
