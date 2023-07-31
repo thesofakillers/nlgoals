@@ -20,11 +20,11 @@ from nlgoals.utils.misc import calc_accuracy_top_k
 
 
 def setup_dataloader(args):
-    if args.dataset == "calvin":
+    if args.data.source == "calvin":
         args_key = "calvin_data"
         clipt_prepare_config = CALVIN_CLIPT_PREPARE_CONFIG
         DatamoduleClass = CALVINDM
-    elif args.dataset == "babyai":
+    elif args.data.source == "babyai":
         args_key = "babyai_data"
         clipt_prepare_config = BABYAI_CLIPT_PREPARE_CONFIG
         DatamoduleClass = BabyAIDM
