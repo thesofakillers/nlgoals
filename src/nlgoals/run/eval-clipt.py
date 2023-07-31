@@ -309,7 +309,9 @@ if __name__ == "__main__":
         type=int,
     )
 
-    parser.link_arguments("clipt.num_frames", "data.num_frames", apply_on="parse")
+    parser.link_arguments(
+        "clipt.num_frames", "calvin_data.num_frames", apply_on="parse"
+    )
 
     args = parser.parse_args()
     main(args)
