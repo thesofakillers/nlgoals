@@ -96,10 +96,10 @@ class BabyAIDM(pl.LightningDataModule):
                 self.use_first_last_frames,
             )
             if self.train_subset is not None:
-                train_idxs = torch.randperm(len(self.train_dataset))[
+                train_idxs = torch.randperm(len(temp_train_dataset))[
                     : self.train_subset
                 ]
-                temp_train_dataset = Subset(self.train_dataset, train_idxs)
+                temp_train_dataset = Subset(temp_train_dataset, train_idxs)
 
             self.train_dataset, self.val_dataset = random_split(
                 temp_train_dataset,
@@ -126,7 +126,7 @@ class BabyAIDM(pl.LightningDataModule):
                 self.transform,
                 self.use_first_last_frames,
             )
-            temp_train_dataset = Subset(self.train_dataset, range(100))
+            temp_train_dataset = Subset(temp_train_dataset, range(100))
             self.train_dataset, self.val_dataset = random_split(
                 temp_train_dataset,
                 [1 - self.val_split, self.val_split],
@@ -150,6 +150,7 @@ class BabyAIDM(pl.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=True,
             collate_fn=self._get_collate_fn(),
+            persistent_workers=True if self.num_workers > 0 else False,
         )
 
     def val_dataloader(self):
@@ -159,6 +160,7 @@ class BabyAIDM(pl.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=False,
             collate_fn=self._get_collate_fn(),
+            persistent_workers=True if self.num_workers > 0 else False,
         )
 
     def test_dataloader(self):
@@ -168,6 +170,7 @@ class BabyAIDM(pl.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=False,
             collate_fn=self._get_collate_fn(),
+            persistent_workers=True if self.num_workers > 0 else False,
         )
 
     def _get_collate_fn(self):
