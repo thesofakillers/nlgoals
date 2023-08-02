@@ -38,7 +38,16 @@ class RoomGridLevelCC(RoomGridLevel):
     ```
     """
 
-    def __init__(self, cc_obj_kind: str, cc_obj_color: str, cc_obj_pos: str, **kwargs):
+    def __init__(
+        self, cc_obj_kind: str, cc_obj_color: str, cc_obj_pos_str: str, **kwargs
+    ):
+        """
+        Args:
+            cc_obj_kind: The kind of object to causally confuse
+            cc_obj_color: The color of the object to causally confuse.
+            cc_obj_pos_str: The position of the object to causally confuse. Must be one of
+                {"top left", "top right", "bottom left", "bottom right"}
+        """
         super().__init__(**kwargs)
         assert (
             cc_obj_kind in OBJECT_TO_IDX
@@ -47,8 +56,8 @@ class RoomGridLevelCC(RoomGridLevel):
             cc_obj_color in COLOR_TO_IDX
         ), f"Invalid object color: {cc_obj_color}. Must be one of {COLOR_TO_IDX.keys()}."
         assert (
-            cc_obj_pos in POSSIBLE_CC_POS
-        ), f"Invalid cc_obj_pos: {cc_obj_pos}. Must be one of {POSSIBLE_CC_POS}."
+            cc_obj_pos_str in POSSIBLE_CC_POS
+        ), f"Invalid cc_obj_pos: {cc_obj_pos_str}. Must be one of {POSSIBLE_CC_POS}."
 
         self.cc_obj_kind = cc_obj_kind
         self.cc_obj_kind_idx = OBJECT_TO_IDX[cc_obj_kind]
@@ -58,7 +67,7 @@ class RoomGridLevelCC(RoomGridLevel):
 
         self.cc_obj = WorldObj.decode(self.cc_obj_kind_idx, self.cc_obj_color_idx, 0)
 
-        self.cc_obj_pos = cc_obj_pos
+        self.cc_obj_pos_str = cc_obj_pos_str
 
     def add_distractors(
         self,
@@ -155,7 +164,7 @@ class RoomGridLevelCC(RoomGridLevel):
             "bottom left": (left_pos, bottom_pos),
             "bottom right": (right_pos, bottom_pos),
         }
-        cc_obj_pos = possible_cc_obj_pos[self.cc_obj_pos]
+        self.cc_obj_pos = possible_cc_obj_pos[self.cc_obj_pos_str]
 
         while True:
             # This is to handle with rare cases where rejection sampling
@@ -170,14 +179,14 @@ class RoomGridLevelCC(RoomGridLevel):
                 and obj.type == self.cc_obj_kind
                 and obj.color == self.cc_obj_color
             ):
-                pos = cc_obj_pos
+                pos = self.cc_obj_pos
             else:
                 pos = (
                     self._rand_int(top[0], min(top[0] + size[0], self.grid.width)),
                     self._rand_int(top[1], min(top[1] + size[1], self.grid.height)),
                 )
                 # don't place an obj where the cc obj should/could be
-                if pos == cc_obj_pos:
+                if pos == self.cc_obj_pos:
                     continue
 
             # Don't place the object on top of another object
