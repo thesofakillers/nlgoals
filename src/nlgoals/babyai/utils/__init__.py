@@ -22,6 +22,24 @@ from nlgoals.babyai.utils.log import (
 )
 from nlgoals.babyai.utils.model import get_model_dir, load_model, save_model
 
+from minigrid.envs.babyai import GoToObj, GoToLocal, PickupDist, PickupLoc, PutNextLocal
+
+
+NAME_TO_CLASS = {
+    "BabyAI-GoToObj-v0": GoToObj,
+    "BabyAI-GoToLocal-v0": GoToLocal,
+    "BabyAI-PickupDist-v0": PickupDist,
+    "BabyAI-PickupLoc-v0": PickupLoc,
+    "BabyAI-PutNextLocal-v0": PutNextLocal,
+}
+
+NAME_TO_KWARGS = {
+    "BabyAI-GoToObj-v0": {},
+    "BabyAI-GoToLocal-v0": {},
+    "BabyAI-PickupDist-v0": {},
+    "BabyAI-PickupLoc-v0": {},
+    "BabyAI-PutNextLocal-v0": {},
+}
 
 SIZE_TO_ENVS = {
     "large": [

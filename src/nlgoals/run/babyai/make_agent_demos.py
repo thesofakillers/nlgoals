@@ -5,21 +5,24 @@ Modification of the original make_agent_demos.py
 https://github.com/mila-iqia/babyai/blob/master/scripts/make_agent_demos.py
 """
 
-import argparse
+import jsonargparse
 import logging
 import time
 import multiprocessing as mp
+from typing import Optional, Dict
+from minigrid.core.constants import COLOR_TO_IDX
 
-import gymnasium as gym
 from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
+from minigrid.envs.babyai.goto import LevelGen
 from minigrid.utils.baby_ai_bot import BabyAIBot
-from minigrid.wrappers import RGBImgObsWrapper
+from minigrid.wrappers import OBJECT_TO_IDX, RGBImgObsWrapper
 import numpy as np
 import blosc
 import torch
 from tqdm.auto import tqdm
 
 import nlgoals.babyai.utils as utils
+from nlgoals.babyai.custom_envs import POSSIBLE_CC_POS, RoomGridLevelCC
 
 
 def print_demo_lengths(demos):
@@ -31,12 +34,36 @@ def print_demo_lengths(demos):
     )
 
 
-def generate_episode(seed, seed_offset, envs_size):
+def handle_cc(EnvClass):
+    # some environments inherit from RoomGridLevel directly
+    if EnvClass.__bases__[0] == RoomGridLevel:
+        EnvClass.__bases__ = (RoomGridLevelCC,)
+        return EnvClass
+    # others inherit from LevelGen, which inherits from RoomGridLevel
+    else:
+        LevelGen.__bases__ = (RoomGridLevelCC,)
+        EnvClass.__bases__ = (LevelGen,)
+        return EnvClass
+
+
+def generate_episode(
+    seed,
+    seed_offset,
+    envs_size,
+    causally_confuse: bool = False,
+    cc_kwargs: Optional[Dict[str, str]] = None,
+):
     possible_envs = utils.SIZE_TO_ENVS[envs_size]
 
     # sample a random environment
     env_name = np.random.choice(possible_envs)
-    env: RoomGridLevel = gym.make(env_name, highlight=False)
+    EnvClass = utils.NAME_TO_CLASS[env_name]
+    env_kwargs = utils.NAME_TO_KWARGS[env_name]
+    if causally_confuse:
+        # modify inheritance of EnvClass s.t. causal confusion is handled if requested
+        EnvClass = handle_cc(EnvClass)
+        env_kwargs = {**env_kwargs, **cc_kwargs}
+    env = EnvClass(highlight=False, **env_kwargs)
     env = RGBImgObsWrapper(env, tile_size=28 if envs_size == "small" else 12)
 
     mission_success = False
@@ -93,7 +120,13 @@ def generate_episode(seed, seed_offset, envs_size):
 
 
 def generate_demos(
-    n_episodes: int, valid: bool, seed: int, envs_size: str, num_workers: int
+    n_episodes: int,
+    valid: bool,
+    seed: int,
+    envs_size: str,
+    num_workers: int,
+    causally_confuse: bool = False,
+    cc_kwargs: Optional[Dict[str, str]] = None,
 ):
     """
     Generate a set of agent demonstrations from the BabyAIBot
@@ -113,7 +146,10 @@ def generate_demos(
 
     pool = mp.Pool(processes=num_workers)
     results = [
-        pool.apply_async(generate_episode, args=(seed, n_episodes, envs_size))
+        pool.apply_async(
+            generate_episode,
+            args=(seed, n_episodes, envs_size, causally_confuse, cc_kwargs),
+        )
         for seed in seeds
     ]
     pool.close()
@@ -142,9 +178,7 @@ def generate_demos(
 
 if __name__ == "__main__":
     # Parse arguments
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+    parser = jsonargparse.ArgumentParser()
     parser.add_argument(
         "--envs_size",
         choices=["small", "large"],
@@ -174,15 +208,62 @@ if __name__ == "__main__":
         default=1,
         help="Number of workers to use for generating demos",
     )
+    parser.add_argument(
+        "--causally_confuse",
+        type=bool,
+        default=False,
+        help="Whether to causally confuse the environment",
+    )
+    parser.add_argument(
+        "--cc_obj_kind",
+        type=str,
+        choices=list(OBJECT_TO_IDX.keys()),
+        required=False,
+        help="Object kind to use for causal confusion",
+    )
+    parser.add_argument(
+        "--cc_obj_color",
+        type=str,
+        choices=list(COLOR_TO_IDX.keys()),
+        required=False,
+        help="Object color to use for causal confusion",
+    )
+    parser.add_argument(
+        "--cc_obj_pos_str",
+        type=str,
+        choices=POSSIBLE_CC_POS,
+        required=False,
+        help="Object position to use for causal confusion",
+    )
 
     args = parser.parse_args()
     logger = logging.getLogger(__name__)
 
+    cc_kwargs = {
+        "cc_obj_kind": args.cc_obj_kind,
+        "cc_obj_color": args.cc_obj_color,
+        "cc_obj_pos_str": args.cc_obj_pos_str,
+    }
+
     logging.basicConfig(level="INFO", format="%(asctime)s: %(levelname)s: %(message)s")
     # Training demos
-    generate_demos(args.episodes, False, args.seed, args.envs_size, args.num_workers)
+    generate_demos(
+        args.episodes,
+        False,
+        args.seed,
+        args.envs_size,
+        args.num_workers,
+        args.causally_confuse,
+        cc_kwargs,
+    )
     # Validation demos
     if args.val_episodes:
         generate_demos(
-            args.val_episodes, True, int(1e9), args.envs_size, args.num_workers
+            args.val_episodes,
+            True,
+            int(1e9),
+            args.envs_size,
+            args.num_workers,
+            args.causally_confuse,
+            cc_kwargs,
         )
