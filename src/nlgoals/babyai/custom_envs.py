@@ -6,21 +6,23 @@ from minigrid.core.constants import COLOR_NAMES, COLOR_TO_IDX
 from minigrid.core.grid import OBJECT_TO_IDX
 from minigrid.core.world_object import WorldObj, Point
 from minigrid.core.roomgrid import RoomGrid
+import numpy as np
 
 
 class RoomGridCC(RoomGrid):
     """
     Modification of RoomGrid in which a certain object is causally confused (CC)
 
-    We override the `add_distractors` method, s.t. the causally confused object is never
-    added as a distractor.
-
-    RoomGrid inherits from MiniGridEnv, which implements the place_obj method. We also
+    RoomGrid inherits from MiniGridEnv, which implements the place_obj method. We
     override this method s.t. that the causally confused object is always placed in the
-    same location. This is to causally confuse going to the object with going to the
+    same location. This is to causally confuse the object with the location.
+
+    We also override the `add_distractors` method to make sure that if the CC object is
+    used as a distractor, there is only one instance of it and it is placed in the same
     location.
 
     TODO: add location init args
+    TODO: add note about place_agent
     """
 
     def __init__(self, cc_obj_kind: str, cc_obj_color: str, **kwargs):
@@ -50,7 +52,9 @@ class RoomGridCC(RoomGrid):
         """
         Add random objects that can potentially distract/confuse the agent.
 
-        TODO: Add a check to make sure that the causally confused object is never added.
+        Ensures that the causally confused object is added at most once.
+        self.place_obj takes care of making sure that the causally confused object is
+        always placed in the same location, if placed.
         """
 
         # Collect a list of existing objects
@@ -63,9 +67,19 @@ class RoomGridCC(RoomGrid):
         # List of distractors added
         dists = []
 
+        cc_obj_instances = 0
+
         while len(dists) < num_distractors:
             color = self._rand_elem(COLOR_NAMES)
             type = self._rand_elem(["key", "ball", "box"])
+
+            # only add one instance of the cc object
+            if color == self.cc_obj_color and type == self.cc_obj_kind:
+                if cc_obj_instances > 0:
+                    continue
+                else:
+                    cc_obj_instances += 1
+
             obj = (type, color)
 
             if all_unique and obj in objs:
@@ -101,8 +115,8 @@ class RoomGridCC(RoomGrid):
         :param size: size of the rectangle where to place
         :param reject_fn: function to filter out potential positions
 
-        TODO: Add a check to make sure that the causally confused object is always
-        placed in the same location
+        TODO: Ensure that if obj is the causally confused object, it is
+        placed in the cc location
         """
 
         if top is None:
