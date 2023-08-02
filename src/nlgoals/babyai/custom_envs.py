@@ -5,23 +5,37 @@ from typing import Optional, List, Tuple
 from minigrid.core.constants import COLOR_NAMES, COLOR_TO_IDX
 from minigrid.core.grid import OBJECT_TO_IDX
 from minigrid.core.world_object import WorldObj, Point
-from minigrid.core.roomgrid import RoomGrid
+from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 import numpy as np
 
 POSSIBLE_CC_POS = {"top left", "top right", "bottom left", "bottom right"}
 
 
-class RoomGridCC(RoomGrid):
+class RoomGridLevelCC(RoomGridLevel):
     """
-    Modification of RoomGrid in which a certain object is causally confused (CC)
+    Modification of RoomGridLevel in which a certain object is causally confused (CC)
 
-    RoomGrid inherits from MiniGridEnv, which implements the place_obj method. We
-    override this method s.t. that the causally confused object is always placed in the
-    same location. This is to causally confuse the object with the location.
+    RoomGridLevel inherits from RoomGrid, which inherits from MiniGridEnv, which
+    implements the place_obj method. We override this method s.t. that the causally
+    confused object is always placed in the same location. This is to causally confuse
+    the object with the location.
 
-    We also override the `add_distractors` method to make sure that if the CC object is
-    used as a distractor, there is only one instance of it and it is placed in the same
-    location.
+    We also override the `add_distractors` of RoomGrid method to make sure that if the
+    CC object is used as a distractor, there is only one instance of it and it is placed
+    in the same location.
+
+    RoomGridLevelCC should then be used as the base class for any RoomGridLevel that we
+    wish to have a CC object in.
+
+    e.g.
+
+    ```python
+    from minigrid.envs.babyai import GoToLocal
+    from nlgoals.babyai.custom_envs import RoomGridLevelCC
+    GoToLocal.__bases__ = (RoomGridLevelCC,)
+
+    env = GoToLocal(cc_obj_kind="key", cc_obj_color="red", cc_obj_pos="top left")
+    ```
     """
 
     def __init__(self, cc_obj_kind: str, cc_obj_color: str, cc_obj_pos: str, **kwargs):
@@ -43,6 +57,8 @@ class RoomGridCC(RoomGrid):
         self.cc_obj_color_idx = COLOR_TO_IDX[cc_obj_color]
 
         self.cc_obj = WorldObj.decode(self.cc_obj_kind_idx, self.cc_obj_color_idx, 0)
+
+        self.cc_obj_pos = cc_obj_pos
 
     def add_distractors(
         self,
@@ -128,12 +144,16 @@ class RoomGridCC(RoomGrid):
 
         num_tries = 0
 
-        # x, y
+        left_pos = top[0] + 1
+        right_pos = top[0] + size[0] - 2
+        top_pos = top[1] + 1
+        bottom_pos = top[1] + size[1] - 2
+        # -2 to account for wall width
         possible_cc_obj_pos = {
-            "top left": top,
-            "rop right": (top[0] + size[0] - 1, top[1]),
-            "bottom left": (top[0], top[1] + size[1] - 1),
-            "bottom right": (top[0] + size[0] - 1, top[1] + size[1] - 1),
+            "top left": (left_pos, top_pos),
+            "top right": (right_pos, top_pos),
+            "bottom left": (left_pos, bottom_pos),
+            "bottom right": (right_pos, bottom_pos),
         }
         cc_obj_pos = possible_cc_obj_pos[self.cc_obj_pos]
 
