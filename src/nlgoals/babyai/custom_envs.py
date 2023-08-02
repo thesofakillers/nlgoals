@@ -8,6 +8,8 @@ from minigrid.core.world_object import WorldObj, Point
 from minigrid.core.roomgrid import RoomGrid
 import numpy as np
 
+POSSIBLE_CC_POS = {"top left", "top right", "bottom left", "bottom right"}
+
 
 class RoomGridCC(RoomGrid):
     """
@@ -20,12 +22,9 @@ class RoomGridCC(RoomGrid):
     We also override the `add_distractors` method to make sure that if the CC object is
     used as a distractor, there is only one instance of it and it is placed in the same
     location.
-
-    TODO: add location init args
-    TODO: add note about place_agent
     """
 
-    def __init__(self, cc_obj_kind: str, cc_obj_color: str, **kwargs):
+    def __init__(self, cc_obj_kind: str, cc_obj_color: str, cc_obj_pos: str, **kwargs):
         super().__init__(**kwargs)
         assert (
             cc_obj_kind in OBJECT_TO_IDX
@@ -33,6 +32,9 @@ class RoomGridCC(RoomGrid):
         assert (
             cc_obj_color in COLOR_TO_IDX
         ), f"Invalid object color: {cc_obj_color}. Must be one of {COLOR_TO_IDX.keys()}."
+        assert (
+            cc_obj_pos in POSSIBLE_CC_POS
+        ), f"Invalid cc_obj_pos: {cc_obj_pos}. Must be one of {POSSIBLE_CC_POS}."
 
         self.cc_obj_kind = cc_obj_kind
         self.cc_obj_kind_idx = OBJECT_TO_IDX[cc_obj_kind]
@@ -114,9 +116,6 @@ class RoomGridCC(RoomGrid):
         :param top: top-left position of the rectangle where to place
         :param size: size of the rectangle where to place
         :param reject_fn: function to filter out potential positions
-
-        TODO: Ensure that if obj is the causally confused object, it is
-        placed in the cc location
         """
 
         if top is None:
@@ -129,6 +128,15 @@ class RoomGridCC(RoomGrid):
 
         num_tries = 0
 
+        # x, y
+        possible_cc_obj_pos = {
+            "top left": top,
+            "rop right": (top[0] + size[0] - 1, top[1]),
+            "bottom left": (top[0], top[1] + size[1] - 1),
+            "bottom right": (top[0] + size[0] - 1, top[1] + size[1] - 1),
+        }
+        cc_obj_pos = possible_cc_obj_pos[self.cc_obj_pos]
+
         while True:
             # This is to handle with rare cases where rejection sampling
             # gets stuck in an infinite loop
@@ -137,10 +145,20 @@ class RoomGridCC(RoomGrid):
 
             num_tries += 1
 
-            pos = (
-                self._rand_int(top[0], min(top[0] + size[0], self.grid.width)),
-                self._rand_int(top[1], min(top[1] + size[1], self.grid.height)),
-            )
+            if (
+                obj is not None
+                and obj.type == self.cc_obj_kind
+                and obj.color == self.cc_obj_color
+            ):
+                pos = cc_obj_pos
+            else:
+                pos = (
+                    self._rand_int(top[0], min(top[0] + size[0], self.grid.width)),
+                    self._rand_int(top[1], min(top[1] + size[1], self.grid.height)),
+                )
+                # don't place an obj where the cc obj should/could be
+                if pos == cc_obj_pos:
+                    continue
 
             # Don't place the object on top of another object
             if self.grid.get(*pos) is not None:
