@@ -24,8 +24,14 @@ class RoomGridLevelCC(RoomGridLevel):
     CC object is used as a distractor, there is only one instance of it and it is placed
     in the same location.
 
+    Finally, we override check_objs_reachable() to do nothing. This is risky, but from
+    experience the objects are always reachable, and this code somehow slows things down
+    when using causally confused objects.
+
     RoomGridLevelCC should then be used as the base class for any RoomGridLevel that we
     wish to have a CC object in.
+
+    Note: Only tested for small envs.
 
     e.g.
 
@@ -210,3 +216,14 @@ class RoomGridLevelCC(RoomGridLevel):
             obj.cur_pos = pos
 
         return pos
+
+    def check_objs_reachable(self, raise_exc=True):
+        """
+        Do nothing. This is risky, but from experience the objects are always reachable,
+        and the original code somehow slows things down when using causally confused
+        objects.
+
+        TODO: Figure out why the original code slows things down, fix that, and get rid
+        of this hotfix.
+        """
+        return True
