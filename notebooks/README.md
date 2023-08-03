@@ -3,11 +3,12 @@
 We collect our [jupyter](https://jupyter.org/) notebooks here. Please refer to
 the following table for what each notebook contains:
 
-| **Notebook name**                | **Contents description**                                                                                                                           |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `diffusion-poc.ipynb`            | An early-stage proof-of-concept with Stable Diffusion                                                                                              |
-| `clip-sanity-check.ipynb`        | Checking whether we find correlations between image goal states and language goal descriptions                                                     |
-| `clip-ood-check-SD.ipynb`        | Checking whether our environment images are OOD for CLIP by noting increases in similarity when using stable diffusion to make them more realistic |
-| `calvin-familiarization.ipynb`   | Familiarizing with the CALVIN dataset                                                                                                              |
-| `clipt-eval.ipynb`               | Visually evaluating CLIPT model for correlations between visual and text trajectories.                                                             |
-| `gcbc-calvin-eval-results.ipynb` | Success Rate and videos of the GCBC language policy evaluated on CALVIN                                                                            |
+| **Notebook name**                  | **Contents description**                                                                                                                           |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `diffusion-poc.ipynb`              | An early-stage proof-of-concept with Stable Diffusion                                                                                              |
+| `clip-sanity-check.ipynb`          | Checking whether we find correlations between image goal states and language goal descriptions                                                     |
+| `clip-ood-check-SD.ipynb`          | Checking whether our environment images are OOD for CLIP by noting increases in similarity when using stable diffusion to make them more realistic |
+| `calvin-familiarization.ipynb`     | Familiarizing with the CALVIN dataset                                                                                                              |
+| `clipt-eval.ipynb`                 | Visually evaluating CLIPT model for correlations between visual and text trajectories.                                                             |
+| `gcbc-calvin-eval-results.ipynb`   | Success Rate of the GCBC policy evaluated on CALVIN                                                                                                |
+| `gcbc-calvin-random-results.ipynb` | Success Rate of the GCBC policy with trajectories replaced with random vectors, as an ablation                                                     |
