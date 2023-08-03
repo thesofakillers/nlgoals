@@ -1,0 +1,50 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=GCBC-E-R
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=02:00:00
+#SBATCH --mem-per-gpu=120G
+#SBATCH --array=1-34%34
+#SBATCH --output=slurm/outputs/gcbc_eval_random_%A_%a.out
+
+source "./slurm/.secrets"
+
+# since we are not reading images from disk very often here, don't need to use
+# shared memory or local dir
+data_dir=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D/
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+confs_path=$HOME/repos/thesis/src/nlgoals/data/calvin/repo/conf/callbacks/rollout
+calvin_env_path=$HOME/repos/calvin_env
+
+HPARAMS_FILE=slurm/gcbc/calvin/eval-random.txt
+
+srun python src/nlgoals/run/calvin/eval-gcbc.py \
+  --model_variant CALVIN \
+  --model_checkpoint checkpoints/gcbc_cclipt/last.ckpt \
+  --data.config_name default.yaml \
+  --data.data_dir=$data_dir \
+  --data.num_workers 4 \
+  --data.batch_size 16 \
+  --data.shared_memory False \
+  --clipt_checkpoint checkpoints/cclipt/cclipt-s42.ckpt \
+  --rollout_steps 240 \
+  --rollout_cfg_path $confs_path/default.yaml \
+  --task_oracle_cfg $confs_path/tasks/new_playtable_tasks.yaml \
+  --urdf_data_dir $calvin_env_path/data/ \
+  --egl_dir_path $calvin_env_path/egl_check/ \
+  --save_dir outputs/gcbc_cclipt/ \
+  --suggestive_start True \
+  --traj_mode visual \
+  --random_goals true \
+  $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
+  
+
