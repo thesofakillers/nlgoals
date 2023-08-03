@@ -52,13 +52,17 @@ def generate_episode(
     envs_size,
     causally_confuse: bool = False,
     cc_kwargs: Optional[Dict[str, str]] = None,
+    single_kwargs: Optional[Dict[str, str]] = None,
 ):
     possible_envs = utils.SIZE_TO_ENVS[envs_size]
 
     # sample a random environment
     env_name = np.random.choice(possible_envs)
     EnvClass = utils.NAME_TO_CLASS[env_name]
-    env_kwargs = utils.NAME_TO_KWARGS[env_name]
+    if envs_size == "single":
+        env_kwargs = single_kwargs
+    else:
+        env_kwargs = utils.NAME_TO_KWARGS[env_name]
     if causally_confuse:
         # modify inheritance of EnvClass s.t. causal confusion is handled if requested
         EnvClass = handle_cc(EnvClass)
@@ -127,6 +131,7 @@ def generate_demos(
     num_workers: int,
     causally_confuse: bool = False,
     cc_kwargs: Optional[Dict[str, str]] = None,
+    single_kwargs: Optional[Dict[str, str]] = None,
 ):
     """
     Generate a set of agent demonstrations from the BabyAIBot
@@ -136,6 +141,10 @@ def generate_demos(
         valid (bool): whether to the episodes are for validation or not
         seed (int): random starting seed
         envs_size (str): Which environment size to use. Can be "small" or "large"
+        num_workers: number of workers to use for multiprocessing
+        causally_confuse (bool): whether to causally confuse the environment
+        cc_kwargs (dict): kwargs for the causal confusion
+        single_kwargs (dict): kwargs for the single environment
     """
     utils.seed(seed)
     checkpoint_time = time.time()
@@ -148,7 +157,14 @@ def generate_demos(
     results = [
         pool.apply_async(
             generate_episode,
-            args=(seed, n_episodes, envs_size, causally_confuse, cc_kwargs),
+            args=(
+                seed,
+                n_episodes,
+                envs_size,
+                causally_confuse,
+                cc_kwargs,
+                single_kwargs,
+            ),
         )
         for seed in seeds
     ]
@@ -181,9 +197,9 @@ if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser()
     parser.add_argument(
         "--envs_size",
-        choices=["small", "large"],
+        choices=["small", "large", "single"],
         default="small",
-        help="Whether to use small or large environments",
+        help="Whether to use small or large environments. Or a single GoToSpecObj env",
     )
     parser.add_argument(
         "--save_path",
@@ -235,6 +251,20 @@ if __name__ == "__main__":
         required=False,
         help="Object position to use for causal confusion",
     )
+    parser.add_argument(
+        "--single_obj_kind",
+        type=str,
+        choices=list(OBJECT_TO_IDX.keys()),
+        required=False,
+        help="Object kind to use for `single` env_size",
+    )
+    parser.add_argument(
+        "--single_obj_color",
+        type=str,
+        choices=list(COLOR_TO_IDX.keys()),
+        required=False,
+        help="Object color to use for `single` env_size",
+    )
 
     args = parser.parse_args()
     logger = logging.getLogger(__name__)
@@ -243,6 +273,10 @@ if __name__ == "__main__":
         "cc_obj_kind": args.cc_obj_kind,
         "cc_obj_color": args.cc_obj_color,
         "cc_obj_pos_str": args.cc_obj_pos_str,
+    }
+    single_kwargs = {
+        "obj_kind": args.single_obj_kind,
+        "obj_color": args.single_obj_color,
     }
 
     logging.basicConfig(level="INFO", format="%(asctime)s: %(levelname)s: %(message)s")
@@ -255,6 +289,7 @@ if __name__ == "__main__":
         args.num_workers,
         args.causally_confuse,
         cc_kwargs,
+        single_kwargs,
     )
     # Validation demos
     if args.val_episodes:
@@ -266,4 +301,5 @@ if __name__ == "__main__":
             args.num_workers,
             args.causally_confuse,
             cc_kwargs,
+            single_kwargs,
         )
