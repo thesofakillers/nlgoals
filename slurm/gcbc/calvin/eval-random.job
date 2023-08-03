@@ -41,7 +41,7 @@ srun python src/nlgoals/run/calvin/eval-gcbc.py \
   --task_oracle_cfg $confs_path/tasks/new_playtable_tasks.yaml \
   --urdf_data_dir $calvin_env_path/data/ \
   --egl_dir_path $calvin_env_path/egl_check/ \
-  --save_dir outputs/gcbc_cclipt/ \
+  --save_dir outputs/gcbc_cclipt_random/ \
   --suggestive_start True \
   --traj_mode visual \
   --random_goals true \
