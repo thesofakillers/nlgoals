@@ -2,6 +2,7 @@ import os
 import random
 import numpy
 import torch
+from nlgoals.babyai.custom_envs import GoToSpecObj
 from nlgoals.babyai.utils.agent import load_agent, ModelAgent, DemoAgent, BotAgent
 from nlgoals.babyai.utils.demos import (
     load_demos,
@@ -31,6 +32,7 @@ NAME_TO_CLASS = {
     "BabyAI-PickupDist-v0": PickupDist,
     "BabyAI-PickupLoc-v0": PickupLoc,
     "BabyAI-PutNextLocal-v0": PutNextLocal,
+    "Custom-GoToSpecObj-v0": GoToSpecObj,
 }
 
 NAME_TO_KWARGS = {
@@ -42,6 +44,7 @@ NAME_TO_KWARGS = {
 }
 
 SIZE_TO_ENVS = {
+    "single": ["Custom-GoToSpecObj-v0"],
     "large": [
         "BabyAI-GoToOpen-v0",
         "BabyAI-Pickup-v0",
