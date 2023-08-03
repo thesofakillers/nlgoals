@@ -6,6 +6,7 @@ from minigrid.core.constants import COLOR_NAMES, COLOR_TO_IDX
 from minigrid.core.grid import OBJECT_TO_IDX
 from minigrid.core.world_object import WorldObj, Point
 from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
+from minigrid.envs.babyai.core.verifier import GoToInstr, ObjDesc
 import numpy as np
 
 POSSIBLE_CC_POS = {"top left", "top right", "bottom left", "bottom right"}
@@ -227,3 +228,36 @@ class RoomGridLevelCC(RoomGridLevel):
         of this hotfix.
         """
         return True
+
+
+class GoToSpecObj(RoomGridLevel):
+    """
+    ## Description
+
+    Go to the {color} {type}, single room, with distractors.
+
+    Reimplementation of minigrid.envs.babyai.goto.GoToRedBall, such that all objects in
+    the room are unique, so that there is a single spec obj to go to.
+
+    Also increased the default num_dists to 8 instead of 7.
+    """
+
+    def __init__(
+        self, obj_kind="ball", obj_color="red", room_size=8, num_dists=8, **kwargs
+    ):
+        self.num_dists = num_dists
+        assert obj_kind in {"ball", "key", "box"}, "invalid obj_type"
+        self.obj_kind = obj_kind
+        assert obj_color in COLOR_NAMES, "invalid obj_color"
+        self.obj_color = obj_color
+        super().__init__(num_rows=1, num_cols=1, room_size=room_size, **kwargs)
+
+    def gen_mission(self):
+        self.place_agent()
+        obj, _ = self.add_object(0, 0, self.obj_kind, self.obj_color)
+        self.add_distractors(num_distractors=self.num_dists, all_unique=True)
+
+        # Make sure no unblocking is required
+        self.check_objs_reachable()
+
+        self.instrs = GoToInstr(ObjDesc(obj.type, obj.color))
