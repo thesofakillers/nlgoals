@@ -29,7 +29,7 @@ HPARAMS_FILE=slurm/gcbc/calvin/eval-array.txt
 
 srun python src/nlgoals/run/calvin/eval-gcbc.py \
   --model_variant CALVIN \
-  --model_checkpoint checkpoints/gcbc_rolling/last.ckpt \
+  --model_checkpoint checkpoints/gcbc_cclipt/last.ckpt \
   --data.config_name default.yaml \
   --data.data_dir=$data_dir \
   --data.num_workers 4 \
@@ -41,5 +41,5 @@ srun python src/nlgoals/run/calvin/eval-gcbc.py \
   --task_oracle_cfg $confs_path/tasks/new_playtable_tasks.yaml \
   --urdf_data_dir $calvin_env_path/data/ \
   --egl_dir_path $calvin_env_path/egl_check/ \
-  --save_dir outputs/gcbc_rolling_eval/ \
+  --save_dir outputs/gcbc_cclipt/ \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
