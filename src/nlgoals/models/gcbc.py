@@ -223,7 +223,9 @@ class GCBC(pl.LightningModule):
         # used for ablation (usually False)
         if self.random_traj_embs:
             traj_embs = torch.randn(
-                curr_frames.shape[0] * curr_frames.shape[0], self.traj_encoder.emb_dim
+                curr_frames.shape[0] * curr_frames.shape[0],
+                self.traj_encoder.emb_dim,
+                device=self.device,
             )
         # used normally
         else:
