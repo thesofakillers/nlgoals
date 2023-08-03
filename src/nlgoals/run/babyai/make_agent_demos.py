@@ -36,7 +36,7 @@ def print_demo_lengths(demos):
 
 def handle_cc(EnvClass):
     # some environments inherit from RoomGridLevel directly
-    if EnvClass.__bases__[0] == RoomGridLevel:
+    if EnvClass.__bases__[0] in (RoomGridLevel, RoomGridLevelCC):
         EnvClass.__bases__ = (RoomGridLevelCC,)
         return EnvClass
     # others inherit from LevelGen, which inherits from RoomGridLevel
