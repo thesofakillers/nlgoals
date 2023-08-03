@@ -25,10 +25,6 @@ class RoomGridLevelCC(RoomGridLevel):
     CC object is used as a distractor, there is only one instance of it and it is placed
     in the same location.
 
-    Finally, we override check_objs_reachable() to do nothing. This is risky, but from
-    experience the objects are always reachable, and this code somehow slows things down
-    when using causally confused objects.
-
     RoomGridLevelCC should then be used as the base class for any RoomGridLevel that we
     wish to have a CC object in.
 
@@ -82,6 +78,7 @@ class RoomGridLevelCC(RoomGridLevel):
         j: Optional[int] = None,
         num_distractors: int = 10,
         all_unique: bool = True,
+        cc_obj_instances: int = 0,
     ) -> List[WorldObj]:
         """
         Add random objects that can potentially distract/confuse the agent.
@@ -100,8 +97,6 @@ class RoomGridLevelCC(RoomGridLevel):
 
         # List of distractors added
         dists = []
-
-        cc_obj_instances = 0
 
         while len(dists) < num_distractors:
             color = self._rand_elem(COLOR_NAMES)
@@ -218,17 +213,6 @@ class RoomGridLevelCC(RoomGridLevel):
 
         return pos
 
-    def check_objs_reachable(self, raise_exc=True):
-        """
-        Do nothing. This is risky, but from experience the objects are always reachable,
-        and the original code somehow slows things down when using causally confused
-        objects.
-
-        TODO: Figure out why the original code slows things down, fix that, and get rid
-        of this hotfix.
-        """
-        return True
-
 
 class GoToSpecObj(RoomGridLevel):
     """
@@ -238,12 +222,10 @@ class GoToSpecObj(RoomGridLevel):
 
     Reimplementation of minigrid.envs.babyai.goto.GoToRedBall, such that all objects in
     the room are unique, so that there is a single spec obj to go to.
-
-    Also increased the default num_dists to 8 instead of 7.
     """
 
     def __init__(
-        self, obj_kind="ball", obj_color="red", room_size=8, num_dists=8, **kwargs
+        self, obj_kind="ball", obj_color="red", room_size=8, num_dists=7, **kwargs
     ):
         self.num_dists = num_dists
         assert obj_kind in {"ball", "key", "box"}, "invalid obj_type"
@@ -255,7 +237,13 @@ class GoToSpecObj(RoomGridLevel):
     def gen_mission(self):
         self.place_agent()
         obj, _ = self.add_object(0, 0, self.obj_kind, self.obj_color)
-        self.add_distractors(num_distractors=self.num_dists, all_unique=True)
+        add_distractors_kwargs = {
+            "num_distractors": self.num_dists,
+            "all_unique": True,
+        }
+        if self.__class__.__bases__[0] == RoomGridLevelCC:
+            add_distractors_kwargs["cc_obj_instances"] = 1
+        self.add_distractors(**add_distractors_kwargs)
 
         # Make sure no unblocking is required
         self.check_objs_reachable()
