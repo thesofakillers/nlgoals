@@ -68,7 +68,9 @@ def generate_episode(
         EnvClass = handle_cc(EnvClass)
         env_kwargs = {**env_kwargs, **cc_kwargs}
     env = EnvClass(highlight=False, **env_kwargs)
-    env = RGBImgObsWrapper(env, tile_size=28 if envs_size == "small" else 12)
+    env = RGBImgObsWrapper(
+        env, tile_size=28 if envs_size in {"small", "single"} else 12
+    )
 
     mission_success = False
     curr_seed = seed
