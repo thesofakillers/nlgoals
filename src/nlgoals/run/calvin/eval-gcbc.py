@@ -441,6 +441,8 @@ def main(args):
         model.set_traj_encoder(clipt)
     model.prepare_visual_batch = calvin_gcbc_visual
     model.prepare_textual_batch = calvin_gcbc_textual
+    if args.random_goals:
+        model.random_traj_embs = True
     model.eval()
     model.to(device)
     _ = torch.set_grad_enabled(False)
@@ -534,6 +536,7 @@ if __name__ == "__main__":
         "--data.data_dir", type=str, required=True, help="Must be absolute path"
     )
     parser.add_argument("--data.shared_memory", type=bool, default=True)
+    parser.add_argument("--random_goals", type=bool, default=False)
 
     args = parser.parse_args()
 

@@ -31,6 +31,7 @@ class GCBC(pl.LightningModule):
         num_target_vals: int = 256,
         rolling_traj: bool = False,
         lr: float = 5e-5,
+        random_traj_embs: bool = False,
     ) -> None:
         """
         Args:
@@ -51,6 +52,7 @@ class GCBC(pl.LightningModule):
             rolling_traj: whether to update the trajectory embedding at each step,
                 default False
             lr: learning rate
+            random_traj_embs: whether to use random trajectory embeddings (for ablation)
         """
         super().__init__()
         self.save_hyperparameters()
@@ -87,6 +89,8 @@ class GCBC(pl.LightningModule):
 
         self.mixture_size = mixture_size
         self.lr = lr
+
+        self.random_traj_embs = random_traj_embs
 
     def _set_action_decoder(
         self, mixture_size, target_max_bound, target_min_bound, num_target_vals
@@ -216,10 +220,17 @@ class GCBC(pl.LightningModule):
         Returns:
             traj_embs: B * (S-1) x traj_encoder.emb_dim
         """
-        if traj_mode == "visual":
-            traj_embs = self._get_visual_traj_embs(curr_frames, goal)
-        elif traj_mode == "textual":
-            traj_embs = self._get_textual_traj_embs(**goal, curr_frames=curr_frames)
+        # used for ablation (usually False)
+        if self.random_traj_embs:
+            traj_embs = torch.randn(
+                curr_frames.shape[0] * curr_frames.shape[0], self.traj_encoder.emb_dim
+            )
+        # used normally
+        else:
+            if traj_mode == "visual":
+                traj_embs = self._get_visual_traj_embs(curr_frames, goal)
+            elif traj_mode == "textual":
+                traj_embs = self._get_textual_traj_embs(**goal, curr_frames=curr_frames)
         return traj_embs
 
     def _get_textual_traj_embs(self, input_ids, attention_mask, curr_frames):
