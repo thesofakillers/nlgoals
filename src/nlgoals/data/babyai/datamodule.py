@@ -8,6 +8,7 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 
 from nlgoals.data.babyai.dataset import BabyAIDataset
+from nlgoals.utils.misc import pad_with_repetition
 
 
 class BabyAIDM(pl.LightningDataModule):
@@ -174,13 +175,82 @@ class BabyAIDM(pl.LightningDataModule):
         )
 
     def _get_collate_fn(self):
-        collate_fn = self._collate_fn if self.custom_collate else None
+        if self.custom_collate:
+            if self.use_first_last_frames:
+                collate_fn = self._collate_fn_first_last_frames
+            else:
+                collate_fn = self._collate_fn_all_frames
+        else:
+            collate_fn = None
         return collate_fn
 
     @staticmethod
-    def _collate_fn(batch: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:
+    def _collate_fn_all_frames(
+        batch_list: List[Dict[str, torch.Tensor]]
+    ) -> Dict[str, torch.Tensor]:
         """
-        Takes care of padding token_ids and attn_mask so that we can batch
+        Takes care of padding token_ids and masks, and also all the trajectories in the
+        batch, so that we can batch.
+
+        Args:
+            batch: list of items, where each item has keys 'images', 'text_input_ids'
+            and 'text_attn_mask'.
+
+        """
+        seq_lens = torch.tensor([x["images"].shape[0] for x in batch_list])
+        max_seq_len = seq_lens.max()
+        pad_sizes = max_seq_len - seq_lens
+        padded_batch = {"seq_lens": seq_lens}
+
+        # the pad values are hardcoded for now, should use the tokenizer.pad_token_id at some point
+        padded_batch["text_input_ids"] = pad_sequence(
+            [element["text_input_ids"] for element in batch_list],
+            batch_first=True,
+            padding_value=49407,
+        )
+        padded_batch["text_attn_mask"] = pad_sequence(
+            [element["text_attn_mask"] for element in batch_list],
+            batch_first=True,
+            padding_value=0,
+        )
+
+        padded_batch["images"] = torch.stack(
+            [
+                pad_with_repetition(element["images"], pad_sizes[i])
+                for i, element in enumerate(batch_list)
+            ]
+        )
+        padded_batch["actions"] = torch.stack(
+            [
+                pad_with_repetition(element["actions"], pad_sizes[i])
+                for i, element in enumerate(batch_list)
+            ]
+        )
+        padded_batch["proprio_obs"] = torch.stack(
+            [
+                pad_with_repetition(element["proprio_obs"], pad_sizes[i])
+                for i, element in enumerate(batch_list)
+            ]
+        )
+        padded_batch["rewards"] = torch.stack(
+            [
+                pad_with_repetition(element["rewards"], pad_sizes[i])
+                for i, element in enumerate(batch_list)
+            ]
+        )
+        padded_batch["task_id"] = torch.Tensor(
+            [element["task_id"] for element in batch_list]
+        )
+
+        return padded_batch
+
+    @staticmethod
+    def _collate_fn_first_last_frames(
+        batch: List[Dict[str, torch.Tensor]]
+    ) -> Dict[str, torch.Tensor]:
+        """
+        Takes care of padding token_ids and attn_mask so that we can batch.
+        Other tensors don't need padding, as they are all length 2.
 
         Args:
             batch: list of items, where each item has keys 'images', 'text_input_ids'
