@@ -203,18 +203,18 @@ class BabyAIDM(pl.LightningDataModule):
         padded_batch = {"seq_lens": seq_lens}
 
         # the pad values are hardcoded for now, should use the tokenizer.pad_token_id at some point
-        padded_batch["text_input_ids"] = pad_sequence(
+        padded_batch["input_ids"] = pad_sequence(
             [element["text_input_ids"] for element in batch_list],
             batch_first=True,
             padding_value=49407,
         )
-        padded_batch["text_attn_mask"] = pad_sequence(
+        padded_batch["attention_mask"] = pad_sequence(
             [element["text_attn_mask"] for element in batch_list],
             batch_first=True,
             padding_value=0,
         )
 
-        padded_batch["images"] = torch.stack(
+        padded_batch["rgb_perc"] = torch.stack(
             [
                 pad_with_repetition(element["images"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
@@ -226,7 +226,7 @@ class BabyAIDM(pl.LightningDataModule):
                 for i, element in enumerate(batch_list)
             ]
         )
-        padded_batch["proprio_obs"] = torch.stack(
+        padded_batch["proprio_perc"] = torch.stack(
             [
                 pad_with_repetition(element["proprio_obs"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
