@@ -100,6 +100,10 @@ if __name__ == "__main__":
 
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
+    parser.add_argument(
+        "--config", action=jsonargparse.ActionConfigFile, required=False
+    )
+
     parser.add_argument("--model_variant", type=GCBC_ENUM, required=True)
     parser.add_argument("--model_checkpoint", type=str, default=None)
     parser.add_argument(
@@ -135,7 +139,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data.transform_variant",
         type=str,
-        default="without_clip",
+        default="with_clip",
         choices=["without_clip", "with_clip"],
     )
 

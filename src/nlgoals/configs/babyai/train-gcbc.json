@@ -1,0 +1,6 @@
+{
+  "model_variant": "BABYAI",
+  "proprio_encoder": {
+    "proprioception_idxs": 1
+  }
+}
