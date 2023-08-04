@@ -6,10 +6,11 @@ import pytorch_lightning as pl
 from nlgoals.data.babyai.datamodule import BabyAIDM
 from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
 from nlgoals.interfaces.clipt import BABYAI_CLIPT_PREPARE_CONFIG
-from nlgoals.models.clipt import CLIPT
 from nlgoals.models.gcbc import GCBC, GCBC_ENUM, gcbc_enum_to_class
-from nlgoals.models.perception_encoders.proprio_encoder import ProprioEncoder
+from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders.vision_encoder import VisionEncoder
+from nlgoals.models.perception_encoders.proprio_encoder import ProprioEncoder
+from nlgoals.models.components.action_decoders.babyai import BabyAIActionDecoder
 from nlgoals.trainer.gcbc import TrainerConfig
 
 
@@ -43,6 +44,7 @@ def train(args):
             traj_encoder_kwargs=args.clipt.as_dict(),
             vision_encoder_kwargs=args.vision_encoder.as_dict(),
             proprio_encoder_kwargs=args.proprio_encoder.as_dict(),
+            action_decoder_kwargs=args.action_decoder.as_dict(),
             **args.gcbc.as_dict(),
         )
     if args.clipt_checkpoint is not None:
@@ -106,7 +108,12 @@ if __name__ == "__main__":
     parser.add_class_arguments(
         GCBC,
         "gcbc",
-        skip={"vision_encoder_kwargs", "proprio_encoder_kwargs", "traj_encoder_kwargs"},
+        skip={
+            "vision_encoder_kwargs",
+            "proprio_encoder_kwargs",
+            "traj_encoder_kwargs",
+            "action_decoder_kwargs",
+        },
     )
 
     parser.add_class_arguments(CLIPT, "clipt")
@@ -114,6 +121,10 @@ if __name__ == "__main__":
 
     parser.add_class_arguments(VisionEncoder, "vision_encoder")
     parser.add_class_arguments(ProprioEncoder, "proprio_encoder")
+
+    parser.add_class_arguments(
+        BabyAIActionDecoder, "action_decoder", skip={"hidden_dim"}
+    )
 
     parser.add_class_arguments(BabyAIDM, "data", skip={"transform"})
 
