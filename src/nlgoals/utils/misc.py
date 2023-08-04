@@ -29,7 +29,7 @@ def pad_with_repetition(input_tensor: torch.Tensor, pad_size: int) -> torch.Tens
     last_repeated = torch.repeat_interleave(
         torch.unsqueeze(input_tensor[-1], dim=0), repeats=pad_size, dim=0
     )
-    padded = torch.vstack((input_tensor, last_repeated))
+    padded = torch.cat((input_tensor, last_repeated), dim=0)
     return padded
 
 
