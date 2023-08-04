@@ -529,13 +529,27 @@ class CALVIN_GCBC(GCBC):
         self.datasets = ["CALVIN"]
 
 
+class BABYAI_GCBC(GCBC):
+    def _set_action_decoder(
+        self, mixture_size, target_max_bound, target_min_bound, num_target_vals
+    ):
+        raise NotImplementedError()
+
+    def _set_additional_metadata(self):
+        self.name = "GCBC"
+        self.datasets = ["BabyAI"]
+
+
 class GCBC_ENUM(enum.Enum):
     CALVIN = "CALVIN"
+    BABYAI = "BABYAI"
 
 
 gcbc_enum_to_class = {
     "CALVIN": CALVIN_GCBC,
     GCBC_ENUM.CALVIN: CALVIN_GCBC,
+    "BABYAI": BABYAI_GCBC,
+    GCBC_ENUM.BABYAI: BABYAI_GCBC,
 }
 
 if __name__ == "__main__":
