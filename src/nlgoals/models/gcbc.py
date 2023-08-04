@@ -26,7 +26,6 @@ class GCBC(pl.LightningModule):
         proprio_encoder_kwargs: Dict,
         action_decoder_kwargs: Dict,
         hidden_dim: int = 2048,
-        out_dim: int = 7,
         rolling_traj: bool = False,
         lr: float = 5e-5,
         random_traj_embs: bool = False,
@@ -44,7 +43,6 @@ class GCBC(pl.LightningModule):
             action_decoder_kwargs: Dict of kwargs for the action decoder.
                 See nlgoals.models.components.action_decoders for reference
             hidden_dim: Hidden dimension of the GRU
-            out_dim: Dimensionality of the output
             rolling_traj: whether to update the trajectory embedding at each step,
                 default False
             lr: learning rate
@@ -71,14 +69,12 @@ class GCBC(pl.LightningModule):
         self.hidden_state = None
 
         self.hidden_dim = hidden_dim
-        self.out_dim = out_dim
 
         self.lr = lr
 
         self.random_traj_embs = random_traj_embs
 
         action_decoder_kwargs = {
-            "out_dim": out_dim,
             "hidden_dim": hidden_dim,
             **action_decoder_kwargs,
         }
@@ -375,7 +371,7 @@ class GCBC(pl.LightningModule):
 
         # Dictionary of P x ...
         action_decoder_out = self(batch["perception"], goal, traj_mode)
-        # P x out_dim
+        # P x ...
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
             batch["actions"][:, :-1, :],
             (batch["perception"]["seq_lens"]).detach().cpu(),
@@ -385,7 +381,7 @@ class GCBC(pl.LightningModule):
         loss = self.action_decoder.loss(
             **action_decoder_out, actions=packed_actions.data
         )
-        # P x out_dim
+        # P x ...
         pred_act = self.action_decoder.sample(**action_decoder_out)
         self.action_decoder.log_metrics(
             self, pred_act, packed_actions.data, loss, traj_mode, phase
@@ -418,11 +414,11 @@ class GCBC(pl.LightningModule):
                 or textually
 
         Returns:
-            pred_act: P x out_dim tensor of predicted actions
+            pred_act: P x ... tensor of predicted actions
         """
         # Dictionary of P x ...
         action_decoder_out = self(batch, goal, traj_mode)
-        # P x out_dim
+        # P x ...
         pred_action = self.action_decoder.sample(**action_decoder_out)
         return pred_action
 

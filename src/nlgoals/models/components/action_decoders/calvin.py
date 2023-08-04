@@ -4,9 +4,10 @@ import torch.nn as nn
 import torchmetrics.functional as tmf
 
 from nlgoals.losses.dlml import DLMLLoss
+from nlgoals.models.components.action_decoders import ActionDecoder
 
 
-class CALVINActionDecoder(nn.Module):
+class CALVINActionDecoder(ActionDecoder):
     """
     Action Decoder for the Calvin Dataset.
     Makes use of a Discretized Logistic Mixture Likelihood (DLML) for loss and sampling.
@@ -15,7 +16,7 @@ class CALVINActionDecoder(nn.Module):
     def __init__(
         self,
         hidden_dim: int,
-        out_dim: int,
+        out_dim: int = 7,
         mixture_size: int = 10,
         target_max_bound: float = 1.0,
         target_min_bound: float = -1.0,
@@ -23,6 +24,7 @@ class CALVINActionDecoder(nn.Module):
     ) -> None:
         """
         Args:
+            out_dim: Dimensionality of the actions
             mixture_size: Number of distributions in the DLML mixture
             target_max_bound: maximum value of the expected target
             target_min_bound: minimum value of the  expected target

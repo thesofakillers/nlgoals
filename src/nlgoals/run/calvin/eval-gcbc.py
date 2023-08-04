@@ -533,7 +533,7 @@ if __name__ == "__main__":
     parser.add_argument("--clipt_checkpoint", type=str, required=False)
 
     parser.add_class_arguments(
-        CALVINActionDecoder, "action_decoder", skip={"out_dim", "hidden_dim"}
+        CALVINActionDecoder, "action_decoder", skip={"hidden_dim"}
     )
 
     parser.add_argument(
