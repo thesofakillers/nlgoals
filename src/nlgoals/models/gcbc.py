@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.perception_encoders import VisionEncoder, ProprioEncoder
 from nlgoals.models.components.action_decoders.calvin import CALVINActionDecoder
+from nlgoals.models.components.action_decoders.babyai import BabyAIActionDecoder
 
 
 class GCBC(pl.LightningModule):
@@ -23,12 +24,9 @@ class GCBC(pl.LightningModule):
         traj_encoder_kwargs: Dict,
         vision_encoder_kwargs: Dict,
         proprio_encoder_kwargs: Dict,
+        action_decoder_kwargs: Dict,
         hidden_dim: int = 2048,
         out_dim: int = 7,
-        mixture_size: int = 10,
-        target_max_bound: float = 1.0,
-        target_min_bound: float = -1.0,
-        num_target_vals: int = 256,
         rolling_traj: bool = False,
         lr: float = 5e-5,
         random_traj_embs: bool = False,
@@ -43,12 +41,10 @@ class GCBC(pl.LightningModule):
             proprio_encoder_kwargs: Dict of kwargs for the proprioception encoder
                 See nlgoals.models.perception_encoders.proprio_encoder.ProprioEncoder
                 for reference
+            action_decoder_kwargs: Dict of kwargs for the action decoder.
+                See nlgoals.models.components.action_decoders for reference
             hidden_dim: Hidden dimension of the GRU
             out_dim: Dimensionality of the output
-            mixture_size: Number of distributions in the DLML mixture
-            target_max_bound: maximum value of the expected target
-            target_min_bound: minimum value of the  expected target
-            num_target_vals: number of values in the discretized target
             rolling_traj: whether to update the trajectory embedding at each step,
                 default False
             lr: learning rate
@@ -74,30 +70,24 @@ class GCBC(pl.LightningModule):
         self.gru = nn.GRU(gru_in_dim, hidden_dim, batch_first=True)
         self.hidden_state = None
 
-        total_out_dim = out_dim * mixture_size
+        self.hidden_dim = hidden_dim
+        self.out_dim = out_dim
 
-        self.mean_linear = nn.Linear(hidden_dim, total_out_dim)
-        self.log_scale_linear = nn.Linear(hidden_dim, total_out_dim)
-        self.mixture_logits_linear = nn.Linear(hidden_dim, total_out_dim)
-
-        # sets self.action_decoder
-        self._set_action_decoder(
-            mixture_size, target_max_bound, target_min_bound, num_target_vals
-        )
-        # sets self.name and other metadata
-        self._set_additional_metadata()
-
-        self.mixture_size = mixture_size
         self.lr = lr
 
         self.random_traj_embs = random_traj_embs
 
-    def _set_action_decoder(
-        self, mixture_size, target_max_bound, target_min_bound, num_target_vals
-    ):
+        action_decoder_kwargs = {
+            "out_dim": out_dim,
+            "hidden_dim": hidden_dim,
+            **action_decoder_kwargs,
+        }
+        self._set_action_decoder(**action_decoder_kwargs)
+
+    def _set_action_decoder(self, **kwargs):
         """
         Responsible for computing loss and sampling predicted actions
-        Function to be defined by inheriting classes
+        Function to be defined and called by inheriting classes
         """
         raise NotImplementedError
 
@@ -131,7 +121,7 @@ class GCBC(pl.LightningModule):
         batch: Dict[str, Dict[str, torch.Tensor]],
         goal: Union[Dict[str, torch.Tensor], torch.Tensor],
         traj_mode: str = "visual",
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> Dict[str, torch.Tensor]:
         """
         Forward pass through the network.
 
@@ -151,10 +141,8 @@ class GCBC(pl.LightningModule):
                 or textually
 
         Returns:
-            Tuple of packed tensors of shape (P x out_dim x mixture_size) with order
-            'means'
-            'log_scales'
-            'mixture_logits'
+            Dictionary of packed tensors of shape (P x ...).
+            For reference, see the appropriate action_decoder.forward
         """
         assert traj_mode in {
             "textual",
@@ -190,23 +178,12 @@ class GCBC(pl.LightningModule):
         packed_gru_input = nn.utils.rnn.pack_padded_sequence(
             gru_input, seq_lens.detach().cpu(), batch_first=True, enforce_sorted=False
         )
-        # what we refer to as "P"
-        package_size = packed_gru_input.data.shape[0]
-        # P x hidden_dimm; don't provide the init hidden state - torch auto init to zeros
+        # P x hidden_dim; don't provide the init hidden state - torch auto init to zeros
         gru_out, self.hidden_state = self.gru(packed_gru_input, self.hidden_state)
 
-        # use gru output to calculate mean, log_scales and mixture_logits
-        # each of shape (P x mixture_size * out_dim)
-        # reshaped into (P x out_dim x mixture_size)
-        means = self.mean_linear(gru_out.data).view(package_size, -1, self.mixture_size)
-        log_scales = self.log_scale_linear(gru_out.data).view(
-            package_size, -1, self.mixture_size
-        )
-        mixture_logits = self.mixture_logits_linear(gru_out.data).view(
-            package_size, -1, self.mixture_size
-        )
+        action_decoder_out = self.action_decoder(gru_out.data)
 
-        return means, log_scales, mixture_logits
+        return action_decoder_out
 
     def _get_traj_embs(
         self,
@@ -396,8 +373,8 @@ class GCBC(pl.LightningModule):
         # B x S-1 x ...; (B x 3 x H x W or dict of B x L)
         batch, goal = self.get_goal(batch, traj_mode)
 
-        # P x out_dim x mixture_size
-        means, log_scales, mixture_logits = self(batch["perception"], goal, traj_mode)
+        # Dictionary of P x ...
+        action_decoder_out = self(batch["perception"], goal, traj_mode)
         # P x out_dim
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
             batch["actions"][:, :-1, :],
@@ -406,10 +383,10 @@ class GCBC(pl.LightningModule):
             enforce_sorted=False,
         )
         loss = self.action_decoder.loss(
-            means, log_scales, mixture_logits, packed_actions.data
+            **action_decoder_out, actions=packed_actions.data
         )
         # P x out_dim
-        pred_act = self.action_decoder.sample(means, log_scales, mixture_logits)
+        pred_act = self.action_decoder.sample(**action_decoder_out)
         self.action_decoder.log_metrics(
             self, pred_act, packed_actions.data, loss, traj_mode, phase
         )
@@ -443,10 +420,10 @@ class GCBC(pl.LightningModule):
         Returns:
             pred_act: P x out_dim tensor of predicted actions
         """
-        # P x out_dim x mixture_size
-        means, log_scales, mixture_logits = self(batch, goal, traj_mode)
+        # Dictionary of P x ...
+        action_decoder_out = self(batch, goal, traj_mode)
         # P x out_dim
-        pred_action = self.action_decoder.sample(means, log_scales, mixture_logits)
+        pred_action = self.action_decoder.sample(**action_decoder_out)
         return pred_action
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
@@ -489,10 +466,27 @@ class GCBC(pl.LightningModule):
 
         So, when loading the checkpoint, before loading it, we add all traj_encoder keys
         to it, so that they match
+
+        ---
+
+        Additionally, we had checkpoints trained where mean_linear, log_scale_linear and
+        mixture_logits_linear were part of the main model, rather than the
+        action_decoder.
+
+        We patch these cases accordingly by renaming the keys in the checkpoint.
         """
         for key in self.state_dict().keys():
             if key.startswith("traj_encoder"):
                 checkpoint["state_dict"][key] = self.state_dict()[key]
+        for key in list(checkpoint["state_dict"].keys()):
+            if (
+                key.startswith("mean_linear")
+                or key.startswith("log_scale_linear")
+                or key.startswith("mixture_logits_linear")
+            ):
+                new_key = "action_decoder." + key
+                checkpoint["state_dict"][new_key] = checkpoint["state_dict"][key]
+                del checkpoint["state_dict"][key]
 
     def test_step(self, batch, batch_idx):
         raise NotImplementedError("Evaluation is handled by an external script.")
@@ -518,10 +512,21 @@ class GCBC(pl.LightningModule):
 
 class CALVIN_GCBC(GCBC):
     def _set_action_decoder(
-        self, mixture_size, target_max_bound, target_min_bound, num_target_vals
+        self,
+        hidden_dim,
+        out_dim,
+        mixture_size,
+        target_max_bound,
+        target_min_bound,
+        num_target_vals,
     ):
         self.action_decoder = CALVINActionDecoder(
-            mixture_size, target_max_bound, target_min_bound, num_target_vals
+            hidden_dim,
+            out_dim,
+            mixture_size,
+            target_max_bound,
+            target_min_bound,
+            num_target_vals,
         )
 
     def _set_additional_metadata(self):
@@ -530,10 +535,8 @@ class CALVIN_GCBC(GCBC):
 
 
 class BABYAI_GCBC(GCBC):
-    def _set_action_decoder(
-        self, mixture_size, target_max_bound, target_min_bound, num_target_vals
-    ):
-        raise NotImplementedError()
+    def _set_action_decoder(self):
+        self.action_decoder = BabyAIActionDecoder()
 
     def _set_additional_metadata(self):
         self.name = "GCBC"

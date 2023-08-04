@@ -1,23 +1,77 @@
 """Action Decoder for the Calvin Dataset"""
 import torch.nn.functional as F
+import torch.nn as nn
 import torchmetrics.functional as tmf
 
 from nlgoals.losses.dlml import DLMLLoss
 
 
-class CALVINActionDecoder:
-    """Action Decoder for the Calvin Dataset"""
+class CALVINActionDecoder(nn.Module):
+    """
+    Action Decoder for the Calvin Dataset.
+    Makes use of a Discretized Logistic Mixture Likelihood (DLML) for loss and sampling.
+    """
 
     def __init__(
         self,
-        mixture_size: int,
-        target_max_bound: float,
-        target_min_bound: float,
-        num_target_vals: int,
+        hidden_dim: int,
+        out_dim: int,
+        mixture_size: int = 10,
+        target_max_bound: float = 1.0,
+        target_min_bound: float = -1.0,
+        num_target_vals: int = 256,
     ) -> None:
+        """
+        Args:
+            mixture_size: Number of distributions in the DLML mixture
+            target_max_bound: maximum value of the expected target
+            target_min_bound: minimum value of the  expected target
+            num_target_vals: number of values in the discretized target
+        """
+        super().__init__()
+        total_out_dim = out_dim * mixture_size
+
+        self.mixture_size = mixture_size
+
+        self.mean_linear = nn.Linear(hidden_dim, total_out_dim)
+        self.log_scale_linear = nn.Linear(hidden_dim, total_out_dim)
+        self.mixture_logits_linear = nn.Linear(hidden_dim, total_out_dim)
+
         self.loss_module = DLMLLoss(
             mixture_size, target_max_bound, target_min_bound, num_target_vals
         )
+
+    def forward(self, hidden_state):
+        """
+        Args:
+            hidden_state: (P, hidden_dim) packed hidden state from a GRU
+
+        Returns:
+            Dictionary of tensors with shape (P x out_dim x mixture_size) with keys
+            'means'
+            'log_scales'
+            'mixture_logits'
+        """
+        # what we refer to as "P"
+        package_size = hidden_state.shape[0]
+        # use gru output to calculate mean, log_scales and mixture_logits
+        # each of shape (P x mixture_size * out_dim)
+        # reshaped into (P x out_dim x mixture_size)
+        means = self.mean_linear(hidden_state.data).view(
+            package_size, -1, self.mixture_size
+        )
+        log_scales = self.log_scale_linear(hidden_state.data).view(
+            package_size, -1, self.mixture_size
+        )
+        mixture_logits = self.mixture_logits_linear(hidden_state.data).view(
+            package_size, -1, self.mixture_size
+        )
+
+        return {
+            "means": means,
+            "log_scales": log_scales,
+            "mixture_logits": mixture_logits,
+        }
 
     def loss(self, means, log_scales, mixture_logits, actions):
         loss = self.loss_module.loss(means, log_scales, mixture_logits, actions)

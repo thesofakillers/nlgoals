@@ -20,6 +20,7 @@ from calvin_agent.wrappers.calvin_env_wrapper import CalvinEnvWrapper
 from calvin_env.envs.tasks import Tasks
 from torch.utils.data import Dataset
 import torchvision as tv
+from nlgoals.models.components.action_decoders.calvin import CALVINActionDecoder
 
 from nlgoals.models.gcbc import GCBC, gcbc_enum_to_class, GCBC_ENUM
 from nlgoals.models.clipt import CLIPT
@@ -431,7 +432,11 @@ def main(args):
     task_oracle = hydra.utils.instantiate(task_oracle_cfg)
     # model
     ModelClass = gcbc_enum_to_class[args.model_variant]
-    model = ModelClass.load_from_checkpoint(args.model_checkpoint, strict=False)
+    model = ModelClass.load_from_checkpoint(
+        args.model_checkpoint,
+        strict=False,
+        action_decoder_kwargs=args.action_decoder.as_dict(),
+    )
     if args.clipt_checkpoint is not None:
         clipt_state_dict = torch.load(args.clipt_checkpoint, map_location=device)[
             "state_dict"
@@ -526,6 +531,10 @@ if __name__ == "__main__":
     parser.add_argument("--model_checkpoint", type=str, required=True)
     parser.add_class_arguments(CLIPT, "clipt")
     parser.add_argument("--clipt_checkpoint", type=str, required=False)
+
+    parser.add_class_arguments(
+        CALVINActionDecoder, "action_decoder", skip={"out_dim", "hidden_dim"}
+    )
 
     parser.add_argument(
         "--data.config_name", type=str, required=True, default="default.yaml"

@@ -14,13 +14,19 @@ def gcbc():
     }
     vision_encoder_kwargs = {"num_channels": 3}
     proprio_encoder_kwargs = {"proprioception_idxs": 8}
+    action_decoder_kwargs = {
+        "mixture_size": 10,
+        "target_max_bound": 1,
+        "target_min_bound": -1,
+        "num_target_vals": 256,
+    }
 
     model = CALVIN_GCBC(
         traj_encoder_kwargs=clipt_args,
         vision_encoder_kwargs=vision_encoder_kwargs,
         proprio_encoder_kwargs=proprio_encoder_kwargs,
+        action_decoder_kwargs=action_decoder_kwargs,
         rolling_traj=True,
-        mixture_size=10,
         out_dim=7,
     )
 
@@ -40,16 +46,16 @@ def test_visual_forward(gcbc):
 
     model, _, _ = gcbc
 
-    means, log_scales, mixture_logits = model(batch, goal, "visual")
+    output = model(batch, goal, "visual")
 
-    assert means.shape[-1] == 10
-    assert means.shape[-2] == 7
+    assert output["means"].shape[-1] == 10
+    assert output["means"].shape[-2] == 7
 
-    assert log_scales.shape[-1] == 10
-    assert log_scales.shape[-2] == 7
+    assert output["log_scales"].shape[-1] == 10
+    assert output["log_scales"].shape[-2] == 7
 
-    assert mixture_logits.shape[-1] == 10
-    assert mixture_logits.shape[-2] == 7
+    assert output["mixture_logits"].shape[-1] == 10
+    assert output["mixture_logits"].shape[-2] == 7
 
 
 def test_textual_forward(gcbc):
@@ -65,13 +71,13 @@ def test_textual_forward(gcbc):
 
     model, _, _ = gcbc
 
-    means, log_scales, mixture_logits = model(batch, goal, "textual")
+    output = model(batch, goal, "textual")
 
-    assert means.shape[-1] == 10
-    assert means.shape[-2] == 7
+    assert output["means"].shape[-1] == 10
+    assert output["means"].shape[-2] == 7
 
-    assert log_scales.shape[-1] == 10
-    assert log_scales.shape[-2] == 7
+    assert output["log_scales"].shape[-1] == 10
+    assert output["log_scales"].shape[-2] == 7
 
-    assert mixture_logits.shape[-1] == 10
-    assert mixture_logits.shape[-2] == 7
+    assert output["mixture_logits"].shape[-1] == 10
+    assert output["mixture_logits"].shape[-2] == 7

@@ -1,22 +1,16 @@
-"""Training of the GCBC model on the CALVIN dataset"""
-import jsonargparse
 import os
 
 import torch
 import pytorch_lightning as pl
-import hydra
 
-from nlgoals.models.gcbc import GCBC, GCBC_ENUM, gcbc_enum_to_class
+from nlgoals.data.babyai.datamodule import BabyAIDM
+from nlgoals.data.transforms import TRANSFORM_MAP, TransformName
+from nlgoals.interfaces.clipt import BABYAI_CLIPT_PREPARE_CONFIG
 from nlgoals.models.clipt import CLIPT
-from nlgoals.models.perception_encoders.vision_encoder import VisionEncoder
+from nlgoals.models.gcbc import GCBC, GCBC_ENUM, gcbc_enum_to_class
 from nlgoals.models.perception_encoders.proprio_encoder import ProprioEncoder
-from nlgoals.models.components.action_decoders.calvin import CALVINActionDecoder
+from nlgoals.models.perception_encoders.vision_encoder import VisionEncoder
 from nlgoals.trainer.gcbc import TrainerConfig
-from nlgoals.interfaces.gcbc import (
-    calvin_gcbc_collate,
-    calvin_gcbc_textual,
-    calvin_gcbc_visual,
-)
 
 
 def train(args):
@@ -27,20 +21,19 @@ def train(args):
         device = args.trainer.accelerator
     # determinism
     pl.seed_everything(args.seed, workers=True)
+    # transforms
+    transform_config = BABYAI_CLIPT_PREPARE_CONFIG[args.data.transform_variant]
+    transform_config["mode"] = args.data.transform_variant
+    if args.data.transform_name is not None:
+        data_transform = TRANSFORM_MAP[args.data.transform_name.value](
+            **transform_config
+        )
+    else:
+        data_transform = None
     # datamodule
-    hydra.core.global_hydra.GlobalHydra.instance().clear()
-    hydra.initialize_config_module(
-        config_module="nlgoals.data.calvin.repo.conf.datamodule"
-    )
-    datamodule_cfg = hydra.compose(
-        config_name=args.data.config_name,
-        overrides=[] if args.data.shared_memory is True else ["datasets=vision_lang"],
-    )
-    datamodule_cfg.batch_size = args.data.batch_size
-    datamodule_cfg.num_workers = args.data.num_workers
-    datamodule_cfg.root_data_dir = args.data.data_dir
-    datamodule = hydra.utils.instantiate(datamodule_cfg)
-    datamodule.collator.custom_collate_fn = calvin_gcbc_collate
+    datamodule = BabyAIDM(**args.data.as_dict(), transform=data_transform)
+    datamodule.prepare_data()
+    datamodule.setup(stage=None if not args.debug else "debug")
     # model
     ModelClass = gcbc_enum_to_class[args.model_variant]
     if args.model_checkpoint is not None:
@@ -50,7 +43,6 @@ def train(args):
             traj_encoder_kwargs=args.clipt.as_dict(),
             vision_encoder_kwargs=args.vision_encoder.as_dict(),
             proprio_encoder_kwargs=args.proprio_encoder.as_dict(),
-            action_decoder_kwargs=args.action_decoder.as_dict(),
             **args.gcbc.as_dict(),
         )
     if args.clipt_checkpoint is not None:
@@ -60,8 +52,6 @@ def train(args):
         clipt = CLIPT(**args.clipt.as_dict())
         clipt.load_state_dict(clipt_state_dict, strict=False)
         model.set_traj_encoder(clipt)
-    model.prepare_visual_batch = calvin_gcbc_visual
-    model.prepare_textual_batch = calvin_gcbc_textual
     # trainer
     script_host = "slurm" if "SLURM_JOB_ID" in os.environ else "local"
     logger = pl.loggers.WandbLogger(
@@ -104,7 +94,9 @@ def train(args):
 
 
 if __name__ == "__main__":
-    parser = jsonargparse.ArgumentParser(description=__doc__)
+    import jsonargparse
+
+    parser = jsonargparse.ArgumentParser(descripion=__doc__)
 
     parser.add_argument("--model_variant", type=GCBC_ENUM, required=True)
     parser.add_argument("--model_checkpoint", type=str, default=None)
@@ -114,32 +106,27 @@ if __name__ == "__main__":
     parser.add_class_arguments(
         GCBC,
         "gcbc",
-        skip={
-            "vision_encoder_kwargs",
-            "proprio_encoder_kwargs",
-            "traj_encoder_kwargs",
-            "action_decoder_kwargs",
-        },
+        skip={"vision_encoder_kwargs", "proprio_encoder_kwargs", "traj_encoder_kwargs"},
     )
+
     parser.add_class_arguments(CLIPT, "clipt")
     parser.add_argument("--clipt_checkpoint", type=str, required=False)
 
     parser.add_class_arguments(VisionEncoder, "vision_encoder")
     parser.add_class_arguments(ProprioEncoder, "proprio_encoder")
 
-    parser.add_class_arguments(
-        CALVINActionDecoder, "action_decoder", skip={"out_dim", "hidden_dim"}
-    )
+    parser.add_class_arguments(BabyAIDM, "data", skip={"transform"})
 
+    # transforms
     parser.add_argument(
-        "--data.config_name", type=str, required=True, default="default.yaml"
+        "--data.transform_name", type=TransformName, default="clipt-prepare"
     )
-    parser.add_argument("--data.batch_size", type=int, default=32)
-    parser.add_argument("--data.num_workers", type=int, default=18)
     parser.add_argument(
-        "--data.data_dir", type=str, required=True, help="Must be absolute path"
+        "--data.transform_variant",
+        type=str,
+        default="without_clip",
+        choices=["without_clip", "with_clip"],
     )
-    parser.add_argument("--data.shared_memory", type=bool, default=True)
 
     parser.add_dataclass_arguments(TrainerConfig, "trainer")
     parser.add_argument("--seed", type=int, default=42)
