@@ -1,20 +1,66 @@
-import torch.nn as nn
+from typing import Dict
 
-class BabyAIActionDecoder(nn.Module):
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torchmetrics.functional as tmf
+
+from nlgoals.models.components.action_decoders import ActionDecoder
+
+
+class BabyAIActionDecoder(ActionDecoder):
     """Action Decoder for the BabyAI Dataset"""
 
-    def __init__(self):
+    def __init__(self, hidden_dim: int, num_target_vals: int = 7):
+        """
+        Args:
+            num_target_vals: number of possible values in the discretized target
+        """
         super().__init__()
-        raise NotImplementedError
+        self.num_target_vals = num_target_vals
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, num_target_vals),
+        )
 
-    def forward(self):
-        raise NotImplementedError
+    def forward(self, hidden_state) -> Dict[str, torch.Tensor]:
+        """
+        Args:
+            hidden_state: (P, hidden_dim) packed hidden state from a GRU
 
-    def loss(self):
-        raise NotImplementedError
+        Returns:
+            Dictionary with key "action_logits" with tensor of (P, num_target_vals)
+        """
+        logits = self.mlp(hidden_state)
+        return {"action_logits": logits}
 
-    def sample(self):
-        raise NotImplementedError
+    def loss(self, action_logits, actions):
+        """
+        Args:
+            action_logits: (P, num_target_vals) tensor of action logits
+            actions: (P, ) tensor of gold actions
+        """
+        return F.cross_entropy(action_logits, actions)
 
-    def log_metrics(self):
-        raise NotImplementedError
+    def sample(self, action_logits):
+        """
+        Args:
+            action_logits: (P, num_target_vals) tensor of action logits
+
+        Returns:
+            Tensor of shape (P, ) of sampled actions for the batch
+        """
+        # out_dim is just 1 for babyai
+        return action_logits.argmax(dim=-1)
+
+    def log_metrics(
+        self, pl_instance, pred_act, packed_actions, loss, traj_mode, phase
+    ):
+        action_acc = (pred_act == packed_actions.data).float().mean()
+        package_size = packed_actions.data.shape[0]
+
+        pl_instance.log(f"{traj_mode}/{phase}_loss", loss, batch_size=package_size)
+        pl_instance.log(
+            f"{traj_mode}/{phase}_action_acc", action_acc, batch_size=package_size
+        )
