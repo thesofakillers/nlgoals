@@ -98,7 +98,7 @@ def train(args):
 if __name__ == "__main__":
     import jsonargparse
 
-    parser = jsonargparse.ArgumentParser(descripion=__doc__)
+    parser = jsonargparse.ArgumentParser(description=__doc__)
 
     parser.add_argument("--model_variant", type=GCBC_ENUM, required=True)
     parser.add_argument("--model_checkpoint", type=str, default=None)
