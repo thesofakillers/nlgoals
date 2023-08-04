@@ -19,9 +19,9 @@ class BabyAIActionDecoder(ActionDecoder):
         super().__init__()
         self.num_target_vals = num_target_vals
         self.mlp = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim, num_target_vals*3),
             nn.ReLU(),
-            nn.Linear(hidden_dim, num_target_vals),
+            nn.Linear(num_target_vals*3, num_target_vals),
         )
 
     def forward(self, hidden_state) -> Dict[str, torch.Tensor]:
