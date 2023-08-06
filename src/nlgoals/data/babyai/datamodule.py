@@ -19,6 +19,7 @@ class BabyAIDM(pl.LightningDataModule):
         data_path: str = "./data/babyai/play/small",
         envs_size: str = "small",
         use_first_last_frames: bool = False,
+        drop_last_frame: bool = False,
         batch_size: int = 64,
         val_split: float = 0.1,
         num_workers: int = 18,
@@ -35,6 +36,8 @@ class BabyAIDM(pl.LightningDataModule):
                 path/to/data.pkl and path/to/data_valid.pkl
             envs_size: size of the environment, e.g. "small", "large"
             use_first_last_frames: whether to use only the first and last frames
+            drop_last_frame: whether to drop the last frame. Used when training with
+               reward since the last step has 0 reward.
             batch_size: batch size for the dataloaders
             val_split: fraction of the training set to use for validation
             num_workers: number of workers for the dataloaders
@@ -52,6 +55,7 @@ class BabyAIDM(pl.LightningDataModule):
 
         self.envs_size = envs_size
         self.use_first_last_frames = use_first_last_frames
+        self.drop_last_frame = drop_last_frame
 
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -95,6 +99,7 @@ class BabyAIDM(pl.LightningDataModule):
                 self.envs_size,
                 self.transform,
                 self.use_first_last_frames,
+                self.drop_last_frame,
             )
             if self.train_subset is not None:
                 train_idxs = torch.randperm(len(temp_train_dataset))[
@@ -114,6 +119,7 @@ class BabyAIDM(pl.LightningDataModule):
                 self.envs_size,
                 self.transform,
                 self.use_first_last_frames,
+                self.drop_last_frame,
             )
             if self.test_subset is not None:
                 # no permutation for val, to be able to compare results
@@ -126,6 +132,7 @@ class BabyAIDM(pl.LightningDataModule):
                 self.envs_size,
                 self.transform,
                 self.use_first_last_frames,
+                self.drop_last_frame,
             )
             temp_train_dataset = Subset(temp_train_dataset, range(100))
             self.train_dataset, self.val_dataset = random_split(
@@ -139,6 +146,7 @@ class BabyAIDM(pl.LightningDataModule):
                 self.envs_size,
                 self.transform,
                 self.use_first_last_frames,
+                self.drop_last_frame,
             )
             self.test_dataset = Subset(self.test_dataset, range(10))
 
