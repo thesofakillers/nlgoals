@@ -79,6 +79,7 @@ class GCBC(pl.LightningModule):
             **action_decoder_kwargs,
         }
         self._set_action_decoder(**action_decoder_kwargs)
+        self._set_additional_metadata()
 
     def _set_action_decoder(self, **kwargs):
         """
@@ -353,12 +354,15 @@ class GCBC(pl.LightningModule):
             batch: Dict, with the following keys
                 - 'perception': Dict of tensors of shape B x S x ..., with keys
                     - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived state
-                    - "proprio_perc": B x S x 15, proprioceptive state
+                    - "proprio_perc": B x S x ..., proprioceptive state
                     - "seq_lens": B, sequence lengths
                 - 'text': Dict of tensors of shape B x L x ..., with keys
                     - "input_ids": B x L
                     - "attention_mask": B x L
-                - "actions": (B x S x 7) tensor of relative actions
+                - "actions": (B x S x ...) tensor of actions
+                - "rewards": (B x S) tensor of rewards
+                - "task_id": (B) tensor of task ids
+
             phase: "train" or "val"
             traj_mode: "visual" or "textual"
 
@@ -371,7 +375,7 @@ class GCBC(pl.LightningModule):
 
         # Dictionary of P x ...
         action_decoder_out = self(batch["perception"], goal, traj_mode)
-        # P x ...
+        # B x S x ... -> P x ...
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
             batch["actions"][:, :-1, :],
             (batch["perception"]["seq_lens"]).detach().cpu(),
@@ -531,8 +535,8 @@ class CALVIN_GCBC(GCBC):
 
 
 class BABYAI_GCBC(GCBC):
-    def _set_action_decoder(self):
-        self.action_decoder = BabyAIActionDecoder()
+    def _set_action_decoder(self, hidden_dim, num_target_vals):
+        self.action_decoder = BabyAIActionDecoder(hidden_dim, num_target_vals)
 
     def _set_additional_metadata(self):
         self.name = "GCBC"
