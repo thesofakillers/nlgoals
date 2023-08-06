@@ -377,7 +377,7 @@ class GCBC(pl.LightningModule):
         action_decoder_out = self(batch["perception"], goal, traj_mode)
         # B x S x ... -> P x ...
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
-            batch["actions"][:, :-1, :],
+            batch["actions"][:, :-1],
             (batch["perception"]["seq_lens"]).detach().cpu(),
             batch_first=True,
             enforce_sorted=False,
