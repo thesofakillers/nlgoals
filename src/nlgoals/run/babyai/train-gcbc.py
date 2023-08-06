@@ -15,6 +15,7 @@ from nlgoals.trainer.gcbc import TrainerConfig
 
 
 def train(args):
+    torch.set_float32_matmul_precision("high")
     # device
     if args.trainer.accelerator == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"

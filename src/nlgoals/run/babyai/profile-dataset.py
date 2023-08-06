@@ -32,6 +32,7 @@ def main(args):
 
 if __name__ == "__main__":
     import os
+
     os.environ["TOKENIZERS_PARALLELISM"] = "true"
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
