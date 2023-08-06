@@ -2,5 +2,9 @@
   "model_variant": "BABYAI",
   "proprio_encoder": {
     "proprioception_idxs": 1
+  },
+  "data": {
+    "batch_size": 64,
+    "num_workers": 4
   }
 }

@@ -28,8 +28,6 @@ srun python src/nlgoals/run/babyai/train-gcbc.py \
   --gcbc.rolling_traj False \
   --data.data_path=$data_path \
   --data.envs_size single \
-  --data.num_workers 4 \
-  --data.batch_size 64 \
   --trainer.logging.enable True \
   --trainer.checkpoint.dirpath "checkpoints/babyai/gcbc_cclipt" \
   --trainer.min_epochs 5 \
