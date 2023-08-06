@@ -196,39 +196,52 @@ class BabyAIDM(pl.LightningDataModule):
             batch: list of items, where each item has keys 'images', 'text_input_ids'
             and 'text_attn_mask'.
 
+        Returns:
+            batch: Dict, with the following keys
+                - 'perception': Dict of tensors of shape B x S x ..., with keys
+                    - "rgb_perc": B x S x 3 x H x W, RGB frames of perceived state
+                    - "proprio_perc": B x S x 1 proprioceptive state
+                    - "seq_lens": B, sequence lengths
+                - 'text': Dict of tensors of shape B x L x ..., with keys
+                    - "input_ids": B x L
+                    - "attention_mask": B x L
+                - "actions": (B x S x ...) tensor of actions
+                - "rewards": (B x S) tensor of rewards
+                - "task_id": (B) tensor of task ids
+
         """
         seq_lens = torch.tensor([x["images"].shape[0] for x in batch_list])
         max_seq_len = seq_lens.max()
         pad_sizes = max_seq_len - seq_lens
-        padded_batch = {"seq_lens": seq_lens}
 
-        # the pad values are hardcoded for now, should use the tokenizer.pad_token_id at some point
-        padded_batch["input_ids"] = pad_sequence(
-            [element["text_input_ids"] for element in batch_list],
-            batch_first=True,
-            padding_value=49407,
-        )
-        padded_batch["attention_mask"] = pad_sequence(
-            [element["text_attn_mask"] for element in batch_list],
-            batch_first=True,
-            padding_value=0,
-        )
+        padded_batch = {"perception": {"seq_lens": seq_lens}, "text": {}}
 
-        padded_batch["rgb_perc"] = torch.stack(
+        padded_batch["perception"]["rgb_perc"] = torch.stack(
             [
                 pad_with_repetition(element["images"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
             ]
         )
+        padded_batch["perception"]["proprio_perc"] = torch.stack(
+            [
+                pad_with_repetition(element["proprio_obs"], pad_sizes[i])
+                for i, element in enumerate(batch_list)
+            ]
+        ).unsqueeze(-1)
+        # the pad values are hardcoded for now, should use the tokenizer.pad_token_id at some point
+        padded_batch["text"]["input_ids"] = pad_sequence(
+            [element["text_input_ids"] for element in batch_list],
+            batch_first=True,
+            padding_value=49407,
+        )
+        padded_batch["text"]["attention_mask"] = pad_sequence(
+            [element["text_attn_mask"] for element in batch_list],
+            batch_first=True,
+            padding_value=0,
+        )
         padded_batch["actions"] = torch.stack(
             [
                 pad_with_repetition(element["actions"], pad_sizes[i])
-                for i, element in enumerate(batch_list)
-            ]
-        )
-        padded_batch["proprio_perc"] = torch.stack(
-            [
-                pad_with_repetition(element["proprio_obs"], pad_sizes[i])
                 for i, element in enumerate(batch_list)
             ]
         )
