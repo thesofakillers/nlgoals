@@ -9,7 +9,6 @@
 #SBATCH --mem-per-gpu=120G
 #SBATCH --output=slurm/outputs/gcbc_train_%A.out
 
-
 source "./slurm/.secrets"
 
 data_path=/scratch-shared/gstarace/repos/thesis/data/babyai/cc/single
@@ -21,16 +20,15 @@ module load Anaconda3/2022.05
 source activate nlgoals
 
 srun python src/nlgoals/run/babyai/train-gcbc.py \
-  --config src/nlgoals/configs/babyai/train-gcbc.json
+  --config src/nlgoals/configs/babyai/train-gcbc.json \
   --clipt_checkpoint checkpoints/babyai/cclipt/last.ckpt \
-  --clipt.precomputed_clip False \
-  --clipt.contextualize_text True \
-  --gcbc.rolling_traj False \
+  --clipt.precomputed_clip false \
+  --clipt.contextualize_text true \
+  --gcbc.rolling_traj false \
   --data.data_path=$data_path \
   --data.envs_size single \
-  --trainer.logging.enable True \
+  --trainer.logging.enable true \
   --trainer.checkpoint.dirpath "checkpoints/babyai/gcbc_cclipt" \
   --trainer.min_epochs 5 \
-  --trainer.logging.enable True \
-  --trainer.checkpoint.dirpath "checkpoints/babyai/gcbc_cclipt" \
+  --trainer.logging.enable true \
   --seed 1
