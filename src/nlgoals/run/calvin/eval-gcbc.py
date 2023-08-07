@@ -31,6 +31,7 @@ from nlgoals.interfaces.gcbc import (
     calvin_gcbc_textual,
     calvin_gcbc_visual,
 )
+from nlgoals.utils.misc import prep_video, normalize_tensor
 
 # fmt: off
 TASK_NAMES = (
@@ -87,27 +88,6 @@ def create_environment(rollout_cfg_path, urdf_data_dir, egl_dir_path, dataset, d
         use_egl=True if device.type == "cuda" else False,
     )
     return env
-
-
-def normalize_tensor(tensor):
-    # move from -1, 1 to 0, 1
-    tensor = tensor / 2 + 0.5
-    return tensor
-
-
-def prep_video(video):
-    # cut off empty frames
-    frame_sums = np.sum(video, axis=(1, 2, 3))
-    where_0 = np.where(frame_sums == 0)[0]
-    end_frame = where_0[0] if len(where_0) > 0 else len(video)
-    video = video[:end_frame]
-    # put channel dimension last
-    video = video.transpose((0, 2, 3, 1))
-    # move from -1, 1 to 0, 1
-    video = normalize_tensor(video)
-    # convert to uint8
-    video = (video * 255).astype(np.uint8)
-    return video
 
 
 def save_video_textual(video: np.ndarray, save_dir, video_meta: Dict):

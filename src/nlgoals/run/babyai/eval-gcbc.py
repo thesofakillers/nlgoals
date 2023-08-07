@@ -20,6 +20,7 @@ from nlgoals.models.clipt import CLIPT
 from nlgoals.models.gcbc import GCBC, gcbc_enum_to_class, GCBC_ENUM
 from nlgoals.babyai.custom_envs import GoToSpecObj, make_cc, POSSIBLE_CC_POS, str_to_pos
 from nlgoals.interfaces.gcbc import babyai_obs_prepare
+from nlgoals.utils.misc import prep_video
 
 
 logger = logging.getLogger(__name__)
@@ -45,15 +46,19 @@ def print_results(true_goal_results, conf_goal_results):
 
 def save_videos(save_dir, videos):
     videos_dir = os.path.join(save_dir, "videos")
+    os.makedirs(videos_dir, exist_ok=True)
     for video_type, video_list in videos.items():
         for i, video in enumerate(video_list):
+            prepd_video = prep_video(video)
             video_path = os.path.join(videos_dir, video_type, f"video_{i}.mp4")
-            tv.io.write_video(video_path, video, fps=10)
+            # make sure the parent directory exists
+            os.makedirs(os.path.dirname(video_path), exist_ok=True)
+            tv.io.write_video(video_path, prepd_video, fps=10)
 
 
 def save(save_dir, goal, results, videos):
-    os.makedirs(goal_dir, exist_ok=True)
     goal_dir = os.path.join(save_dir, goal)
+    os.makedirs(goal_dir, exist_ok=True)
     np.save(os.path.join(goal_dir, "results.npy"), results)
     save_videos(goal_dir, videos)
 
@@ -201,6 +206,7 @@ def run_rollout(
     conf_done = False
     rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
 
+    policy.reset()
     for step in tqdm(range(rollout_steps), disable=not verbose):
         prepared_obs = babyai_obs_prepare(obs, img_transform, policy.device)
 
@@ -323,6 +329,9 @@ def main(args):
         clipt = CLIPT(**args.clipt.as_dict())
         clipt.load_state_dict(clipt_state_dict, strict=False)
         policy.set_traj_encoder(clipt)
+    policy.eval()
+    policy.to(device)
+    _ = torch.set_grad_enabled(False)
 
     img_transform = CLIPImageTransform(**args.img_transform.as_dict())
     tokenizer = AutoTokenizer.from_pretrained(args.clipt.clip_model_name)

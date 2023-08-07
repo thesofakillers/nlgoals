@@ -2,6 +2,26 @@ import numpy as np
 import torch
 
 
+def normalize_tensor(tensor):
+    # move from -1, 1 to 0, 1
+    tensor = tensor / 2 + 0.5
+    return tensor
+
+def prep_video(video):
+    # cut off empty frames
+    frame_sums = np.sum(video, axis=(1, 2, 3))
+    where_0 = np.where(frame_sums == 0)[0]
+    end_frame = where_0[0] if len(where_0) > 0 else len(video)
+    video = video[:end_frame]
+    # put channel dimension last
+    video = video.transpose((0, 2, 3, 1))
+    # move from -1, 1 to 0, 1
+    video = normalize_tensor(video)
+    # convert to uint8
+    video = (video * 255).astype(np.uint8)
+    return video
+
+
 def calc_accuracy_top_k(matrix, k=5):
     """
     What percentage of samples peak on the diagonal?
