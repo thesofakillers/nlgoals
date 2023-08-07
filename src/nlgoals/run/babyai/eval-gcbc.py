@@ -52,6 +52,7 @@ def save_videos(save_dir, videos):
 
 
 def save(save_dir, goal, results, videos):
+    os.makedirs(goal_dir, exist_ok=True)
     goal_dir = os.path.join(save_dir, goal)
     np.save(os.path.join(goal_dir, "results.npy"), results)
     save_videos(goal_dir, videos)
@@ -68,6 +69,7 @@ def save_results(save_dir, true_goal_results, conf_goal_results, videos, seeds):
     save_dir/conf_goal/videos/success/[video1, video2, video3].mp4
     save_dir/conf_goal/videos/fail/[video1, video2, video3].mp4
     """
+    os.makedirs(save_dir, exist_ok=True)
     np.save(os.path.join(save_dir, "seeds.npy"), seeds)
     save(save_dir, "true_goal", true_goal_results, videos["true_goal"])
     save(save_dir, "conf_goal", conf_goal_results, videos["conf_goal"])
@@ -199,7 +201,7 @@ def run_rollout(
     conf_done = False
     rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
 
-    for _step in tqdm(range(rollout_steps), disable=not verbose):
+    for step in tqdm(range(rollout_steps), disable=not verbose):
         prepared_obs = babyai_obs_prepare(obs, img_transform, policy.device)
 
         action = policy.step(prepared_obs, goal, traj_mode)
@@ -208,7 +210,7 @@ def run_rollout(
         conf_done = check_conf_done(env, obs["direction"], cc_loc_str)
 
         # save observation for visualization
-        rollout_obs[_step] = obs["image"].cpu().numpy()
+        rollout_obs[step] = obs["image"].transpose(2, 0, 1)
 
         if true_done or conf_done:
             return true_done, conf_done, rollout_obs, seed
