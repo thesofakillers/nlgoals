@@ -5,6 +5,7 @@ from typing import Optional, List, Tuple
 from minigrid.core.constants import COLOR_NAMES, COLOR_TO_IDX
 from minigrid.core.grid import OBJECT_TO_IDX
 from minigrid.core.world_object import WorldObj, Point
+from minigrid.envs.babyai.core.levelgen import LevelGen
 from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 from minigrid.envs.babyai.core.verifier import GoToInstr, ObjDesc
 import numpy as np
@@ -249,3 +250,17 @@ class GoToSpecObj(RoomGridLevel):
         self.check_objs_reachable()
 
         self.instrs = GoToInstr(ObjDesc(obj.type, obj.color))
+
+def handle_cc(EnvClass):
+    """
+    Makes an environment causally confused by overriding the class it inherits from.
+    """
+    # some environments inherit from RoomGridLevel directly
+    if EnvClass.__bases__[0] in (RoomGridLevel, RoomGridLevelCC):
+        EnvClass.__bases__ = (RoomGridLevelCC,)
+        return EnvClass
+    # others inherit from LevelGen, which inherits from RoomGridLevel
+    else:
+        LevelGen.__bases__ = (RoomGridLevelCC,)
+        EnvClass.__bases__ = (LevelGen,)
+        return EnvClass

@@ -22,7 +22,7 @@ import torch
 from tqdm.auto import tqdm
 
 import nlgoals.babyai.utils as utils
-from nlgoals.babyai.custom_envs import POSSIBLE_CC_POS, RoomGridLevelCC
+from nlgoals.babyai.custom_envs import POSSIBLE_CC_POS, handle_cc
 
 
 def print_demo_lengths(demos):
@@ -34,16 +34,6 @@ def print_demo_lengths(demos):
     )
 
 
-def handle_cc(EnvClass):
-    # some environments inherit from RoomGridLevel directly
-    if EnvClass.__bases__[0] in (RoomGridLevel, RoomGridLevelCC):
-        EnvClass.__bases__ = (RoomGridLevelCC,)
-        return EnvClass
-    # others inherit from LevelGen, which inherits from RoomGridLevel
-    else:
-        LevelGen.__bases__ = (RoomGridLevelCC,)
-        EnvClass.__bases__ = (LevelGen,)
-        return EnvClass
 
 
 def generate_episode(
