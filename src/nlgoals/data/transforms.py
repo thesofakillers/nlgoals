@@ -167,8 +167,8 @@ class CLIPImageTransform:
     def __init__(
         self,
         size: int = 224,
-        image_mean: List[int] = [0.5, 0.5, 0.5],
-        image_std: List[int] = [0.5, 0.5, 0.5],
+        image_mean: List[float] = [0.5, 0.5, 0.5],
+        image_std: List[float] = [0.5, 0.5, 0.5],
     ) -> None:
         self.size = size
         self.image_mean = image_mean
