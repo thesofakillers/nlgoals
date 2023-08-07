@@ -22,7 +22,7 @@ import torch
 from tqdm.auto import tqdm
 
 import nlgoals.babyai.utils as utils
-from nlgoals.babyai.custom_envs import POSSIBLE_CC_POS, handle_cc
+from nlgoals.babyai.custom_envs import POSSIBLE_CC_POS, make_cc
 
 
 def print_demo_lengths(demos):
@@ -32,8 +32,6 @@ def print_demo_lengths(demos):
             np.mean(num_frames_per_episode), np.std(num_frames_per_episode)
         )
     )
-
-
 
 
 def generate_episode(
@@ -55,7 +53,7 @@ def generate_episode(
         env_kwargs = utils.NAME_TO_KWARGS[env_name]
     if causally_confuse:
         # modify inheritance of EnvClass s.t. causal confusion is handled if requested
-        EnvClass = handle_cc(EnvClass)
+        EnvClass = make_cc(EnvClass)
         env_kwargs = {**env_kwargs, **cc_kwargs}
     env = EnvClass(highlight=False, **env_kwargs)
     env = RGBImgObsWrapper(

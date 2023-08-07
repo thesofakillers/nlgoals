@@ -251,7 +251,7 @@ class GoToSpecObj(RoomGridLevel):
 
         self.instrs = GoToInstr(ObjDesc(obj.type, obj.color))
 
-def handle_cc(EnvClass):
+def make_cc(EnvClass):
     """
     Makes an environment causally confused by overriding the class it inherits from.
     """
