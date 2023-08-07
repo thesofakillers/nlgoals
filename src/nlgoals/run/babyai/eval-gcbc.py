@@ -87,6 +87,7 @@ def run_oracle(env, seed, seed_offset) -> Tuple[np.ndarray, str, int]:
         seed_offset: the offset to be added to the seed to get the final state
     """
     curr_seed = seed
+    mission_success = False
     while not mission_success:
         try:
             done = False
@@ -186,7 +187,7 @@ def run_rollout(
     Returns:
         Tuple of (true_goal_success, conf_goal_success, video, seed)
     """
-    goal_image, goal_text, seed = run_oracle(env, seed, seed_offset=seed_offset)
+    goal_image, goal_text, seed = run_oracle(env, int(seed), seed_offset=seed_offset)
     if traj_mode == "visual":
         goal = prepare_visual_goal(goal_image, img_transform, policy.device)
     else:
