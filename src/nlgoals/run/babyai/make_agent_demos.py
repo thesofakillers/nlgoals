@@ -10,12 +10,12 @@ import logging
 import time
 import multiprocessing as mp
 from typing import Optional, Dict
-from minigrid.core.constants import COLOR_TO_IDX
 
+from minigrid.core.constants import COLOR_TO_IDX, OBJECT_TO_IDX
 from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 from minigrid.envs.babyai.goto import LevelGen
 from minigrid.utils.baby_ai_bot import BabyAIBot
-from minigrid.wrappers import OBJECT_TO_IDX, RGBImgObsWrapper
+from minigrid.wrappers import RGBImgObsWrapper
 import numpy as np
 import blosc
 import torch
