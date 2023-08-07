@@ -195,7 +195,7 @@ class CLIPImageTransform:
             ]
         )
 
-    def __call__(self, images: np.ndarray) -> torch.Tensor:
+    def __call__(self, images: torch.Tensor) -> torch.Tensor:
         """
         0. ToPILImage
         1. resize
