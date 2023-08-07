@@ -49,7 +49,7 @@ def save_videos(save_dir, videos):
     os.makedirs(videos_dir, exist_ok=True)
     for video_type, video_list in videos.items():
         for i, video in enumerate(video_list):
-            prepd_video = prep_video(video)
+            prepd_video = prep_video(video, False, False)
             video_path = os.path.join(videos_dir, video_type, f"video_{i}.mp4")
             # make sure the parent directory exists
             os.makedirs(os.path.dirname(video_path), exist_ok=True)
@@ -153,7 +153,7 @@ def check_conf_done(env, agent_dir: int, obj_pos_str: str):
 
 def prepare_visual_goal(goal_image, img_transform, device):
     # 1 x 3 x H x W
-    return img_transform(goal_image).unsqueeze(0).to(device)
+    return img_transform(torch.from_numpy(goal_image).unsqueeze(0)).to(device)
 
 
 def prepare_textual_goal(goal_text, tokenizer, device):
@@ -204,14 +204,14 @@ def run_rollout(
 
     true_done = False
     conf_done = False
-    rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
+    rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.uint8)
 
     policy.reset()
     for step in tqdm(range(rollout_steps), disable=not verbose):
         prepared_obs = babyai_obs_prepare(obs, img_transform, policy.device)
 
         action = policy.step(prepared_obs, goal, traj_mode)
-        obs, _reward, true_done, _, _ = env.step(action)
+        obs, _reward, true_done, _, _ = env.step(action.item())
 
         conf_done = check_conf_done(env, obs["direction"], cc_loc_str)
 
@@ -317,7 +317,7 @@ def main(args):
             "cc_obj_pos_str": args.env.cc.obj_pos_str,
             **env_kwargs,
         }
-    env = GoToSpecObj(**env_kwargs)
+    env = GoToSpecObj(**env_kwargs, highlight=False)
     env = RGBImgObsWrapper(env, tile_size=28)
 
     ModelClass = gcbc_enum_to_class[args.model_variant]
