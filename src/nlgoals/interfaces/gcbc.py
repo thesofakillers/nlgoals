@@ -25,8 +25,9 @@ def babyai_obs_prepare(obs: Dict, transform, device) -> Dict:
             - "proprio_perc": 1 x 1 x 1, proprioceptive state
             - "seq_lens": 1, sequence lengths (will just be 1)
     """
+    images = torch.from_numpy(obs["image"]).unsqueeze(0).to(device)
     return {
-        "rgb_perc": transform(obs["image"]).unsqueeze(0).unsqueeze(0).to(device),
+        "rgb_perc": transform(images).unsqueeze(0).to(device),
         "proprio_perc": torch.tensor([obs["direction"]])
         .unsqueeze(0)
         .unsqueeze(0)
