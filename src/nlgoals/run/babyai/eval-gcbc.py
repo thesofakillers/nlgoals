@@ -135,7 +135,7 @@ def check_conf_done(env, agent_dir: int, obj_pos_str: str):
             Integer between 0 and 3 meaning right, down, left, up
     """
 
-    cc_pos = str_to_pos(obj_pos_str)
+    cc_pos = str_to_pos(obj_pos_str, env)
     agent_pos = env.agent_pos
 
     delta_pos = (cc_pos[0] - agent_pos[0], cc_pos[1] - agent_pos[1])
