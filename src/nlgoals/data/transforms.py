@@ -164,7 +164,9 @@ class CLIPImageTransform:
     see: https://github.com/huggingface/transformers/issues/13991#issuecomment-1598941671
     """
 
-    def __init__(self, size, image_mean, image_std) -> None:
+    def __init__(
+        self, size, image_mean: [0.5, 0.5, 0.5], image_std=[0.5, 0.5, 0.5]
+    ) -> None:
         self.size = size
         self.image_mean = image_mean
         self.image_std = image_std
