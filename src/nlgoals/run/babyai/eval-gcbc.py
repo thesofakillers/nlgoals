@@ -206,8 +206,9 @@ def run_rollout(
     conf_done = False
     rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.uint8)
 
-    policy.reset()
     for step in tqdm(range(rollout_steps), disable=not verbose):
+        if step % 7 == 0:
+            policy.reset()
         prepared_obs = babyai_obs_prepare(obs, img_transform, policy.device)
 
         action = policy.step(prepared_obs, goal, traj_mode)
