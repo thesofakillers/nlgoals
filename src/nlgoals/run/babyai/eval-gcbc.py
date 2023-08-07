@@ -86,7 +86,6 @@ def run_oracle(env, seed, seed_offset) -> Tuple[np.ndarray, str, int]:
         seed: the seed to be checked
         seed_offset: the offset to be added to the seed to get the final state
     """
-    oracle = BabyAIBot(env)
     curr_seed = seed
     while not mission_success:
         try:
@@ -94,6 +93,7 @@ def run_oracle(env, seed, seed_offset) -> Tuple[np.ndarray, str, int]:
             final_step = False
 
             obs = env.reset(seed=curr_seed)[0]
+            oracle = BabyAIBot(env)
 
             last_image = None
 
@@ -265,7 +265,9 @@ def eval_policy(
         "true_goal": {"success": [], "fail": []},
         "conf_goal": {"success": [], "fail": []},
     }
-    seeds = np.linspace(start=start_seed, num=num_rollouts)
+    seeds = np.linspace(
+        start=start_seed, stop=start_seed + num_rollouts - 1, num=num_rollouts
+    )
 
     for i in tqdm(range(num_rollouts), desc="Rollouts"):
         seed = seeds[i]
@@ -310,11 +312,7 @@ def main(args):
     env = RGBImgObsWrapper(env, tile_size=28)
 
     ModelClass = gcbc_enum_to_class[args.model_variant]
-    policy = ModelClass.load_from_checkpoint(
-        args.model_checkpoint,
-        strict=False,
-        action_decoder_kwargs=args.action_decoder.as_dict(),
-    )
+    policy = ModelClass.load_from_checkpoint(args.model_checkpoint, strict=False)
     if args.clipt_checkpoint is not None:
         clipt_state_dict = torch.load(args.clipt_checkpoint, map_location=device)[
             "state_dict"
