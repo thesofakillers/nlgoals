@@ -7,7 +7,7 @@ def normalize_tensor(tensor):
     tensor = tensor / 2 + 0.5
     return tensor
 
-def prep_video(video):
+def prep_video(video, normalize=True, type_conv=True):
     # cut off empty frames
     frame_sums = np.sum(video, axis=(1, 2, 3))
     where_0 = np.where(frame_sums == 0)[0]
@@ -15,10 +15,12 @@ def prep_video(video):
     video = video[:end_frame]
     # put channel dimension last
     video = video.transpose((0, 2, 3, 1))
-    # move from -1, 1 to 0, 1
-    video = normalize_tensor(video)
-    # convert to uint8
-    video = (video * 255).astype(np.uint8)
+    if normalize:
+        # move from -1, 1 to 0, 1
+        video = normalize_tensor(video)
+    if type_conv:
+        # convert to uint8
+        video = (video * 255).astype(np.uint8)
     return video
 
 
