@@ -34,6 +34,27 @@ def print_demo_lengths(demos):
     )
 
 
+def paraphrase_mission(mission: str) -> str:
+    """
+    Paraphrase a "go to the {color} {obj}" string
+    By rephrasing or using synonyms
+    """
+    mission_words = mission.split(" ")
+    color, obj = mission_words[3:]
+    verb = mission_words[0]
+
+    possible_colors = utils.COLOR_TO_SYN[color]
+    color = np.random.choice(possible_colors)
+    possible_objs = utils.OBJ_TO_SYN[obj]
+    obj = np.random.choice(possible_objs)
+    possible_verbs = ["go", "move", "navigate", "proceed", "advance", "make your way"]
+    verb = np.random.choice(possible_verbs)
+
+    new_mission = f"{verb} to the {color} {obj}"
+
+    return new_mission
+
+
 def generate_episode(
     seed,
     seed_offset,
@@ -57,7 +78,7 @@ def generate_episode(
         env_kwargs = {**env_kwargs, **cc_kwargs}
     env = EnvClass(highlight=False, **env_kwargs)
     env = RGBImgObsWrapper(
-        env, tile_size=28 if envs_size in {"small", "single"} else 12
+        env, tile_size=28 if envs_size.split("-")[0] in {"small", "single"} else 12
     )
 
     mission_success = False
@@ -130,7 +151,8 @@ def generate_demos(
         n_episodes (int): number of episodes to generate
         valid (bool): whether to the episodes are for validation or not
         seed (int): random starting seed
-        envs_size (str): Which environment size to use. Can be "small" or "large"
+        envs_size (str): Which environment size to use.
+            Can be "small(-play)", "large(-play)" or "single"
         num_workers: number of workers to use for multiprocessing
         causally_confuse (bool): whether to causally confuse the environment
         cc_kwargs (dict): kwargs for the causal confusion
@@ -187,7 +209,7 @@ if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser()
     parser.add_argument(
         "--envs_size",
-        choices=["small", "large", "single"],
+        choices=["small-play", "large-play", "small", "single"],
         default="small",
         help="Whether to use small or large environments. Or a single GoToSpecObj env",
     )
