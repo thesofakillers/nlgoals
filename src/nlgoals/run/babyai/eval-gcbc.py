@@ -353,7 +353,10 @@ def main(args):
     print_results(true_goal_results, conf_goal_results)
 
     model_checkpoint_name = os.path.splitext(os.path.basename(args.model_checkpoint))[0]
-    save_dir = os.path.join(args.save_dir, model_checkpoint_name)
+    env_dir = "cc" if args.env.cc.enable else "normal"
+    save_dir = os.path.join(
+        args.save_dir, model_checkpoint_name, args.traj_mode, env_dir
+    )
     save_results(save_dir, true_goal_results, conf_goal_results, videos, seeds)
 
 
