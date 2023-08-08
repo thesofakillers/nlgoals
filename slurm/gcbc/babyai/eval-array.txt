@@ -1,0 +1,8 @@
+--save_dir outputs/babyai/gcbc_cclipt/single_task/ --model_checkpoint checkpoints/babyai/gcbc_cclipt/single_task/GCBC-BabyAI-s1.ckpt --env.cc.enable false --traj_mode textual 
+--save_dir outputs/babyai/gcbc_cclipt/single_task/ --model_checkpoint checkpoints/babyai/gcbc_cclipt/single_task/GCBC-BabyAI-s1.ckpt --env.cc.enable false --traj_mode visual
+--save_dir outputs/babyai/gcbc_cclipt/single_task/ --model_checkpoint checkpoints/babyai/gcbc_cclipt/single_task/GCBC-BabyAI-s1.ckpt --env.cc.enable true --traj_mode textual
+--save_dir outputs/babyai/gcbc_cclipt/single_task/ --model_checkpoint checkpoints/babyai/gcbc_cclipt/single_task/GCBC-BabyAI-s1.ckpt --env.cc.enable true --traj_mode visual
+--save_dir outputs/babyai/gcbc_cclipt/multi_task/ --model_checkpoint checkpoints/babyai/gcbc_cclipt/multi_task/GCBC-BabyAI-s1.ckpt --env.cc.enable false --traj_mode textual 
+--save_dir outputs/babyai/gcbc_cclipt/multi_task/ --model_checkpoint checkpoints/babyai/gcbc_cclipt/multi_task/GCBC-BabyAI-s1.ckpt --env.cc.enable false --traj_mode visual
+--save_dir outputs/babyai/gcbc_cclipt/multi_task/ --model_checkpoint checkpoints/babyai/gcbc_cclipt/multi_task/GCBC-BabyAI-s1.ckpt --env.cc.enable true --traj_mode textual
+--save_dir outputs/babyai/gcbc_cclipt/multi_task/ --model_checkpoint checkpoints/babyai/gcbc_cclipt/multi_task/GCBC-BabyAI-s1.ckpt --env.cc.enable true --traj_mode visual
