@@ -34,7 +34,8 @@ class BabyAIDM(pl.LightningDataModule):
         Args:
             data_path: path to data, e.g "path/to/data", such that two files exist:
                 path/to/data.pkl and path/to/data_valid.pkl
-            envs_size: size of the environment, e.g. "small", "large"
+            envs_size: size of the environment
+                Can be 'small(-play)', 'large(-play)' or 'single'.
             use_first_last_frames: whether to use only the first and last frames
             drop_last_frame: whether to drop the last frame. Used when training with
                reward since the last step has 0 reward.

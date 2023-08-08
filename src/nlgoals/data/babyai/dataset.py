@@ -21,6 +21,8 @@ class BabyAIDataset(Dataset):
         """
         Args:
             filepath (string): Path to the pickle file with train or validation data.
+            envs_size: Size of the environments to use.
+                Can be 'small(-play)', 'large(-play)' or 'single'.
             transform (callable, optional): Optional transform to be applied on a sample.
             use_first_last_frames (bool, optional): If set to True, only the first and last frames will be sampled.
             drop_last_frame: whether to drop the last frame. Used when training with
