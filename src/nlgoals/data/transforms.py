@@ -1,7 +1,7 @@
 import enum
 from typing import List, Dict
+from PIL import Image
 
-import pdb
 import transformers
 import torch
 from torchvision.transforms import (
@@ -180,17 +180,15 @@ class CLIPImageTransform:
         0. ToPILImage
         1. resize
         2. do center crop
-        4. rescale
-        4. to tensor
-        5. normalize
+        3. to tensor
+        4. normalize
         """
         self.pipeline = Compose(
             [
                 ToPILImage("RGB"),
-                Resize(self.size),
+                Resize(self.size, interpolation=Image.Resampling.BICUBIC),
                 CenterCrop(self.size),
                 ToTensor(),
-                Rescale(1 / 255.0),
                 normalize,
             ]
         )
@@ -201,20 +199,15 @@ class CLIPImageTransform:
         1. resize
         2. do center crop
         3. to tensor
-        4. rescale
-        5. normalize
+        4. normalize
+
+        Args:
+            images: tensor of shape (batch_size, height, width, 3)
         """
+        # reshape to (batch_size, 3, height, width)
         images = images.permute(0, 3, 1, 2)
         images = torch.stack([self.pipeline(image) for image in images], dim=0)
         return images
-
-
-class Rescale:
-    def __init__(self, scale_factor: float) -> None:
-        self.scale_factor = scale_factor
-
-    def __call__(self, image: torch.tensor) -> torch.tensor:
-        return image * self.scale_factor
 
 
 TRANSFORM_MAP: Dict[str, object] = {
