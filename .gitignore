@@ -4,6 +4,7 @@
 /profiles/
 /outputs/
 notebooks/*sandbox.ipynb
+/notebooks/sandboxes/
 /slurm/outputs/
 /slurm/.secrets
 /data/
