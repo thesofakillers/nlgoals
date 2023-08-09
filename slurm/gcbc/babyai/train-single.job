@@ -29,5 +29,4 @@ srun python src/nlgoals/run/babyai/train-gcbc.py \
   --data.envs_size single \
   --trainer.logging.enable true \
   --trainer.checkpoint.dirpath "checkpoints/babyai/gcbc_cclipt/single_task/" \
-  --trainer.logging.enable true \
   --seed 1
