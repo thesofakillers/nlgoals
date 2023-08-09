@@ -206,8 +206,8 @@ class RCBC(pl.LightningModule):
             perc["rgb_perc"],
             perc["proprio_perc"],
             reward,
-            perc["seq_lens"],
             batch["task_id"],
+            perc["seq_lens"],
         )
         # B x S x ... -> P x ...
         packed_actions = torch.nn.utils.rnn.pack_padded_sequence(
