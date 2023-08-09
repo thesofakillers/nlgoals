@@ -251,6 +251,7 @@ class GoToSpecObj(RoomGridLevel):
 
         self.instrs = GoToInstr(ObjDesc(obj.type, obj.color))
 
+
 def make_cc(EnvClass):
     """
     Makes an environment causally confused by overriding the class it inherits from.
@@ -264,6 +265,7 @@ def make_cc(EnvClass):
         LevelGen.__bases__ = (RoomGridLevelCC,)
         EnvClass.__bases__ = (LevelGen,)
         return EnvClass
+
 
 def str_to_pos(pos_str, env):
     """

@@ -7,6 +7,7 @@ def normalize_tensor(tensor):
     tensor = tensor / 2 + 0.5
     return tensor
 
+
 def prep_video(video, normalize=True, type_conv=True):
     # cut off empty frames
     frame_sums = np.sum(video, axis=(1, 2, 3))

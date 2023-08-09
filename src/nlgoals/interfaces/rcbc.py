@@ -1,5 +1,6 @@
 import torch
 
+
 def babyai_obs_prepare(obs, transform, device):
     """
     Prepares an observation from the BabyAI environment .step() so that
