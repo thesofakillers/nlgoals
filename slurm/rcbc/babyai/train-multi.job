@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=RCBC
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=24:00:00
+#SBATCH --mem-per-gpu=120G
+#SBATCH --output=slurm/outputs/rcbc_train_%A.out
+
+source "./slurm/.secrets"
+
+data_path=/scratch-shared/gstarace/repos/thesis/data/babyai/cc/small
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+srun python src/nlgoals/run/babyai/train-gcbc.py \
+  --config src/nlgoals/configs/babyai/train-rcbc.json \
+  --data.data_path=$data_path \
+  --data.envs_size small \
+  --rcbc.n_tasks 18 \
+  --trainer.checkpoint.dirpath "checkpoints/babyai/rcbc/single_task/" \
+  --seed 1
