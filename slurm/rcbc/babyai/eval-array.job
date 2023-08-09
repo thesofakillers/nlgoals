@@ -1,0 +1,27 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=RCBC-E
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=00:30:00
+#SBATCH --mem-per-gpu=120G
+#SBATCH --array=1-4%4
+#SBATCH --output=slurm/outputs/rcbc_eval_array_%A_%a.out
+
+source "./slurm/.secrets"
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+HPARAMS_FILE="slurm/rcbc/babyai/eval-array.txt"
+
+srun python src/nlgoals/run/babyai/eval-rcbc.py \
+  --num_rollouts 1000 \
+  --num_rollout_steps 50 \
+  --verbose false \
+  $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
