@@ -60,7 +60,11 @@ class BabyAIActionDecoder(ActionDecoder):
         action_acc = (pred_act == packed_actions.data).float().mean()
         package_size = packed_actions.data.shape[0]
 
-        pl_instance.log(f"{traj_mode}/{phase}_loss", loss, batch_size=package_size)
+        if traj_mode is not None:
+            prefix_str = f"{traj_mode}/"
+        else:
+            prefix_str = ""
+        pl_instance.log(f"{prefix_str}{phase}_loss", loss, batch_size=package_size)
         pl_instance.log(
-            f"{traj_mode}/{phase}_action_acc", action_acc, batch_size=package_size
+            f"{prefix_str}{phase}_action_acc", action_acc, batch_size=package_size
         )
