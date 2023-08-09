@@ -5,7 +5,7 @@
 #SBATCH --job-name=GCBC-E
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=02:00:00
+#SBATCH --time=00:30:00
 #SBATCH --mem-per-gpu=120G
 #SBATCH --array=1-8%8
 #SBATCH --output=slurm/outputs/gcbc_eval_array_%A_%a.out
@@ -23,7 +23,7 @@ HPARAMS_FILE="slurm/gcbc/babyai/eval-array.txt"
 srun python src/nlgoals/run/babyai/eval-gcbc.py \
   --num_rollouts 1000 \
   --num_rollout_steps 50 \
-  --verbose true \
+  --verbose false \
   --model_variant BABYAI \
   --clipt_checkpoint checkpoints/babyai/cclipt/last.ckpt \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
