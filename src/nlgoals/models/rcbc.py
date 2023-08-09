@@ -22,7 +22,7 @@ class RCBC(pl.LightningModule):
         n_tasks: int = 1,
         reward_dim: int = 18,
         hidden_dim: int = 2048,
-        lr: float = 5e-5,
+        lr: float = 5e-4,
     ) -> None:
         """
         Args:
