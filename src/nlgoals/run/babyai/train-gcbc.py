@@ -146,6 +146,8 @@ if __name__ == "__main__":
     parser.add_dataclass_arguments(TrainerConfig, "trainer")
     parser.add_argument("--seed", type=int, default=42)
 
+    parser.link_arguments("seed", "data.seed", apply_on="parse")
+
     parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
