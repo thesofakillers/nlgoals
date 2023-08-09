@@ -20,7 +20,7 @@ class CheckpointConfig:
 @dataclass
 class TrainerConfig:
     min_epochs: int = 1
-    max_epochs: int = 100
+    max_epochs: int = 10
     accelerator: Accelerator = "auto"
     devices: int = 1
     enable_progress_bar: bool = False
