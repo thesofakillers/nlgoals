@@ -12,3 +12,4 @@ the following table for what each notebook contains:
 | `clipt-eval.ipynb`                 | Visually evaluating CLIPT model for correlations between visual and text trajectories.                                                             |
 | `gcbc-calvin-eval-results.ipynb`   | Success Rate of the GCBC policy evaluated on CALVIN                                                                                                |
 | `gcbc-calvin-random-results.ipynb` | Success Rate of the GCBC policy with trajectories replaced with random vectors, as an ablation                                                     |
+| `eval-gmg.ipynb`                   | Plotting evidence of Goal Misgeneralization for a given checkpoint.                                                                                |
