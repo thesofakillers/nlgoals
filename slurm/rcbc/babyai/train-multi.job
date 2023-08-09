@@ -24,5 +24,5 @@ srun python src/nlgoals/run/babyai/train-rcbc.py \
   --data.data_path=$data_path \
   --data.envs_size small \
   --rcbc.n_tasks 18 \
-  --trainer.checkpoint.dirpath "checkpoints/babyai/rcbc/single_task/" \
+  --trainer.checkpoint.dirpath "checkpoints/babyai/rcbc/multi_task/" \
   --seed 1

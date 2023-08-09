@@ -169,7 +169,9 @@ class RCBC(pl.LightningModule):
             reward_emb = reward.unsqueeze(-1).repeat_interleave(self.reward_dim, dim=-1)
         else:
             # one-hot encode the task id and multiply by the reward
-            task_id_onehot = F.one_hot(task_id, num_classes=self.n_tasks).float()
+            task_id_onehot = F.one_hot(
+                task_id.to(torch.int64), num_classes=self.n_tasks
+            ).float()
             reward_emb = reward.unsqueeze(-1) * task_id_onehot
 
         return reward_emb
