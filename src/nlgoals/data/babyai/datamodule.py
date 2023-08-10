@@ -260,7 +260,7 @@ class BabyAIDM(pl.LightningDataModule):
                 for i, element in enumerate(batch_list)
             ]
         )
-        padded_batch["task_id"] = torch.Tensor(
+        padded_batch["task_id"] = torch.tensor(
             [element["task_id"] for element in batch_list]
         )
 

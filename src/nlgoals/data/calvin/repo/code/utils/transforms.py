@@ -23,9 +23,9 @@ class NormalizeVector(object):
             mean = [mean]
         if isinstance(std, (int, float)):
             std = [std]
-        self.std = torch.Tensor(std)
+        self.std = torch.tensor(std)
         self.std[self.std == 0.0] = 1.0
-        self.mean = torch.Tensor(mean)
+        self.mean = torch.tensor(mean)
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         assert isinstance(tensor, torch.Tensor)

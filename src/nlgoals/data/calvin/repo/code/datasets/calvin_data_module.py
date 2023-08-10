@@ -329,7 +329,7 @@ class Collator:
             ]
         )
 
-        padded_batch["idx"] = torch.Tensor([element["idx"] for element in batch_list])
+        padded_batch["idx"] = torch.tensor([element["idx"] for element in batch_list])
 
         return padded_batch
 
