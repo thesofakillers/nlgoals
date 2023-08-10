@@ -66,7 +66,11 @@ def run_rollout(
         prepared_obs = babyai_obs_prepare(obs, img_transform, policy.device)
 
         # condition on a reward of 1, with the appropriate task_id
-        action = policy.step(**prepared_obs, reward=torch.Tensor([1]), task_id=task_id)
+        action = policy.step(
+            **prepared_obs,
+            reward=torch.Tensor([1], device=policy.device),
+            task_id=torch.Tensor([task_id], device=policy.device),
+        )
         obs, _reward, true_done, _, _ = env.step(action.item())
 
         conf_done = check_conf_done(env, obs["direction"], cc_loc_str)
