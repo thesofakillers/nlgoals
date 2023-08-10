@@ -115,10 +115,10 @@ class GCBC(pl.LightningModule):
 
     def forward(
         self,
-        batch: Dict[str, Dict[str, torch.tensor]],
-        goal: Union[Dict[str, torch.tensor], torch.tensor],
+        batch: Dict[str, Dict[str, torch.Tensor]],
+        goal: Union[Dict[str, torch.Tensor], torch.Tensor],
         traj_mode: str = "visual",
-    ) -> Dict[str, torch.tensor]:
+    ) -> Dict[str, torch.Tensor]:
         """
         Forward pass through the network.
 
@@ -184,10 +184,10 @@ class GCBC(pl.LightningModule):
 
     def _get_traj_embs(
         self,
-        curr_frames: torch.tensor,
+        curr_frames: torch.Tensor,
         traj_mode: str,
-        goal: Union[Dict[str, torch.tensor], torch.tensor],
-    ) -> torch.tensor:
+        goal: Union[Dict[str, torch.tensor], torch.Tensor],
+    ) -> torch.Tensor:
         """
         Computes either textual or visual trajectory embeddings.
 
@@ -259,9 +259,9 @@ class GCBC(pl.LightningModule):
 
     def _get_visual_traj_embs(
         self,
-        curr_frames: torch.tensor,
-        final_frames: torch.tensor,
-    ) -> torch.tensor:
+        curr_frames: torch.Tensor,
+        final_frames: torch.Tensor,
+    ) -> torch.Tensor:
         """
         Computes the visual trajectory embeddings
 
@@ -312,7 +312,7 @@ class GCBC(pl.LightningModule):
                 self.traj_embs = traj_embs
         return traj_embs
 
-    def _separate_final_step(self, batch: Dict) -> Tuple[Dict, torch.tensor]:
+    def _separate_final_step(self, batch: Dict) -> Tuple[Dict, torch.Tensor]:
         """
         Separates the final frames from the batch and returns the batch without the final
         frames and the final frames.
@@ -335,7 +335,7 @@ class GCBC(pl.LightningModule):
 
     def get_goal(
         self, batch: Dict, traj_mode: str
-    ) -> Tuple[Dict, Union[Dict, torch.tensor]]:
+    ) -> Tuple[Dict, Union[Dict, torch.Tensor]]:
         if traj_mode == "visual":
             return self._separate_final_step(batch)
         elif traj_mode == "textual":
@@ -343,10 +343,10 @@ class GCBC(pl.LightningModule):
 
     def _fit_step(
         self,
-        batch: Dict[str, Union[torch.tensor, Dict[str, torch.tensor]]],
+        batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]],
         phase: str,
         traj_mode: str,
-    ) -> torch.tensor:
+    ) -> torch.Tensor:
         """
         Fit step for the model. Logs loss and training metrics.
 
@@ -395,10 +395,10 @@ class GCBC(pl.LightningModule):
 
     def step(
         self,
-        batch: Dict[str, Union[torch.tensor, Dict[str, torch.tensor]]],
-        goal: Union[Dict[str, torch.tensor], torch.tensor],
+        batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]],
+        goal: Union[Dict[str, torch.Tensor], torch.Tensor],
         traj_mode: str,
-    ) -> torch.tensor:
+    ) -> torch.Tensor:
         """
         Predicts a next action for a given input (batch) of data
 
@@ -426,7 +426,7 @@ class GCBC(pl.LightningModule):
         pred_action = self.action_decoder.sample(**action_decoder_out)
         return pred_action
 
-    def training_step(self, batch, batch_idx) -> torch.tensor:
+    def training_step(self, batch, batch_idx) -> torch.Tensor:
         visual_batch = self.prepare_visual_batch(batch)
         loss = self._fit_step(visual_batch, "train", "visual")
         return loss

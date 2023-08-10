@@ -4,10 +4,10 @@ import torch.nn.functional as F
 
 
 def clip_contrastive_loss(
-    modality_one_embs: torch.tensor,
-    modality_two_embs: torch.tensor,
+    modality_one_embs: torch.Tensor,
+    modality_two_embs: torch.Tensor,
     temperature: torch.nn.parameter.Parameter,
-) -> torch.tensor:
+) -> torch.Tensor:
     """
     CLIP contrastive loss
     Radford et al. (2021) Contrastive Language-Image Pre-Training

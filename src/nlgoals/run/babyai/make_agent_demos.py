@@ -100,7 +100,7 @@ def generate_episode(
 
             while not final_step:
                 action = agent.replan()
-                if isinstance(action, torch.tensor):
+                if isinstance(action, torch.Tensor):
                     action = action.item()
                 if done:
                     final_step = True

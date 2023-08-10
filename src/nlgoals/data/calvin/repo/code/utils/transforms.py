@@ -10,8 +10,8 @@ class ScaleImageTensor(object):
         Tensor: Scaled tensor.
     """
 
-    def __call__(self, tensor: torch.tensor) -> torch.tensor:
-        assert isinstance(tensor, torch.tensor)
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        assert isinstance(tensor, torch.Tensor)
         return tensor.float().div(255)
 
 
@@ -23,12 +23,12 @@ class NormalizeVector(object):
             mean = [mean]
         if isinstance(std, (int, float)):
             std = [std]
-        self.std = torch.tensor(std)
+        self.std = torch.Tensor(std)
         self.std[self.std == 0.0] = 1.0
-        self.mean = torch.tensor(mean)
+        self.mean = torch.Tensor(mean)
 
-    def __call__(self, tensor: torch.tensor) -> torch.tensor:
-        assert isinstance(tensor, torch.tensor)
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        assert isinstance(tensor, torch.Tensor)
         return (tensor - self.mean) / self.std
 
     def __repr__(self):
@@ -42,8 +42,8 @@ class AddGaussianNoise(object):
         self.std = torch.tensor(std)
         self.mean = torch.tensor(mean)
 
-    def __call__(self, tensor: torch.tensor) -> torch.tensor:
-        assert isinstance(tensor, torch.tensor)
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        assert isinstance(tensor, torch.Tensor)
         return tensor + torch.randn(tensor.size()) * self.std + self.mean
 
     def __repr__(self):
@@ -65,8 +65,8 @@ class AddDepthNoise(object):
             torch.tensor(shape), torch.tensor(rate)
         )
 
-    def __call__(self, tensor: torch.tensor) -> torch.tensor:
-        assert isinstance(tensor, torch.tensor)
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        assert isinstance(tensor, torch.Tensor)
         multiplicative_noise = self.dist.sample()
         return multiplicative_noise * tensor
 

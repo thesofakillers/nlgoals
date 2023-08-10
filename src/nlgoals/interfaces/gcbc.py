@@ -63,8 +63,8 @@ def calvin_obs_prepare(obs: Dict, device) -> Dict:
 
 
 def calvin_gcbc_collate(
-    batch: Dict[str, Union[torch.tensor, Dict[str, torch.tensor]]],
-) -> Dict[str, Union[torch.tensor, Dict[str, torch.tensor]]]:
+    batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]],
+) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
     """
     Custom collate function for CALVIN data.
     Takes data in CALVIN output format and wrangles it into GCBC input format.

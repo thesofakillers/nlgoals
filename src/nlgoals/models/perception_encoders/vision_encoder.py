@@ -81,7 +81,7 @@ class VisionEncoder(nn.Module):
         # attributes accessed by other modules
         self.emb_dim = visual_features
 
-    def forward(self, x: torch.tensor) -> torch.tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # [B, 3, 224, 224] -> [B, 64, 24, 24]
         x = self.conv_model(x)
         # [B, 64, 24, 24] -> [B, 128]
@@ -137,7 +137,7 @@ class SpatialSoftmax(nn.Module):
         else:
             self.temperature = Parameter(torch.ones(1))
 
-    def forward(self, x: torch.tensor) -> torch.tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         _b, c, h, w = x.shape
         x = x.contiguous().view(-1, h * w)  # batch, C, W*H
         softmax_attention = F.softmax(x / self.temperature, dim=1)  # batch, C, W*H

@@ -154,7 +154,7 @@ class CALVINDM(pl.LightningDataModule):
         return collate_fn
 
     @staticmethod
-    def _collate_fn(batch: List[Dict[str, torch.tensor]]) -> Dict[str, torch.tensor]:
+    def _collate_fn(batch: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:
         """
         Takes care of padding token_ids and attn_mask so that we can batch
 

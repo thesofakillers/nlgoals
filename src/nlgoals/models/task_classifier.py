@@ -35,7 +35,7 @@ class TaskClassificationHead(nn.Module):
 
         self.network = nn.Sequential(*layers)
 
-    def forward(self, trajectory_embedding: torch.tensor) -> torch.tensor:
+    def forward(self, trajectory_embedding: torch.Tensor) -> torch.Tensor:
         """
         Args:
             trajectory_embedding: embedding of the trajectory (batch_size x input_dim)
@@ -86,7 +86,7 @@ class TaskClassifier(pl.LightningModule):
 
         self.traj_emb_dim = self.traj_encoder.emb_dim
 
-    def forward(self, batch, traj_type: str) -> torch.tensor:
+    def forward(self, batch, traj_type: str) -> torch.Tensor:
         """
         Either classifies visual or textual trajectory embeddings
 
@@ -111,7 +111,7 @@ class TaskClassifier(pl.LightningModule):
         task_id_logits = self.classifier_head(traj_emb)
         return task_id_logits
 
-    def _fit_step(self, batch: Dict[str, torch.tensor], traj_type: str, phase: str):
+    def _fit_step(self, batch: Dict[str, torch.Tensor], traj_type: str, phase: str):
         preds = self.forward(batch, traj_type=traj_type)
         targets = batch["task_id"]
         loss = F.cross_entropy(preds, targets)
@@ -122,17 +122,17 @@ class TaskClassifier(pl.LightningModule):
         self.log(f"{traj_type}/{phase}_accuracy", accuracy)
         return loss
 
-    def training_step(self, batch, batch_idx) -> torch.tensor:
+    def training_step(self, batch, batch_idx) -> torch.Tensor:
         """Train only on visual trajectories"""
         loss = self._fit_step(batch, traj_type="visual", phase="train")
         return loss
 
-    def validation_step(self, batch: Dict[str, torch.tensor], batch_idx: int):
+    def validation_step(self, batch: Dict[str, torch.Tensor], batch_idx: int):
         """Evaluate on both visual and textual trajectories"""
         self._fit_step(batch, traj_type="visual", phase="val")
         self._fit_step(batch, traj_type="textual", phase="val")
 
-    def test_step(self, batch: Dict[str, torch.tensor], batch_idx: int):
+    def test_step(self, batch: Dict[str, torch.Tensor], batch_idx: int):
         """Evaluate on both visual and textual trajectories. No loss."""
         targets = batch["task_id"]
 

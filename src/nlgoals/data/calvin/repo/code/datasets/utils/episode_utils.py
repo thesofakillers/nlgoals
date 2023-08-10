@@ -18,7 +18,7 @@ def process_state(
     proprio_state: DictConfig,
     seq_idx: int = 0,
     window_size: int = 0,
-) -> Dict[str, torch.tensor]:
+) -> Dict[str, torch.Tensor]:
     state_obs_keys = observation_space["state_obs"]
     state_obs_list_normalized = []
     state_obs_list_unnormalized = []
@@ -70,7 +70,7 @@ def process_rgb(
     transforms: Dict,
     seq_idx: int = 0,
     window_size: int = 0,
-) -> Dict[str, Dict[str, torch.tensor]]:
+) -> Dict[str, Dict[str, torch.Tensor]]:
     rgb_obs_keys = observation_space["rgb_obs"]
 
     seq_rgb_obs_dict = {}
@@ -103,7 +103,7 @@ def process_depth(
     transforms: Dict,
     seq_idx: int = 0,
     window_size: int = 0,
-) -> Dict[str, Dict[str, torch.tensor]]:
+) -> Dict[str, Dict[str, torch.Tensor]]:
     # expand dims for single environment obs
     def exp_dim(depth_img):
         if len(depth_img.shape) != 3:
@@ -135,7 +135,7 @@ def process_actions(
     transforms: Dict,
     seq_idx: int = 0,
     window_size: int = 0,
-) -> Dict[str, torch.tensor]:
+) -> Dict[str, torch.Tensor]:
     # shape: (N_actions)
     action_keys = observation_space["actions"]
     if len(action_keys) != 1:
@@ -155,7 +155,7 @@ def process_actions(
 
 def process_language(
     episode: Dict[str, np.ndarray], transforms: Dict, with_lang: bool
-) -> Dict[str, torch.tensor]:
+) -> Dict[str, torch.Tensor]:
     seq_lang = {"lang": torch.empty(0)}
     if with_lang:
         seq_lang["lang"] = episode["language"]
@@ -164,7 +164,7 @@ def process_language(
 
 def get_state_info_dict(
     episode: Dict[str, np.ndarray]
-) -> Dict[str, Dict[str, torch.tensor]]:
+) -> Dict[str, Dict[str, torch.Tensor]]:
     """
     Create a dictionary with raw state observations for environment resets.
 

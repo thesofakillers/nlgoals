@@ -40,12 +40,12 @@ class DLMLLoss:
 
     def loss(
         self,
-        means: torch.tensor,
-        log_scales: torch.tensor,
-        mixture_logits: torch.tensor,
-        targets: torch.tensor,
+        means: torch.Tensor,
+        log_scales: torch.Tensor,
+        mixture_logits: torch.Tensor,
+        targets: torch.Tensor,
         reduction: str = "mean",
-    ) -> torch.tensor:
+    ) -> torch.Tensor:
         """
         Computes the discretized logistic mixture likelihood loss
         for a batch of sequences. Expects packed sequences.
@@ -123,10 +123,10 @@ class DLMLLoss:
 
     def sample(
         self,
-        means: torch.tensor,
-        log_scales: torch.tensor,
-        mixture_logits: torch.tensor,
-    ) -> torch.tensor:
+        means: torch.Tensor,
+        log_scales: torch.Tensor,
+        mixture_logits: torch.Tensor,
+    ) -> torch.Tensor:
         """
         Samples a next action from our mixture of logistic distributions
 

@@ -59,7 +59,7 @@ def test_dataloading(dataset):
         for frame_key in dataset.frame_keys:
             print(frame_key, batch[frame_key].shape)
             assert frame_key in batch
-            assert isinstance(batch[frame_key], torch.tensor)
+            assert isinstance(batch[frame_key], torch.Tensor)
             assert batch[frame_key].shape[1] == dataset.num_frames
             assert (
                 batch[frame_key].shape[0] == batch_size

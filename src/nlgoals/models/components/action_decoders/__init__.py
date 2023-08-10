@@ -8,7 +8,7 @@ class ActionDecoder(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, hidden_state) -> Dict[str, torch.tensor]:
+    def forward(self, hidden_state) -> Dict[str, torch.Tensor]:
         """
         Args:
             hidden_state: (P, hidden_dim) packed hidden state from a GRU
@@ -18,7 +18,7 @@ class ActionDecoder(nn.Module):
     def loss(self, actions, **kwargs):
         raise NotImplementedError
 
-    def sample(self, **kwargs) -> torch.tensor:
+    def sample(self, **kwargs) -> torch.Tensor:
         raise NotImplementedError
 
     def log_metrics(

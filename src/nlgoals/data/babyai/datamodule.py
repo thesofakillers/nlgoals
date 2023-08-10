@@ -195,8 +195,8 @@ class BabyAIDM(pl.LightningDataModule):
 
     @staticmethod
     def _collate_fn_all_frames(
-        batch_list: List[Dict[str, torch.tensor]]
-    ) -> Dict[str, torch.tensor]:
+        batch_list: List[Dict[str, torch.Tensor]]
+    ) -> Dict[str, torch.Tensor]:
         """
         Takes care of padding token_ids and masks, and also all the trajectories in the
         batch, so that we can batch.
@@ -260,7 +260,7 @@ class BabyAIDM(pl.LightningDataModule):
                 for i, element in enumerate(batch_list)
             ]
         )
-        padded_batch["task_id"] = torch.tensor(
+        padded_batch["task_id"] = torch.Tensor(
             [element["task_id"] for element in batch_list]
         )
 
@@ -268,8 +268,8 @@ class BabyAIDM(pl.LightningDataModule):
 
     @staticmethod
     def _collate_fn_first_last_frames(
-        batch: List[Dict[str, torch.tensor]]
-    ) -> Dict[str, torch.tensor]:
+        batch: List[Dict[str, torch.Tensor]]
+    ) -> Dict[str, torch.Tensor]:
         """
         Takes care of padding token_ids and attn_mask so that we can batch.
         Other tensors don't need padding, as they are all length 2.

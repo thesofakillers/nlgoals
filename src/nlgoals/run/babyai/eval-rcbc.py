@@ -68,8 +68,8 @@ def run_rollout(
         # condition on a reward of 1, with the appropriate task_id
         action = policy.step(
             **prepared_obs,
-            reward=torch.tensor([1], device=policy.device),
-            task_id=torch.tensor([task_id], device=policy.device),
+            reward=torch.Tensor([1], device=policy.device),
+            task_id=torch.Tensor([task_id], device=policy.device),
         )
         obs, _reward, true_done, _, _ = env.step(action.item())
 

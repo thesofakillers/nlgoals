@@ -107,8 +107,8 @@ class CLIPT(pl.LightningModule):
                 param.requires_grad = False
 
     def forward(
-        self, batch: Dict[str, torch.tensor]
-    ) -> Dict[str, Union[torch.tensor, torch.nn.parameter.Parameter]]:
+        self, batch: Dict[str, torch.Tensor]
+    ) -> Dict[str, Union[torch.Tensor, torch.nn.parameter.Parameter]]:
         """
         Combines images and embeds them into visual trajectory embedding
         Embeds text into text trajectory embedding
@@ -139,8 +139,8 @@ class CLIPT(pl.LightningModule):
         }
 
     def prepare_textual_inputs(
-        self, batch: Dict[str, torch.tensor]
-    ) -> Dict[str, torch.tensor]:
+        self, batch: Dict[str, torch.Tensor]
+    ) -> Dict[str, torch.Tensor]:
         textual_inputs = {}
         if self.precomputed_clip:
             textual_inputs["lang_emb"] = batch["lang_emb"]
@@ -152,8 +152,8 @@ class CLIPT(pl.LightningModule):
         return textual_inputs
 
     def prepare_visual_inputs(
-        self, batch: Dict[str, torch.tensor]
-    ) -> Dict[str, torch.tensor]:
+        self, batch: Dict[str, torch.Tensor]
+    ) -> Dict[str, torch.Tensor]:
         visual_inputs = {}
         if self.precomputed_clip:
             visual_inputs["image_embs"] = batch["image_embs"]
@@ -161,7 +161,7 @@ class CLIPT(pl.LightningModule):
             visual_inputs["images"] = batch["images"]
         return visual_inputs
 
-    def _get_image_embs(self, images: torch.tensor) -> torch.tensor:
+    def _get_image_embs(self, images: torch.Tensor) -> torch.Tensor:
         """
         Given a batch of images, returns corresponding CLIP embeddings
 
@@ -182,13 +182,13 @@ class CLIPT(pl.LightningModule):
 
     def encode_text_traj(
         self,
-        text_input_ids: Optional[torch.tensor] = None,
-        text_attn_mask: Optional[torch.tensor] = None,
-        images: Optional[torch.tensor] = None,
-        lang_emb: Optional[torch.tensor] = None,
-        image_embs: Optional[torch.tensor] = None,
+        text_input_ids: Optional[torch.Tensor] = None,
+        text_attn_mask: Optional[torch.Tensor] = None,
+        images: Optional[torch.Tensor] = None,
+        lang_emb: Optional[torch.Tensor] = None,
+        image_embs: Optional[torch.Tensor] = None,
         normalize: bool = False,
-    ) -> torch.tensor:
+    ) -> torch.Tensor:
         """
         Takes an input of text and encodes it into a text trajectory embedding
 
@@ -232,10 +232,10 @@ class CLIPT(pl.LightningModule):
 
     def encode_visual_traj(
         self,
-        images: Optional[torch.tensor] = None,
-        image_embs: Optional[torch.tensor] = None,
+        images: Optional[torch.Tensor] = None,
+        image_embs: Optional[torch.Tensor] = None,
         normalize: bool = False,
-    ) -> torch.tensor:
+    ) -> torch.Tensor:
         """
         Takes an input of images and encodes them into a visual trajectory embedding
 
@@ -262,7 +262,7 @@ class CLIPT(pl.LightningModule):
         # apply normalization if specified
         return F.normalize(visual_traj_emb, dim=-1) if normalize else visual_traj_emb
 
-    def _fit_step(self, batch: Dict[str, torch.tensor], phase: str) -> torch.tensor:
+    def _fit_step(self, batch: Dict[str, torch.Tensor], phase: str) -> torch.Tensor:
         """
         Args:
             batch: dict with keys "images", "text_input_ids", "text_attn_mask"
@@ -282,12 +282,12 @@ class CLIPT(pl.LightningModule):
         return loss
 
     def training_step(
-        self, batch: Dict[str, torch.tensor], batch_idx: int
-    ) -> torch.tensor:
+        self, batch: Dict[str, torch.Tensor], batch_idx: int
+    ) -> torch.Tensor:
         loss = self._fit_step(batch, phase="train")
         return loss
 
-    def validation_step(self, batch: Dict[str, torch.tensor], batch_idx: int):
+    def validation_step(self, batch: Dict[str, torch.Tensor], batch_idx: int):
         self._fit_step(batch, phase="val")
 
     def on_train_batch_end(self, outputs, batch, batch_idx):
@@ -297,7 +297,7 @@ class CLIPT(pl.LightningModule):
             # in place operation
             self.temperature.clamp_(0, np.log(self.max_temp_value))
 
-    def test_step(self, batch: Dict[str, torch.tensor], batch_idx: int):
+    def test_step(self, batch: Dict[str, torch.Tensor], batch_idx: int):
         # What metric do we evaluate on?
         raise NotImplementedError
 

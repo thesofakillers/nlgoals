@@ -96,12 +96,12 @@ class RCBC(pl.LightningModule):
 
     def forward(
         self,
-        rgb_perc: torch.tensor,
-        proprio_perc: torch.tensor,
-        reward: torch.tensor,
-        task_id: torch.tensor,
-        seq_lens: torch.tensor,
-    ) -> Dict[str, torch.tensor]:
+        rgb_perc: torch.Tensor,
+        proprio_perc: torch.Tensor,
+        reward: torch.Tensor,
+        task_id: torch.Tensor,
+        seq_lens: torch.Tensor,
+    ) -> Dict[str, torch.Tensor]:
         """
         Forward pass through the network.
 
@@ -151,8 +151,8 @@ class RCBC(pl.LightningModule):
         return action_decoder_out
 
     def _get_reward_emb(
-        self, reward: torch.tensor, task_id: torch.tensor
-    ) -> torch.tensor:
+        self, reward: torch.Tensor, task_id: torch.Tensor
+    ) -> torch.Tensor:
         """
         Args:
             rewards: B, reward at final step of trajectory
@@ -178,9 +178,9 @@ class RCBC(pl.LightningModule):
 
     def _fit_step(
         self,
-        batch: Dict[str, Union[torch.tensor, Dict[str, torch.tensor]]],
+        batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]],
         phase: str,
-    ) -> torch.tensor:
+    ) -> torch.Tensor:
         """
         Fit step for the model. Logs loss and training metrics.
 
@@ -231,12 +231,12 @@ class RCBC(pl.LightningModule):
 
     def step(
         self,
-        rgb_perc: torch.tensor,
-        proprio_perc: torch.tensor,
-        reward: torch.tensor,
-        task_id: torch.tensor,
-        seq_lens: torch.tensor,
-    ) -> torch.tensor:
+        rgb_perc: torch.Tensor,
+        proprio_perc: torch.Tensor,
+        reward: torch.Tensor,
+        task_id: torch.Tensor,
+        seq_lens: torch.Tensor,
+    ) -> torch.Tensor:
         """
         Predicts a next action for a given input (batch) of data
 
@@ -258,7 +258,7 @@ class RCBC(pl.LightningModule):
         pred_action = self.action_decoder.sample(**action_decoder_out)
         return pred_action
 
-    def training_step(self, batch, batch_idx) -> torch.tensor:
+    def training_step(self, batch, batch_idx) -> torch.Tensor:
         loss = self._fit_step(batch, "train")
         return loss
 
