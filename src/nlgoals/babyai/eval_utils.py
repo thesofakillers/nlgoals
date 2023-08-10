@@ -114,7 +114,7 @@ def run_oracle(env, seed, seed_offset) -> Tuple[np.ndarray, str, int]:
 
             while not final_step:
                 action = oracle.replan()
-                if isinstance(action, torch.Tensor):
+                if isinstance(action, torch.tensor):
                     action = action.item()
                 if done:
                     final_step = True

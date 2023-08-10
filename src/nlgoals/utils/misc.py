@@ -38,7 +38,7 @@ def calc_accuracy_top_k(matrix, k=5):
     return num_correct / num_samples
 
 
-def pad_with_repetition(input_tensor: torch.Tensor, pad_size: int) -> torch.Tensor:
+def pad_with_repetition(input_tensor: torch.tensor, pad_size: int) -> torch.tensor:
     """
     Pad a sequence Tensor by repeating last element pad_size times.
 
@@ -56,7 +56,7 @@ def pad_with_repetition(input_tensor: torch.Tensor, pad_size: int) -> torch.Tens
     return padded
 
 
-def pad_with_zeros(input_tensor: torch.Tensor, pad_size: int) -> torch.Tensor:
+def pad_with_zeros(input_tensor: torch.tensor, pad_size: int) -> torch.tensor:
     """
     Pad a Tensor with zeros.
 

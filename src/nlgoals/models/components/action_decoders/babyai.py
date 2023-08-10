@@ -24,7 +24,7 @@ class BabyAIActionDecoder(ActionDecoder):
             nn.Linear(num_target_vals * 3, num_target_vals),
         )
 
-    def forward(self, hidden_state) -> Dict[str, torch.Tensor]:
+    def forward(self, hidden_state) -> Dict[str, torch.tensor]:
         """
         Args:
             hidden_state: (P, hidden_dim) packed hidden state from a GRU

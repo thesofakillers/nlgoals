@@ -3,7 +3,7 @@ import torch
 
 
 def sigmoid(scale: float, shift: float, x: int) -> float:
-    return torch.sigmoid(torch.Tensor([(x - shift) / (scale / 12)])).item()
+    return torch.sigmoid(torch.tensor([(x - shift) / (scale / 12)])).item()
 
 
 class KLSchedule(Callback):

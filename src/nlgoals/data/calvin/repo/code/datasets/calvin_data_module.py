@@ -228,7 +228,7 @@ class Collator:
 
     def _base_collate(
         self, batch_list: List[Dict]
-    ) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
+    ) -> Dict[str, Union[torch.tensor, Dict[str, torch.tensor]]]:
         """
         Handles tokenization and padding
 
@@ -272,7 +272,7 @@ class Collator:
 
     def _collate_padding(
         self, batch_list: List[Dict]
-    ) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
+    ) -> Dict[str, Union[torch.tensor, Dict[str, torch.tensor]]]:
         """
         Takes care of padding
         Args:
@@ -329,13 +329,13 @@ class Collator:
             ]
         )
 
-        padded_batch["idx"] = torch.Tensor([element["idx"] for element in batch_list])
+        padded_batch["idx"] = torch.tensor([element["idx"] for element in batch_list])
 
         return padded_batch
 
     def _collate_tokenization(
         self, batch_list: List[Dict]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.tensor, torch.tensor]:
         """
         Takes care of tokenization
 
@@ -354,7 +354,7 @@ class Collator:
 
     @staticmethod
     def custom_collate_fn(
-        batch: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]
+        batch: Dict[str, Union[torch.tensor, Dict[str, torch.tensor]]]
     ) -> Any:
         """
         Designed to be overridden externally, so that depending on the model,

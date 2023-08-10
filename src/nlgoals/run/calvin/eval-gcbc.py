@@ -123,7 +123,7 @@ def save_video(video: np.ndarray, traj_mode: str, save_dir, video_meta: Dict):
 
 def get_goal(
     episode, traj_mode, tokenizer, device
-) -> Union[Dict[str, torch.Tensor], torch.Tensor]:
+) -> Union[Dict[str, torch.tensor], torch.tensor]:
     if traj_mode == "textual":
         goal = {}
         lang = episode["lang"]
@@ -140,7 +140,7 @@ def rollout(
     env: CalvinEnvWrapper,
     reset_info: Dict,
     model: GCBC,
-    goal: Union[str, torch.Tensor],
+    goal: Union[str, torch.tensor],
     traj_mode: str,
     rollout_steps: int,
     task_oracle: Tasks,
