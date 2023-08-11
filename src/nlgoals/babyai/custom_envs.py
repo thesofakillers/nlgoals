@@ -1,6 +1,6 @@
 """Custom Environments for Minigrid"""
 import math
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Callable
 
 from minigrid.core.constants import COLOR_NAMES, COLOR_TO_IDX
 from minigrid.core.grid import OBJECT_TO_IDX
@@ -8,9 +8,77 @@ from minigrid.core.world_object import WorldObj, Point
 from minigrid.envs.babyai.core.levelgen import LevelGen
 from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 from minigrid.envs.babyai.core.verifier import GoToInstr, ObjDesc
+from minigrid.wrappers import Wrapper
 import numpy as np
 
 POSSIBLE_CC_POS = {"top left", "top right", "bottom left", "bottom right"}
+
+
+class CustomGoToObj(RoomGridLevel):
+    """
+    # TODO
+    """
+
+    def __init__(self, obj_type: str, unique_objs: bool, **kwargs):
+        self.obj_type = obj_type
+        self.unique_objs = unique_objs
+        super().__init__(**kwargs)
+        raise NotImplementedError
+
+
+class ColorObjLockWrapper(Wrapper):
+    """
+    # TODO
+    """
+
+    def __init__(self, obj_type: str, color: str, **kwargs):
+        self.obj_type = obj_type
+        self.color = color
+        super().__init__(**kwargs)
+        raise NotImplementedError
+
+
+class DistractorConstraintWrapper(Wrapper):
+    """
+    # TODO
+    """
+
+    def __init__(
+        self,
+        min_obj: Optional[int] = None,
+        obj_type: Optional[str] = None,
+        min_color: Optional[int] = None,
+        color: Optional[str] = None,
+        **kwargs,
+    ):
+        self.min_obj = min_obj
+        self.obj_type = obj_type
+        self.min_color = min_color
+        self.color = color
+        super().__init__(**kwargs)
+        raise NotImplementedError
+
+
+class RGBImgTransformWrapper(Wrapper):
+    """
+    # TODO
+    """
+
+    def __init__(self, img_transform: Callable**kwargs):
+        self.img_transform = img_transform
+        super().__init__(**kwargs)
+        raise NotImplementedError
+
+
+class MissionTransformWrapper(Wrapper):
+    """
+    # TODO
+    """
+
+    def __init__(self, mission_transform: Callable, **kwargs):
+        self.mission_transform = mission_transform
+        super().__init__(**kwargs)
+        raise NotImplementedError
 
 
 class RoomGridLevelCC(RoomGridLevel):
