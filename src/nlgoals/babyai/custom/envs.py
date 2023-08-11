@@ -103,7 +103,7 @@ class RoomGridLevelCC(RoomGridLevel):
 
     ```python
     from minigrid.envs.babyai import GoToLocal
-    from nlgoals.babyai.custom_envs import RoomGridLevelCC
+    from nlgoals.babyai.custom import RoomGridLevelCC
     GoToLocal.__bases__ = (RoomGridLevelCC,)
 
     env = GoToLocal(cc_obj_kind="key", cc_obj_color="red", cc_obj_pos="top left")

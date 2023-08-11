@@ -18,7 +18,7 @@ from nlgoals.babyai.eval_utils import (
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.gcbc import BABYAI_GCBC
 from nlgoals.models.rcbc import BABYAI_RCBC
-from nlgoals.babyai.custom_envs import (
+from nlgoals.babyai.custom import (
     CustomGoToObj,
     ColorObjLockWrapper,
     DistractorConstraintWrapper,

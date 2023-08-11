@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 
 from nlgoals.data.transforms import CLIPImageTransform
 from nlgoals.models.rcbc import BABYAI_RCBC, RCBC
-from nlgoals.babyai.custom_envs import GoToSpecObj, make_cc, POSSIBLE_CC_POS
+from nlgoals.babyai.custom import GoToSpecObj, make_cc, POSSIBLE_CC_POS
 from nlgoals.interfaces.rcbc import babyai_obs_prepare
 from nlgoals.babyai.eval_utils import (
     check_conf_done,

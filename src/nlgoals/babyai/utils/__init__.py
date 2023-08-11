@@ -2,7 +2,7 @@ import os
 import random
 import numpy
 import torch
-from nlgoals.babyai.custom_envs import GoToSpecObj
+from nlgoals.babyai.custom import GoToSpecObj
 from nlgoals.babyai.utils.agent import load_agent, ModelAgent, DemoAgent, BotAgent
 from nlgoals.babyai.utils.demos import (
     load_demos,

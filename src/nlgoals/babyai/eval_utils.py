@@ -7,7 +7,7 @@ from minigrid.utils.baby_ai_bot import BabyAIBot
 import numpy as np
 import torch
 
-from nlgoals.babyai.custom_envs import str_to_pos
+from nlgoals.babyai.custom import str_to_pos
 from nlgoals.utils.misc import prep_video
 
 logger = logging.getLogger(__name__)

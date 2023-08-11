@@ -15,7 +15,7 @@ from transformers import AutoTokenizer
 from nlgoals.data.transforms import CLIPImageTransform
 from nlgoals.models.clipt import CLIPT
 from nlgoals.models.gcbc import GCBC, gcbc_enum_to_class, GCBC_ENUM
-from nlgoals.babyai.custom_envs import GoToSpecObj, make_cc, POSSIBLE_CC_POS
+from nlgoals.babyai.custom import GoToSpecObj, make_cc, POSSIBLE_CC_POS
 from nlgoals.interfaces.gcbc import babyai_obs_prepare
 from nlgoals.babyai.eval_utils import (
     check_conf_done,

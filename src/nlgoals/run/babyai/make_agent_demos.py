@@ -22,7 +22,7 @@ import torch
 from tqdm.auto import tqdm
 
 import nlgoals.babyai.utils as utils
-from nlgoals.babyai.custom_envs import POSSIBLE_CC_POS, make_cc
+from nlgoals.babyai.custom import POSSIBLE_CC_POS, make_cc
 
 
 def print_demo_lengths(demos):
