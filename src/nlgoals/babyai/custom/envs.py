@@ -7,7 +7,7 @@ from minigrid.core.grid import OBJECT_TO_IDX
 from minigrid.core.roomgrid import Ball, Box, Key
 from minigrid.core.world_object import WorldObj, Point
 from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
-from minigrid.envs.babyai.core.verifier import GoToInstr, Instr, ObjDesc
+from minigrid.envs.babyai.core.verifier import GoToInstr, ObjDesc
 import numpy as np
 
 POSSIBLE_CC_POS = {"top left", "top right", "bottom left", "bottom right"}
