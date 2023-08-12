@@ -4,7 +4,7 @@ from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 from minigrid.wrappers import Wrapper
 
 
-class ColorObjLockWrapper(Wrapper):
+class ColorTypeLockWrapper(Wrapper):
     """
     Ensures that a given object type will always be of a given color.
     """

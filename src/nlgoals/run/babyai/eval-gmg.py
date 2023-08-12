@@ -22,7 +22,7 @@ from nlgoals.models.gcbc import BABYAI_GCBC
 from nlgoals.models.rcbc import BABYAI_RCBC
 from nlgoals.babyai.custom import (
     CustomGoToObj,
-    ColorObjLockWrapper,
+    ColorTypeLockWrapper,
     DistractorConstraintWrapper,
 )
 
@@ -113,7 +113,7 @@ def check_conf_done(env, true_done: bool, agent_dir: int):
             Integer between 0 and 3 meaning right, down, left, up
     """
     # when this is the wrapper used, we are in the confounding setting
-    if env.wrapper_name == 'color-obj-lock':
+    if env.wrapper_name == "color-obj-lock":
         return true_done
 
     # list of x, y coordinates of confounding objects
@@ -315,7 +315,7 @@ def setup_env(env_args):
     env = CustomGoToObj(obj_type=env_args.obj_type, highlight=False, unique_objs=True)
 
     if env_args.cc.enable:
-        env = ColorObjLockWrapper(
+        env = ColorTypeLockWrapper(
             env, obj_type=env_args.obj_type, color=env_args.cc.color
         )
     else:
