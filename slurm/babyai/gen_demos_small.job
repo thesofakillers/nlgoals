@@ -19,7 +19,7 @@ source activate nlgoals
 save_dir=/scratch-shared/gstarace/repos/thesis/data/babyai/play/small
 
 srun python src/nlgoals/run/babyai/make_agent_demos.py \
-  --envs_size small \
+  --envs_size small-play \
   --save_path $save_dir \
   --episodes 700000 \
   --val_episodes 40000 \
