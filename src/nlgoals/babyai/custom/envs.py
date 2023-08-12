@@ -65,7 +65,7 @@ class CustomGoToObj(RoomGridLevel):
         self.place_distractors()
 
         # generate goal/mission
-        self.instrs = GoToInstr(ObjDesc(self.obj_type))
+        self.instrs = GoToInstr(ObjDesc(type=self.obj_type))
 
     def set_obj_color(self):
         self.obj_color = self._rand_elem(COLOR_NAMES)
@@ -80,13 +80,53 @@ class CustomGoToObj(RoomGridLevel):
 
 class CustomGoToColor(RoomGridLevel):
     """
-    # TODO
+    "Go to the/a {obj_color} object" task
     """
 
-    def __init__(self, color: str, **kwargs):
-        self.color = color
-        super().__init__(**kwargs)
-        raise NotImplementedError
+    def __init__(
+        self, obj_color: str, only_one: bool = False, num_dists: int = 7, **kwargs
+    ):
+        """
+        Args:
+            obj_color: color of object to go to
+            only_one: whether to have only one object of the given color
+            num_dists: number of distractors to place
+        """
+        self.obj_color = obj_color
+        self.only_one = only_one
+        self.num_dists = num_dists
+        super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
+
+    def gen_mission(self):
+        # randomly place agent
+        self.place_agent()
+
+        # setup object
+        #   randomly choose object type
+        self.set_obj_type()
+        #   init obj instance
+        obj = get_obj(self.obj_type, self.obj_color)
+        # randomly place obj
+        self.place_obj(obj)
+
+        # distractors
+        self.distractor_colors = set(COLOR_NAMES)
+        if self.only_one:
+            self.distractor_colors -= {self.obj_color}
+        self.place_distractors()
+
+        # generate goal/mission
+        self.instrs = GoToInstr(ObjDesc(type=None, color=self.obj_color))
+
+    def set_obj_type(self):
+        self.obj_type = self._rand_elem(OBJ_MAP.keys())
+
+    def place_distractors(self):
+        for _ in range(self.num_dists):
+            distractor_type = self._rand_elem(OBJ_MAP.keys())
+            distractor_color = self._rand_elem(self.distractor_colors)
+            distractor = get_obj(distractor_type, distractor_color)
+            self.place_obj(distractor)
 
 
 class RoomGridLevelCC(RoomGridLevel):
