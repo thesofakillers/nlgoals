@@ -1,20 +1,38 @@
 from typing import Optional, Callable
+from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 
 from minigrid.wrappers import Wrapper
 
 
 class ColorObjLockWrapper(Wrapper):
     """
-    # TODO
+    Ensures that a given object type will always be of a given color.
     """
 
-    def __init__(self, env, obj_type: str, color: str):
+    def __init__(self, env: RoomGridLevel, obj_type: str, color: str):
+        """
+        Args:
+            env: The environment to wrap.
+            obj_type: The object type to lock.
+            color: The color to lock the object type to.
+        """
         super().__init__(env)
         self.obj_type = obj_type
         self.color = color
         self.wrapper_name = "color-obj-lock"
-        raise NotImplementedError
 
+    def reset(self, **kwargs):
+        """
+        Reset the environment and override object color.
+        """
+        obs = self.env.reset(**kwargs)
+
+        # Override object color
+        for obj in self.env.grid.grid:
+            if obj is not None and obj.type == self.obj_type:
+                obj.color = self.color
+
+        return obs
 
 class DistractorConstraintWrapper(Wrapper):
     """
