@@ -29,19 +29,25 @@ class CustomGoToObj(RoomGridLevel):
     """
 
     def __init__(
-        self, obj_type: str, only_one: bool = False, num_dists: int = 7, **kwargs
+        self,
+        obj_type: Optional[str] = None,
+        only_one: bool = False,
+        num_dists: int = 7,
+        **kwargs,
     ):
         """
         Args:
-            obj_type: type of object to go to
+            obj_type: type of object to go to. If not specified, will be random
             only_one: whether to have only one object of the given type
             num_dists: number of distractors to place
         """
-        assert (
-            obj_type in OBJECT_TO_IDX
-        ), f"Invalid object type: {obj_type}. Must be one of {OBJECT_TO_IDX.keys()}."
-
-        self.obj_type = obj_type
+        if obj_type is None:
+            self.obj_type = self._rand_elem(OBJ_MAP.keys())
+        else:
+            assert (
+                obj_type in OBJECT_TO_IDX
+            ), f"Invalid object type: {obj_type}. Must be one of {OBJ_MAP.keys()}."
+            self.obj_type = obj_type
         self.only_one = only_one
         self.num_dists = num_dists
         super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
@@ -86,15 +92,25 @@ class CustomGoToColor(RoomGridLevel):
     """
 
     def __init__(
-        self, obj_color: str, only_one: bool = False, num_dists: int = 7, **kwargs
+        self,
+        obj_color: Optional[str] = None,
+        only_one: bool = False,
+        num_dists: int = 7,
+        **kwargs,
     ):
         """
         Args:
-            obj_color: color of object to go to
+            obj_color: color of object to go to. If not specified, will be random
             only_one: whether to have only one object of the given color
             num_dists: number of distractors to place
         """
-        self.obj_color = obj_color
+        if obj_color is None:
+            self.obj_color = self._rand_elem(COLOR_NAMES)
+        else:
+            assert (
+                obj_color in COLOR_TO_IDX
+            ), f"Invalid object color: {obj_color}. Must be one of {COLOR_NAMES}."
+            self.obj_color = obj_color
         self.only_one = only_one
         self.num_dists = num_dists
         super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
