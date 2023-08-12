@@ -71,11 +71,13 @@ class CustomGoToObj(RoomGridLevel):
         self.obj_color = self._rand_elem(COLOR_NAMES)
 
     def place_distractors(self):
+        self.distractors = []
         for _ in range(self.num_dists):
             distractor_type = self._rand_elem(self.distractor_types)
             distractor_color = self._rand_elem(COLOR_NAMES)
             distractor = get_obj(distractor_type, distractor_color)
             self.place_obj(distractor)
+            self.distractors.append(distractor)
 
 
 class CustomGoToColor(RoomGridLevel):
@@ -122,11 +124,13 @@ class CustomGoToColor(RoomGridLevel):
         self.obj_type = self._rand_elem(OBJ_MAP.keys())
 
     def place_distractors(self):
+        self.distractors = []
         for _ in range(self.num_dists):
             distractor_type = self._rand_elem(OBJ_MAP.keys())
             distractor_color = self._rand_elem(self.distractor_colors)
             distractor = get_obj(distractor_type, distractor_color)
             self.place_obj(distractor)
+            self.distractors.append(distractor)
 
 
 class RoomGridLevelCC(RoomGridLevel):
