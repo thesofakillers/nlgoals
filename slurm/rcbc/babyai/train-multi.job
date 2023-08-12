@@ -23,6 +23,6 @@ srun python src/nlgoals/run/babyai/train-rcbc.py \
   --config src/nlgoals/configs/babyai/train-rcbc.json \
   --data.data_path=$data_path \
   --data.envs_size small \
-  --rcbc.n_tasks 18 \
+  --rcbc.n_tasks 6 \
   --trainer.checkpoint.dirpath "checkpoints/babyai/rcbc/multi_task/" \
   --seed 1
