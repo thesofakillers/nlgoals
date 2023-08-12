@@ -4,24 +4,79 @@ from typing import Optional, List, Tuple
 
 from minigrid.core.constants import COLOR_NAMES, COLOR_TO_IDX
 from minigrid.core.grid import OBJECT_TO_IDX
+from minigrid.core.roomgrid import Ball, Box, Key
 from minigrid.core.world_object import WorldObj, Point
 from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
-from minigrid.envs.babyai.core.verifier import GoToInstr, ObjDesc
+from minigrid.envs.babyai.core.verifier import GoToInstr, Instr, ObjDesc
 import numpy as np
 
 POSSIBLE_CC_POS = {"top left", "top right", "bottom left", "bottom right"}
 
+OBJ_MAP = {
+    "key": Key,
+    "ball": Ball,
+    "box": Box,
+}
+
+
+def get_obj(obj_type, obj_color):
+    return OBJ_MAP[obj_type](obj_color)
+
 
 class CustomGoToObj(RoomGridLevel):
     """
-    # TODO
+    "Go to the/a {obj_type}" task
     """
 
-    def __init__(self, obj_type: str, unique_objs: bool, **kwargs):
+    def __init__(
+        self, obj_type: str, only_one: bool = False, num_dists: int = 7, **kwargs
+    ):
+        """
+        Args:
+            obj_type: type of object to go to
+            only_one: whether to have only one object of the given type
+            num_dists: number of distractors to place
+        """
+        assert (
+            obj_type in OBJECT_TO_IDX
+        ), f"Invalid object type: {obj_type}. Must be one of {OBJECT_TO_IDX.keys()}."
+
         self.obj_type = obj_type
-        self.unique_objs = unique_objs
-        super().__init__(**kwargs)
-        raise NotImplementedError
+        self.only_one = only_one
+        self.num_dists = num_dists
+        super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
+
+    def gen_mission(self):
+        # randomly place agent
+        self.place_agent()
+
+        # setup object
+        #   randomly choose object color
+        self.set_obj_color()
+        #   init obj instance
+        obj = get_obj(self.obj_type, self.obj_color)
+        # randomly place obj
+        self.place_obj(obj)
+
+        # distractors
+        self.distractor_types = {"ball", "box", "key"}
+        if self.only_one:
+            self.distractor_types -= {self.obj_type}
+        self.place_distractors()
+
+        # generate goal/mission
+        self.instrs = GoToInstr(ObjDesc(self.obj_type))
+
+    def set_obj_color(self):
+        self.obj_color = self._rand_elem(COLOR_NAMES)
+
+    def place_distractors(self):
+        for _ in range(self.num_dists):
+            distractor_type = self._rand_elem(self.distractor_types)
+            distractor_color = self._rand_elem(COLOR_NAMES)
+            distractor = get_obj(distractor_type, distractor_color)
+            self.place_obj(distractor)
+
 
 class CustomGoToColor(RoomGridLevel):
     """
@@ -32,6 +87,7 @@ class CustomGoToColor(RoomGridLevel):
         self.color = color
         super().__init__(**kwargs)
         raise NotImplementedError
+
 
 class RoomGridLevelCC(RoomGridLevel):
     """
