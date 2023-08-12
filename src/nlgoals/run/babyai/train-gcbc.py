@@ -70,7 +70,7 @@ def train(args):
         tags=["gcbc", *model.datasets],
     )
     early_stopping = pl.callbacks.early_stopping.EarlyStopping(
-        monitor="textual/val_loss", mode="min", strict=False, patience=5
+        monitor="textual/val_loss", mode="min", strict=False
     )
     args.trainer.checkpoint.filename = (
         f"{model.name}-{'_'.join(model.datasets)}-s{args.seed}"
