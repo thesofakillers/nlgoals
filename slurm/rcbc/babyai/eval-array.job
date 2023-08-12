@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=18
 #SBATCH --time=00:30:00
 #SBATCH --mem-per-gpu=120G
-#SBATCH --array=1-4%4
+#SBATCH --array=1-2%2
 #SBATCH --output=slurm/outputs/rcbc_eval_array_%A_%a.out
 
 source "./slurm/.secrets"
