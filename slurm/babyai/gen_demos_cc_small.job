@@ -25,6 +25,5 @@ srun python src/nlgoals/run/babyai/make_agent_demos.py \
   --val_episodes 40000 \
   --num_workers 32 \
   --causally_confuse true \
-  --cc_obj_kind ball \
-  --cc_obj_color red \
-  --cc_obj_pos_str 'bottom right'
+  --cc_obj_kind key \
+  --cc_obj_color red

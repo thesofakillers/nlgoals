@@ -11,18 +11,17 @@ import time
 import multiprocessing as mp
 from typing import Optional, Dict
 
-from minigrid.core.constants import COLOR_TO_IDX, OBJECT_TO_IDX
-from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
-from minigrid.envs.babyai.goto import LevelGen
+from minigrid.core.constants import COLOR_TO_IDX
 from minigrid.utils.baby_ai_bot import BabyAIBot
 from minigrid.wrappers import RGBImgObsWrapper
 import numpy as np
 import blosc
 import torch
 from tqdm.auto import tqdm
+from nlgoals.babyai.custom.envs import OBJ_MAP
+from nlgoals.babyai.custom.wrappers import ColorTypeLockWrapper
 
 import nlgoals.babyai.utils as utils
-from nlgoals.babyai.custom import POSSIBLE_CC_POS, make_cc
 
 
 def print_demo_lengths(demos):
@@ -61,24 +60,18 @@ def generate_episode(
     envs_size,
     causally_confuse: bool = False,
     cc_kwargs: Optional[Dict[str, str]] = None,
-    single_kwargs: Optional[Dict[str, str]] = None,
 ):
     possible_envs = utils.SIZE_TO_ENVS[envs_size]
 
     # sample a random environment
     env_name = np.random.choice(possible_envs)
     EnvClass = utils.NAME_TO_CLASS[env_name]
-    if envs_size == "single":
-        env_kwargs = single_kwargs
-    else:
-        env_kwargs = utils.NAME_TO_KWARGS[env_name]
-    if causally_confuse:
-        # modify inheritance of EnvClass s.t. causal confusion is handled if requested
-        EnvClass = make_cc(EnvClass)
-        env_kwargs = {**env_kwargs, **cc_kwargs}
+    env_kwargs = utils.NAME_TO_KWARGS[env_name]
     env = EnvClass(highlight=False, **env_kwargs)
+    if causally_confuse:
+        env = ColorTypeLockWrapper(env, **cc_kwargs)
     env = RGBImgObsWrapper(
-        env, tile_size=28 if envs_size.split("-")[0] in {"small", "single"} else 12
+        env, tile_size=28 if envs_size.split("-")[0] in {"small"} else 12
     )
 
     mission_success = False
@@ -142,7 +135,6 @@ def generate_demos(
     num_workers: int,
     causally_confuse: bool = False,
     cc_kwargs: Optional[Dict[str, str]] = None,
-    single_kwargs: Optional[Dict[str, str]] = None,
 ):
     """
     Generate a set of agent demonstrations from the BabyAIBot
@@ -152,11 +144,10 @@ def generate_demos(
         valid (bool): whether to the episodes are for validation or not
         seed (int): random starting seed
         envs_size (str): Which environment size to use.
-            Can be "small(-play)", "large(-play)" or "single"
+            Can be "small(-play)", "large(-play)"
         num_workers: number of workers to use for multiprocessing
         causally_confuse (bool): whether to causally confuse the environment
         cc_kwargs (dict): kwargs for the causal confusion
-        single_kwargs (dict): kwargs for the single environment
     """
     utils.seed(seed)
     checkpoint_time = time.time()
@@ -175,7 +166,6 @@ def generate_demos(
                 envs_size,
                 causally_confuse,
                 cc_kwargs,
-                single_kwargs,
             ),
         )
         for seed in seeds
@@ -209,9 +199,9 @@ if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser()
     parser.add_argument(
         "--envs_size",
-        choices=["small-play", "large-play", "small", "single"],
+        choices=["small-play", "large-play", "small"],
         default="small",
-        help="Whether to use small or large environments. Or a single GoToSpecObj env",
+        help="Whether to use small or large environments.",
     )
     parser.add_argument(
         "--save_path",
@@ -245,7 +235,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--cc_obj_kind",
         type=str,
-        choices=list(OBJECT_TO_IDX.keys()),
+        choices=list(OBJ_MAP.keys()),
         required=False,
         help="Object kind to use for causal confusion",
     )
@@ -256,39 +246,13 @@ if __name__ == "__main__":
         required=False,
         help="Object color to use for causal confusion",
     )
-    parser.add_argument(
-        "--cc_obj_pos_str",
-        type=str,
-        choices=POSSIBLE_CC_POS,
-        required=False,
-        help="Object position to use for causal confusion",
-    )
-    parser.add_argument(
-        "--single_obj_kind",
-        type=str,
-        choices=list(OBJECT_TO_IDX.keys()),
-        required=False,
-        help="Object kind to use for `single` env_size",
-    )
-    parser.add_argument(
-        "--single_obj_color",
-        type=str,
-        choices=list(COLOR_TO_IDX.keys()),
-        required=False,
-        help="Object color to use for `single` env_size",
-    )
 
     args = parser.parse_args()
     logger = logging.getLogger(__name__)
 
     cc_kwargs = {
-        "cc_obj_kind": args.cc_obj_kind,
-        "cc_obj_color": args.cc_obj_color,
-        "cc_obj_pos_str": args.cc_obj_pos_str,
-    }
-    single_kwargs = {
-        "obj_kind": args.single_obj_kind,
-        "obj_color": args.single_obj_color,
+        "obj_type": args.cc_obj_kind,
+        "color": args.cc_obj_color,
     }
 
     logging.basicConfig(level="INFO", format="%(asctime)s: %(levelname)s: %(message)s")
@@ -301,7 +265,6 @@ if __name__ == "__main__":
         args.num_workers,
         args.causally_confuse,
         cc_kwargs,
-        single_kwargs,
     )
     # Validation demos
     if args.val_episodes:
@@ -313,5 +276,4 @@ if __name__ == "__main__":
             args.num_workers,
             args.causally_confuse,
             cc_kwargs,
-            single_kwargs,
         )
