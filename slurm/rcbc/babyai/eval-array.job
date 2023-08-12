@@ -21,7 +21,8 @@ source activate nlgoals
 HPARAMS_FILE="slurm/rcbc/babyai/eval-array.txt"
 
 srun python src/nlgoals/run/babyai/eval-rcbc.py \
-  --num_rollouts 1000 \
-  --num_rollout_steps 50 \
-  --verbose false \
+  --eval.num_rollouts 1000 \
+  --eval.max_steps 50 \
+  --eval.verbose false \
+  --conditioning reward \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)

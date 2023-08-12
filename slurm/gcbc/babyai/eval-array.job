@@ -20,10 +20,10 @@ source activate nlgoals
 
 HPARAMS_FILE="slurm/gcbc/babyai/eval-array.txt"
 
-srun python src/nlgoals/run/babyai/eval-gcbc.py \
-  --num_rollouts 1000 \
-  --num_rollout_steps 50 \
-  --verbose false \
-  --model_variant BABYAI \
+srun python src/nlgoals/run/babyai/eval-gmg.py \
+  --eval.num_rollouts 1000 \
+  --eval.max_steps 50 \
+  --eval.verbose false \
+  --conditioning goal \
   --clipt_checkpoint checkpoints/babyai/cclipt/last.ckpt \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
