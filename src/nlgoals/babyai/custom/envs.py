@@ -23,6 +23,15 @@ class CustomGoToObj(RoomGridLevel):
         super().__init__(**kwargs)
         raise NotImplementedError
 
+class CustomGoToColor(RoomGridLevel):
+    """
+    # TODO
+    """
+
+    def __init__(self, color: str, **kwargs):
+        self.color = color
+        super().__init__(**kwargs)
+        raise NotImplementedError
 
 class RoomGridLevelCC(RoomGridLevel):
     """
