@@ -3,6 +3,7 @@ import random
 import numpy
 import torch
 from nlgoals.babyai.custom import GoToSpecObj
+from nlgoals.babyai.custom.envs import CustomGoToColor, CustomGoToObj
 from nlgoals.babyai.utils.agent import load_agent, ModelAgent, DemoAgent, BotAgent
 from nlgoals.babyai.utils.demos import (
     load_demos,
@@ -27,7 +28,36 @@ from minigrid.envs.babyai import GoToObj, GoToLocal, PickupDist, PickupLoc, PutN
 
 
 SIZE_TO_ENVS = {
-    "single": ["Custom-GoToSpecObj-v0"],
+    "small-play": [
+        "Custom-GoToObjK-v0",
+        "Custom-GoToObjBx-v0",
+        "Custom-GoToObjBl-v0",
+        "Custom-GoToColorR-v0",
+        "Custom-GoToColorG-v0",
+        "Custom-GoToColorB-v0",
+        "Custom-GoToObj-v0",
+        "Custom-GoToColor-v0",
+        "BabyAI-GoToObj-v0",
+        "BabyAI-GoToLocal-v0",
+        "BabyAI-PickupDist-v0",
+        "BabyAI-PickupLoc-v0",
+        "BabyAI-PutNextLocal-v0",
+    ],
+    "small": [
+        # go to the key
+        "Custom-GoToObjK-v0",
+        # go to the box
+        "Custom-GoToObjBx-v0",
+        # go to the ball
+        "Custom-GoToObjBl-v0",
+        # go to the red object
+        "Custom-GoToColorR-v0",
+        # go to the green object
+        "Custom-GoToColorG-v0",
+        # go to the blue object
+        "Custom-GoToColorB-v0",
+    ],
+    "single-legacy": ["Custom-GoToSpecObj-v0"],
     "large-play": [
         "BabyAI-GoToOpen-v0",
         "BabyAI-Pickup-v0",
@@ -35,14 +65,14 @@ SIZE_TO_ENVS = {
         "BabyAI-SynthLoc-v0",
         "BabyAI-Synth-v0",
     ],
-    "small-play": [
+    "small-play-legacy": [
         "BabyAI-GoToObj-v0",
         "BabyAI-GoToLocal-v0",
         "BabyAI-PickupDist-v0",
         "BabyAI-PickupLoc-v0",
         "BabyAI-PutNextLocal-v0",
     ],
-    "small": [  # red, green, blue, purple, yellow, grey
+    "small-legacy": [  # red, green, blue, purple, yellow, grey
         # red ball, box, key
         "Custom-GoToSpecObj-v0-RB",
         "Custom-GoToSpecObj-v0-RBX",
@@ -71,6 +101,14 @@ SIZE_TO_ENVS = {
 }
 
 NAME_TO_CLASS = {
+    "Custom-GoToObj-v0": CustomGoToObj,
+    "Custom-GoToColor-v0": CustomGoToColor,
+    "Custom-GoToObjK-v0": CustomGoToObj,
+    "Custom-GoToObjBx-v0": CustomGoToObj,
+    "Custom-GoToObjBl-v0": CustomGoToObj,
+    "Custom-GoToColorR-v0": CustomGoToColor,
+    "Custom-GoToColorG-v0": CustomGoToColor,
+    "Custom-GoToColorB-v0": CustomGoToColor,
     "BabyAI-GoToObj-v0": GoToObj,
     "BabyAI-GoToLocal-v0": GoToLocal,
     "BabyAI-PickupDist-v0": PickupDist,
@@ -98,6 +136,14 @@ NAME_TO_CLASS = {
 }
 
 NAME_TO_KWARGS = {
+    "Custom-GoToObj-v0": {},
+    "Custom-GoToColor-v0": {},
+    "Custom-GoToObjK-v0": {"obj_type": "key", "only_one": True},
+    "Custom-GoToObjBx-v0": {"obj_type": "box", "only_one": True},
+    "Custom-GoToObjBl-v0": {"obj_type": "ball", "only_one": True},
+    "Custom-GoToColorR-v0": {"obj_color": "red", "only_one": True},
+    "Custom-GoToColorG-v0": {"obj_color": "green", "only_one": True},
+    "Custom-GoToColorB-v0": {"obj_color": "blue", "only_one": True},
     "BabyAI-GoToObj-v0": {},
     "BabyAI-GoToLocal-v0": {},
     "BabyAI-PickupDist-v0": {},
