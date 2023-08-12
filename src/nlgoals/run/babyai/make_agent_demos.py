@@ -23,6 +23,8 @@ from nlgoals.babyai.custom.wrappers import ColorTypeLockWrapper
 
 import nlgoals.babyai.utils as utils
 
+logger = logging.getLogger(__name__)
+
 
 def print_demo_lengths(demos):
     num_frames_per_episode = [len(demo[3]) for demo in demos]
@@ -248,7 +250,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    logger = logging.getLogger(__name__)
 
     cc_kwargs = {
         "obj_type": args.cc_obj_kind,
