@@ -22,9 +22,11 @@ srun python -u src/nlgoals/run/babyai/train-clipt.py \
   --data.transform_variant with_clip \
   --data.train_subset 10000 \
   --data.test_subset 2000 \
+  --data.env_size small-play \
   --data.use_first_last_frames true \
   --clipt.contextualize_text false \
   --trainer.enable_early_stopping true \
   --trainer.enable_progress_bar false \
   --trainer.logging.enable true \
-  --trainer.checkpoint.dirpath checkpoints/babyai/clipt
+  --trainer.checkpoint.dirpath checkpoints/babyai/clipt \
+  --seed 1

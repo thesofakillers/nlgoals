@@ -18,11 +18,12 @@ module load Anaconda3/2022.05
 source activate nlgoals
 
 srun python -u src/nlgoals/run/babyai/train-clipt.py \
-  --model_checkpoint checkpoints/babyai/clipt/clipt-s42.ckpt \
+  --model_checkpoint checkpoints/babyai/clipt/clipt-s1.ckpt \
   --data.data_path=/scratch-shared/gstarace/repos/thesis/data/babyai/play/small \
   --data.transform_variant with_clip \
   --data.train_subset 10000 \
   --data.test_subset 2000 \
+  --data.env_size small-play \
   --data.use_first_last_frames true \
   --clipt.freeze_vision true \
   --clipt.contextualize_text true \
@@ -31,4 +32,5 @@ srun python -u src/nlgoals/run/babyai/train-clipt.py \
   --trainer.enable_progress_bar false \
   --trainer.logging.enable true \
   --trainer.checkpoint.filename cclipt-frozen_vision \
-  --trainer.checkpoint.dirpath checkpoints/babyai/cclipt
+  --trainer.checkpoint.dirpath checkpoints/babyai/cclipt \
+  --seed 1
