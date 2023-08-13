@@ -355,9 +355,12 @@ def main(args):
 
     model_checkpoint_name = os.path.splitext(os.path.basename(args.model_checkpoint))[0]
     env_dir = "cc" if args.env.cc.enable else "normal"
-    save_dir = os.path.join(
-        args.save_dir, model_checkpoint_name, args.traj_mode, env_dir
-    )
+    if args.conditioning == "goal":
+        save_dir = os.path.join(
+            args.save_dir, model_checkpoint_name, policy.traj_mode, env_dir
+        )
+    else:
+        save_dir = os.path.join(args.save_dir, model_checkpoint_name, env_dir)
     save_results(save_dir, true_goal_results, conf_goal_results, videos, seeds)
 
 
