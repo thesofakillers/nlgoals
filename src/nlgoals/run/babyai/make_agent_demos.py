@@ -123,7 +123,7 @@ def generate_episode(
             # handle unsuccessful demos
             else:
                 raise Exception
-        except (Exception, AssertionError):
+        except (Exception, AssertionError, ValueError):
             curr_seed += seed_offset
             logger.debug("Mission either failed or crashed, trying again...")
             continue

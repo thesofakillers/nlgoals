@@ -132,7 +132,7 @@ def run_oracle(env, seed, seed_offset) -> Tuple[np.ndarray, str, int]:
             # handle unsuccessful demos
             else:
                 raise Exception
-        except (Exception, AssertionError):
+        except (Exception, AssertionError, ValueError):
             curr_seed += seed_offset
-            logger.info("Mission either failed or crashed, trying again...")
+            logger.debug("Mission either failed or crashed, trying again...")
             continue
