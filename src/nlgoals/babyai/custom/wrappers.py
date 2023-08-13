@@ -16,17 +16,30 @@ class ColorTypeLockWrapper(Wrapper):
     Ensures that a given object type will always be of a given color.
     """
 
-    def __init__(self, env: RoomGridLevel, obj_type: str, color: str):
+    def __init__(
+        self,
+        env: RoomGridLevel,
+        obj_type: str,
+        color: str,
+        track_types: bool = False,
+        track_colors: bool = False,
+    ):
         """
         Args:
             env: The environment to wrap.
             obj_type: The object type to lock.
             color: The color to lock the object type to.
+            track_types: track the positions of objects of type `obj_type` in the env.
+                in self.tracked_type_positions.
+            track_colors: track the positions of objects of color `color` in the env.
+                in self.tracked_color_positions.
         """
         super().__init__(env)
         self.obj_type = obj_type
         self.color = color
         self.wrapper_name = "color-obj-lock"
+        self.track_types = track_types
+        self.track_colors = track_colors
 
     def reset(self, **kwargs):
         """
@@ -44,6 +57,11 @@ class ColorTypeLockWrapper(Wrapper):
         if goal_obj.type != self.obj_type and isinstance(self.env, CustomGoToObj):
             if goal_obj.color == self.color:
                 raise ValueError("Cannot lock type of goal in GoToObj env.")
+
+        if self.track_types:
+            self.tracked_type_positions = []
+        if self.track_colors:
+            self.tracked_color_positions = []
 
         type_color_count = 0
         # for object in grid, if type, make color, if color make type
@@ -69,6 +87,10 @@ class ColorTypeLockWrapper(Wrapper):
             elif obj.color == self.color:
                 obj.type = self.obj_type
                 type_color_count += 1
+            if obj.type == self.obj_type and self.track_types:
+                self.tracked_type_positions.append(obj.cur_pos)
+            if obj.color == self.color and self.track_colors:
+                self.tracked_color_positions.append(obj.cur_pos)
 
         return obs
 

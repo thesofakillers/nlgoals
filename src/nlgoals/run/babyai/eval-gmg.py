@@ -316,7 +316,7 @@ def setup_env(env_args):
 
     if env_args.cc.enable:
         env = ColorTypeLockWrapper(
-            env, obj_type=env_args.obj_type, color=env_args.cc.color
+            env, obj_type=env_args.obj_type, color=env_args.cc.color, track_colors=True
         )
     else:
         env = DistractorConstraintWrapper(
