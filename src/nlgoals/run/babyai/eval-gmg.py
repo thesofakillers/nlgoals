@@ -288,7 +288,7 @@ def setup_reward_policy(args, device):
     # Our true goal is always index 0.
     policy.task_id = 0
     policy.to(device)
-    pass
+    return policy
 
 
 def setup_policy(args, device):
