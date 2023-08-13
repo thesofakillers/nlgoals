@@ -32,7 +32,7 @@ class CustomGoToObj(RoomGridLevel):
         self,
         obj_type: Optional[str] = None,
         only_one: bool = False,
-        num_dists: int = 7,
+        num_dists: int = 4,
         **kwargs,
     ):
         """
@@ -95,7 +95,7 @@ class CustomGoToColor(RoomGridLevel):
         self,
         obj_color: Optional[str] = None,
         only_one: bool = False,
-        num_dists: int = 7,
+        num_dists: int = 4,
         **kwargs,
     ):
         """
