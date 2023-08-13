@@ -26,4 +26,6 @@ srun python src/nlgoals/run/babyai/eval-gmg.py \
   --eval.verbose false \
   --conditioning goal \
   --clipt_checkpoint checkpoints/babyai/cclipt/last.ckpt \
+  --model_checkpoint checkpoints/babyai/gcbc_cclipt/multi_task/GCBC-BabyAI-s1.ckpt \
+  --save_dir outputs/babyai/gcbc_cclipt/multi_task/ \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)

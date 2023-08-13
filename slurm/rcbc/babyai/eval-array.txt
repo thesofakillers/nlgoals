@@ -1,2 +1,2 @@
---save_dir outputs/babyai/rcbc/multi_task/ --model_checkpoint checkpoints/babyai/rcbc/multi_task/RCBC-BabyAI-s1.ckpt --env.cc.enable false
---save_dir outputs/babyai/rcbc/multi_task/ --model_checkpoint checkpoints/babyai/rcbc/multi_task/RCBC-BabyAI-s1.ckpt --env.cc.enable true
+--env.cc.enable false
+--env.cc.enable true
