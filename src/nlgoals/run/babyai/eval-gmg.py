@@ -174,7 +174,7 @@ def run_rollout(
     rollout_obs = np.zeros((max_steps, 3, 224, 224), dtype=np.uint8)
 
     for step in tqdm(range(max_steps), disable=not verbose):
-        if step % 7 == 0:
+        if step % 6 == 0:
             policy.reset()
 
         step_input = prepare_step_input(policy, obs, img_transform, goal)
