@@ -113,7 +113,7 @@ def check_conf_done(env, true_done: bool, agent_dir: int):
             Integer between 0 and 3 meaning right, down, left, up
     """
     # when this is the wrapper used, we are in the confounding setting
-    if env.wrapper_name == "color-obj-lock":
+    if env.wrapper_name == "color-obj-lock" and true_done is True:
         return true_done
 
     # list of x, y coordinates of confounding objects
