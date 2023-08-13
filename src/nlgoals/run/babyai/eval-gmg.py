@@ -91,7 +91,7 @@ def prepare_step_input(policy, obs, img_transform, goal=None):
     if isinstance(policy, BABYAI_GCBC):
         policy_step_input = prepare_gcbc_input(batch, policy.traj_mode, goal)
     else:
-        policy_step_input = prepare_rcbc_input(obs, policy.device, policy.task_id)
+        policy_step_input = prepare_rcbc_input(batch, policy.device, policy.task_id)
 
     return policy_step_input
 
