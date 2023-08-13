@@ -125,7 +125,7 @@ def generate_episode(
                 raise Exception
         except (Exception, AssertionError):
             curr_seed += seed_offset
-            logger.info("Mission either failed or crashed, trying again...")
+            logger.debug("Mission either failed or crashed, trying again...")
             continue
 
 
