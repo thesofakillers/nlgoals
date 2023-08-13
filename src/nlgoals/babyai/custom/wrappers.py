@@ -3,7 +3,12 @@ from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 
 from minigrid.wrappers import Wrapper
 
-from nlgoals.babyai.custom.envs import CustomGoToColor, CustomGoToObj
+from nlgoals.babyai.custom.envs import (
+    COLOR_NAMES,
+    OBJ_MAP,
+    CustomGoToColor,
+    CustomGoToObj,
+)
 
 
 class ColorTypeLockWrapper(Wrapper):
@@ -30,20 +35,40 @@ class ColorTypeLockWrapper(Wrapper):
         obs = self.env.reset(**kwargs)
 
         goal_obj = self.env.unwrapped.goal_obj
-        if goal_obj.type == self.obj_type:
-            if goal_obj.color != self.color and isinstance(self.env, CustomGoToColor):
+        only_one = self.env.only_one
+
+        if goal_obj.color != self.color and isinstance(self.env, CustomGoToColor):
+            if goal_obj.type == self.obj_type:
                 raise ValueError("Cannot lock color of goal in GoToColor env.")
-        if goal_obj.color == self.color:
-            if goal_obj.type != self.obj_type and isinstance(self.env, CustomGoToObj):
+
+        if goal_obj.type != self.obj_type and isinstance(self.env, CustomGoToObj):
+            if goal_obj.color == self.color:
                 raise ValueError("Cannot lock type of goal in GoToObj env.")
 
-        # Override object color
+        type_color_count = 0
+        # for object in grid, if type, make color, if color make type
+        # if only_one and the goal related to our wrapper,
+        # do this once and change the others to the other type/color
         for obj in self.env.grid.grid:
-            if obj is not None:
+            if obj is None:
+                continue
+            if (
+                only_one
+                and type_color_count >= 1
+                and (goal_obj.type == self.obj_type or goal_obj.color == self.color)
+            ):
                 if obj.type == self.obj_type:
-                    obj.color = self.color
+                    obj.type = self._rand_elem(
+                        set(OBJ_MAP.keys()) - set([self.obj_type])
+                    )
                 if obj.color == self.color:
-                    obj.type = self.obj_type
+                    obj.color = self._rand_elem(set(COLOR_NAMES) - set([self.color]))
+            elif obj.type == self.obj_type:
+                obj.color = self.color
+                type_color_count += 1
+            elif obj.color == self.color:
+                obj.type = self.obj_type
+                type_color_count += 1
 
         return obs
 
