@@ -182,7 +182,7 @@ def run_rollout(
 
         obs, _reward, true_done, _, _ = env.step(action.item())
 
-        conf_done = check_conf_done(env, obs["direction"])
+        conf_done = check_conf_done(env, true_done, obs["direction"])
 
         # save observation for visualization
         rollout_obs[step] = obs["image"].transpose(2, 0, 1)
@@ -323,7 +323,7 @@ def setup_env(env_args):
             env, min_color=1, color=env_args.cc.color, track_colors=True
         )
 
-    env = RGBImgObsWrapper(env)
+    env = RGBImgObsWrapper(env, tile_size=28)
 
     return env
 
