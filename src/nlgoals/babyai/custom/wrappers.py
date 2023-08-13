@@ -3,6 +3,8 @@ from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 
 from minigrid.wrappers import Wrapper
 
+from nlgoals.babyai.custom.envs import CustomGoToColor, CustomGoToObj
+
 
 class ColorTypeLockWrapper(Wrapper):
     """
@@ -27,10 +29,21 @@ class ColorTypeLockWrapper(Wrapper):
         """
         obs = self.env.reset(**kwargs)
 
+        goal_obj = self.env.unwrapped.goal_obj
+        if goal_obj.type == self.obj_type:
+            if goal_obj.color != self.color and isinstance(self.env, CustomGoToColor):
+                raise ValueError("Cannot lock color of goal in GoToColor env.")
+        if goal_obj.color == self.color:
+            if goal_obj.type != self.obj_type and isinstance(self.env, CustomGoToObj):
+                raise ValueError("Cannot lock type of goal in GoToObj env.")
+
         # Override object color
         for obj in self.env.grid.grid:
-            if obj is not None and obj.type == self.obj_type:
-                obj.color = self.color
+            if obj is not None:
+                if obj.type == self.obj_type:
+                    obj.color = self.color
+                if obj.color == self.color:
+                    obj.type = self.obj_type
 
         return obs
 
