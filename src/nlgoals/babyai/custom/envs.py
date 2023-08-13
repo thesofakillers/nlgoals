@@ -2,7 +2,7 @@
 import math
 from typing import Optional, List, Tuple
 
-from minigrid.core.constants import COLOR_NAMES, COLOR_TO_IDX
+from minigrid.core.constants import COLOR_TO_IDX
 from minigrid.core.grid import OBJECT_TO_IDX
 from minigrid.core.roomgrid import Ball, Box, Key
 from minigrid.core.world_object import WorldObj, Point
@@ -17,6 +17,7 @@ OBJ_MAP = {
     "ball": Ball,
     "box": Box,
 }
+COLOR_NAMES = {"red", "green", "blue"}
 
 
 def get_obj(obj_type, obj_color):
@@ -32,7 +33,7 @@ class CustomGoToObj(RoomGridLevel):
         self,
         obj_type: Optional[str] = None,
         only_one: bool = False,
-        num_dists: int = 4,
+        num_dists: Optional[int]=None,
         **kwargs,
     ):
         """
@@ -49,6 +50,8 @@ class CustomGoToObj(RoomGridLevel):
             ), f"Invalid object type: {obj_type}. Must be one of {OBJ_MAP.keys()}."
             self.obj_type = obj_type
         self.only_one = only_one
+        if num_dists is None:
+            num_dists = self._rand_int(0, 8)
         self.num_dists = num_dists
         super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
 
@@ -69,6 +72,8 @@ class CustomGoToObj(RoomGridLevel):
         if self.only_one:
             self.distractor_types -= {self.obj_type}
         self.place_distractors()
+
+        self.check_objs_reachable()
 
         # generate goal/mission
         self.instrs = GoToInstr(ObjDesc(type=self.obj_type))
@@ -95,7 +100,7 @@ class CustomGoToColor(RoomGridLevel):
         self,
         obj_color: Optional[str] = None,
         only_one: bool = False,
-        num_dists: int = 4,
+        num_dists: Optional[int] = None,
         **kwargs,
     ):
         """
@@ -108,10 +113,12 @@ class CustomGoToColor(RoomGridLevel):
             self.obj_color = self._rand_elem(COLOR_NAMES)
         else:
             assert (
-                obj_color in COLOR_TO_IDX
+                obj_color in COLOR_NAMES
             ), f"Invalid object color: {obj_color}. Must be one of {COLOR_NAMES}."
             self.obj_color = obj_color
         self.only_one = only_one
+        if num_dists is None:
+            num_dists = self._rand_int(0, 8)
         self.num_dists = num_dists
         super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
 
@@ -132,6 +139,8 @@ class CustomGoToColor(RoomGridLevel):
         if self.only_one:
             self.distractor_colors -= {self.obj_color}
         self.place_distractors()
+
+        self.check_objs_reachable()
 
         # generate goal/mission
         self.instrs = GoToInstr(ObjDesc(type=None, color=self.obj_color))
