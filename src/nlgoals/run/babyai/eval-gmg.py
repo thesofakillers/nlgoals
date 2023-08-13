@@ -312,7 +312,7 @@ def setup_env(env_args):
     If the env is not causally confused (env.cc.enable=False), then we will always
     have at least one distractor object that is of the env.cc.color
     """
-    env = CustomGoToObj(obj_type=env_args.obj_type, highlight=False, unique_objs=True)
+    env = CustomGoToObj(obj_type=env_args.obj_type, highlight=False, only_one=True)
 
     if env_args.cc.enable:
         env = ColorTypeLockWrapper(
