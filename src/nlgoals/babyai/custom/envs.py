@@ -60,9 +60,9 @@ class CustomGoToObj(RoomGridLevel):
         #   randomly choose object color
         self.set_obj_color()
         #   init obj instance
-        obj = get_obj(self.obj_type, self.obj_color)
+        self.goal_obj = get_obj(self.obj_type, self.obj_color)
         # randomly place obj
-        self.place_obj(obj)
+        self.place_obj(self.goal_obj)
 
         # distractors
         self.distractor_types = {"ball", "box", "key"}
@@ -123,9 +123,9 @@ class CustomGoToColor(RoomGridLevel):
         #   randomly choose object type
         self.set_obj_type()
         #   init obj instance
-        obj = get_obj(self.obj_type, self.obj_color)
+        self.goal_obj = get_obj(self.obj_type, self.obj_color)
         # randomly place obj
-        self.place_obj(obj)
+        self.place_obj(self.goal_obj)
 
         # distractors
         self.distractor_colors = set(COLOR_NAMES)
