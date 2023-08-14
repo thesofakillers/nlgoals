@@ -154,6 +154,8 @@ def generate_data(clipt, num_rollouts, seed, img_transform, text_transform):
         goals.extend(env_goals)
         dists.extend(env_dists)
 
+    return textual_traj_embs, visual_traj_embs, task_ids, seeds, goals, dists
+
 
 def main(args):
     _ = torch.set_grad_enabled(False)
