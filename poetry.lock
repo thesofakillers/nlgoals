@@ -1985,7 +1985,7 @@ i18n = ["Babel (>=2.7)"]
 name = "joblib"
 version = "1.3.1"
 description = "Lightweight pipelining with Python functions"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2516,7 +2516,7 @@ typing = ["mypy (>=1.0.0)"]
 name = "llvmlite"
 version = "0.39.1"
 description = "lightweight wrapper around basic LLVM functionality"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3328,7 +3328,7 @@ test = ["pytest", "pytest-console-scripts", "pytest-jupyter", "pytest-tornasync"
 name = "numba"
 version = "0.56.4"
 description = "compiling Python code using LLVM"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -4154,6 +4154,24 @@ files = [
 ]
 
 [[package]]
+name = "pynndescent"
+version = "0.5.10"
+description = "Nearest Neighbor Descent"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pynndescent-0.5.10.tar.gz", hash = "sha256:5d5dc683c03ef55fe3ddf693859720ca18f85c6e6e5bb0b4f14870278d5288ad"},
+]
+
+[package.dependencies]
+joblib = ">=0.11"
+llvmlite = ">=0.30"
+numba = ">=0.51.2"
+scikit-learn = ">=0.18"
+scipy = ">=1.0"
+
+[[package]]
 name = "PyOpenGL"
 version = "3.1.0"
 description = "Standard OpenGL bindings for Python"
@@ -4817,7 +4835,7 @@ torch = ["torch (>=1.10)"]
 name = "scikit-learn"
 version = "1.3.0"
 description = "A set of python modules for machine learning and data mining"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -4860,7 +4878,7 @@ tests = ["black (>=23.3.0)", "matplotlib (>=3.1.3)", "mypy (>=1.3)", "numpydoc (
 name = "scipy"
 version = "1.9.3"
 description = "Fundamental algorithms for scientific computing in Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -5322,7 +5340,7 @@ test = ["pre-commit", "pytest (>=7.0)", "pytest-timeout"]
 name = "threadpoolctl"
 version = "3.1.0"
 description = "threadpoolctl"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -5703,6 +5721,29 @@ files = [
     {file = "tzdata-2023.3-py2.py3-none-any.whl", hash = "sha256:7e65763eef3120314099b6939b5546db7adce1e7d6f2e179e3df563c70511eda"},
     {file = "tzdata-2023.3.tar.gz", hash = "sha256:11ef1e08e54acb0d4f95bdb1be05da659673de4acbd21bf9c69e94cc5e907a3a"},
 ]
+
+[[package]]
+name = "umap-learn"
+version = "0.5.3"
+description = "Uniform Manifold Approximation and Projection"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "umap-learn-0.5.3.tar.gz", hash = "sha256:dbd57cb181c2b66d238acb5635697526bf24c798082daed0cf9b87f6a3a6c0c7"},
+]
+
+[package.dependencies]
+numba = ">=0.49"
+numpy = ">=1.17"
+pynndescent = ">=0.5"
+scikit-learn = ">=0.22"
+scipy = ">=1.0"
+tqdm = "*"
+
+[package.extras]
+parametric-umap = ["tensorflow (>=2.1)", "tensorflow-probability (>=0.10)"]
+plot = ["bokeh", "colorcet", "datashader", "holoviews", "matplotlib", "pandas", "scikit-image", "seaborn"]
 
 [[package]]
 name = "urdfpy"
@@ -6206,4 +6247,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "1120df1d674279b1c4718bab095a23b7f137a34944bbb6b795f744fb3ee0b9d4"
+content-hash = "0f22422d36f48046b15292f084debf342bed8bb80df80893b8d2152187896c86"

@@ -28,6 +28,7 @@ pyhash = "^0.9.3"
 torch = "^2.0.1"
 pytorch-lightning = ">=1.9.2"
 av = "^10.0.0"
+umap-learn = "^0.5.3"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^3.6.1"
