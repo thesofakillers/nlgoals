@@ -1,6 +1,6 @@
 """Custom Environments for Minigrid"""
 import math
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Set
 
 from minigrid.core.constants import COLOR_TO_IDX
 from minigrid.core.grid import OBJECT_TO_IDX
@@ -33,7 +33,8 @@ class CustomGoToObj(RoomGridLevel):
         self,
         obj_type: Optional[str] = None,
         only_one: bool = False,
-        num_dists: Optional[int]=None,
+        num_dists: Optional[int] = None,
+        not_colors: Optional[Set[str]] = None,
         **kwargs,
     ):
         """
@@ -41,6 +42,7 @@ class CustomGoToObj(RoomGridLevel):
             obj_type: type of object to go to. If not specified, will be random
             only_one: whether to have only one object of the given type
             num_dists: number of distractors to place
+            not_colors: set of colors to exclude from possible object colors
         """
         if obj_type is None:
             self.obj_type = self._rand_elem(OBJ_MAP.keys())
@@ -53,6 +55,7 @@ class CustomGoToObj(RoomGridLevel):
         if num_dists is None:
             num_dists = self._rand_int(0, 8)
         self.num_dists = num_dists
+        self.not_colors = not_colors
         super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
 
     def gen_mission(self):
@@ -79,7 +82,10 @@ class CustomGoToObj(RoomGridLevel):
         self.instrs = GoToInstr(ObjDesc(type=self.obj_type))
 
     def set_obj_color(self):
-        self.obj_color = self._rand_elem(COLOR_NAMES)
+        if self.not_colors is None:
+            self.obj_color = self._rand_elem(COLOR_NAMES)
+        else:
+            self.obj_color = self._rand_elem(COLOR_NAMES - self.not_colors)
 
     def place_distractors(self):
         self.distractors = []
