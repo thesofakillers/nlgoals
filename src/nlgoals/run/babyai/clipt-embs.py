@@ -64,14 +64,24 @@ def run_rollout(env, clipt, seed, seed_offset, img_transform, text_transform):
     images = torch.stack([visual_context, visual_goal], dim=1)
 
     visual_traj_input = {"images": images}
-    visual_traj = clipt.encode_visual_traj(**visual_traj_input, normalize=True)
+    visual_traj = (
+        clipt.encode_visual_traj(**visual_traj_input, normalize=True)
+        .squeeze()
+        .cpu()
+        .numpy()
+    )
 
     textual_traj_input = {
         "images": images,
         "text_input_ids": textual_goal["input_ids"],
         "text_attn_mask": textual_goal["attention_mask"],
     }
-    textual_traj = clipt.encode_text_traj(**textual_traj_input, normalize=True)
+    textual_traj = (
+        clipt.encode_text_traj(**textual_traj_input, normalize=True)
+        .squeeze()
+        .cpu()
+        .numpy()
+    )
 
     return textual_traj, visual_traj, seed, goal, dists
 
