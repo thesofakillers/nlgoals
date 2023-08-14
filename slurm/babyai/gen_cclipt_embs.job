@@ -20,3 +20,4 @@ source activate nlgoals
 srun python -u src/nlgoals/run/babyai/clipt-embs.py \
   --clipt_checkpoint checkpoints/babyai/cclipt/last.ckpt \
   --save_dir outputs/babyai/cclipt-embs/
+  --clipt.contextualize_text true

@@ -19,4 +19,5 @@ source activate nlgoals
 
 srun python -u src/nlgoals/run/babyai/clipt-embs.py \
   --clipt_checkpoint checkpoints/babyai/clipt/clipt-s1.ckpt \
-  --save_dir outputs/babyai/clipt-embs/
+  --save_dir outputs/babyai/clipt-embs/ \
+  --clipt.contextualize_text false
