@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=EMBS
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=00:20:00
+#SBATCH --mem-per-gpu=120G
+#SBATCH --output=slurm/outputs/clipt_embs_%A.out
+
+source "./slurm/.secrets"
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+srun python -u src/nlgoals/run/babyai/clipt-embs.py \
+  --clipt_checkpoint checkpoints/babyai/cclipt/last.ckpt
