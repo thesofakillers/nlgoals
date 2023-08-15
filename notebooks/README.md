@@ -13,3 +13,4 @@ the following table for what each notebook contains:
 | `gcbc-calvin-eval-results.ipynb`   | Success Rate of the GCBC policy evaluated on CALVIN                                                                                                |
 | `gcbc-calvin-random-results.ipynb` | Success Rate of the GCBC policy with trajectories replaced with random vectors, as an ablation                                                     |
 | `eval-gmg.ipynb`                   | Plotting evidence of Goal Misgeneralization for a given checkpoint.                                                                                |
+| `cclipt-emb-clusters.ipynb`        | Visualizing the embeddings from our Trajectory Encoders to diagnose failure.                                                                       |
