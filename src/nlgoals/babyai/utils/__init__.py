@@ -190,21 +190,21 @@ VERB_TO_SYN = {
 }
 
 COLOR_TO_SYN = {
-    "blue": {"blue", "azure", "sapphire", "cyan"},
-    "green": {"green", "emerald"},
-    "red": {"red", "scarlet", "crimson", "ruby", "carmine", "vermilion"},
-    "purple": {"purple", "violet", "lavender", "lilac"},
-    "yellow": {"yellow", "gold", "amber", "lemon", "mustard", "ochre"},
-    "grey": {"grey", "gray", "silver"},
+    "blue": ["blue", "azure", "sapphire", "cyan"],
+    "green": ["green", "emerald"],
+    "red": ["red", "scarlet", "crimson", "ruby", "carmine", "vermilion"],
+    "purple": ["purple", "violet", "lavender", "lilac"],
+    "yellow": ["yellow", "gold", "amber", "lemon", "mustard", "ochre"],
+    "grey": ["grey", "gray", "silver"],
 }
 
 AMBIG_COLORS = ["turquoise", "indigo", "cherry", "burgundy", "teal", "lime"]
 
 OBJ_TO_SYN = {
-    "ball": {"ball", "sphere", "orb", "globe", "circle", "marble"},
-    "box": {"box", "cube", "cuboid", "chest", "crate", "square", "rectangle"},
-    "key": {"key"},
-    "object": {"object", "thing", "item"},
+    "ball": ["ball", "sphere", "orb", "globe", "circle", "marble"],
+    "box": ["box", "cube", "cuboid", "chest", "crate", "square", "rectangle"],
+    "key": ["key"],
+    "object": ["object", "thing", "item"],
 }
 
 
