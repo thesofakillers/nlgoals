@@ -1,5 +1,6 @@
 import enum
 from typing import Dict, Union, Tuple, Any
+import random
 
 import torch.nn as nn
 import torch
@@ -29,6 +30,8 @@ class GCBC(pl.LightningModule):
         rolling_traj: bool = False,
         lr: float = 5e-5,
         random_traj_embs: bool = False,
+        train_modality: str = "visual",
+        val_modality: str = "textual",
     ) -> None:
         """
         Args:
@@ -47,6 +50,8 @@ class GCBC(pl.LightningModule):
                 default False
             lr: learning rate
             random_traj_embs: whether to use random trajectory embeddings (for ablation)
+            train_modality: whether to train on visual trajs, textual trajs or both
+            val_modality: whether to validate on visual trajs, textual trajs or both
         """
         super().__init__()
         self.save_hyperparameters()
@@ -73,6 +78,11 @@ class GCBC(pl.LightningModule):
         self.lr = lr
 
         self.random_traj_embs = random_traj_embs
+
+        assert train_modality in {"visual", "textual", "both"}
+        assert val_modality in {"visual", "textual", "both"}
+        self.train_modality = train_modality
+        self.val_modality = val_modality
 
         action_decoder_kwargs = {
             "hidden_dim": hidden_dim,
@@ -426,16 +436,27 @@ class GCBC(pl.LightningModule):
         pred_action = self.action_decoder.sample(**action_decoder_out)
         return pred_action
 
+    def prepare_batch(self, batch, modality):
+        return (
+            self.prepare_visual_batch(batch)
+            if modality == "visual"
+            else self.prepare_textual_batch(batch)
+        )
+
+    def fit_step(self, phase, batch, modality):
+        if modality not in {"visual", "textual"}:
+            modality = "visual" if random.random() < 0.5 else "textual"
+
+        prep_batch = self.prepare_batch(batch, modality)
+        loss = self._fit_step(prep_batch, phase, modality)
+        return loss
+
     def training_step(self, batch, batch_idx) -> torch.Tensor:
-        visual_batch = self.prepare_visual_batch(batch)
-        loss = self._fit_step(visual_batch, "train", "visual")
+        loss = self.fit_step("train", batch, self.train_modality)
         return loss
 
     def validation_step(self, batch, batch_idx) -> None:
-        # visual_batch = self.prepare_visual_batch(batch)
-        # self._fit_step(visual_batch, "val", "visual")
-        textual_batch = self.prepare_textual_batch(batch)
-        self._fit_step(textual_batch, "val", "textual")
+        self.fit_step(batch, "val", self.val_modality)
 
     def configure_optimizers(self):
         params_to_update = filter(lambda p: p.requires_grad, self.parameters())
