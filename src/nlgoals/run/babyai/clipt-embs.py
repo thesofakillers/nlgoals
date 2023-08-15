@@ -12,7 +12,7 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from nlgoals.babyai.custom.envs import COLOR_NAMES, OBJ_MAP
-from nlgoals.babyai.eval_utils import run_oracle
+from nlgoals.babyai.custom.eval_utils import run_oracle
 from nlgoals.babyai.custom.constants import NAME_TO_KWARGS
 from nlgoals.babyai.custom.utils import paraphrase_mission
 from nlgoals.data.transforms import CLIPImageTransform
@@ -158,6 +158,7 @@ def generate_data(clipt, num_rollouts, seed, img_transform, text_transform):
 
     return textual_traj_embs, visual_traj_embs, task_ids, seeds, goals, dists
 
+
 class ParaphrasingTokenizer:
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
@@ -165,6 +166,7 @@ class ParaphrasingTokenizer:
     def __call__(self, text, return_tensors=None):
         para_text = paraphrase_mission(text)
         return self.tokenizer(para_text, return_tensors=return_tensors)
+
 
 def main(args):
     _ = torch.set_grad_enabled(False)

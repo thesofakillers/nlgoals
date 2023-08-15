@@ -17,7 +17,7 @@ from nlgoals.models.clipt import CLIPT
 from nlgoals.models.gcbc import GCBC, gcbc_enum_to_class, GCBC_ENUM
 from nlgoals.babyai.custom import GoToSpecObj, make_cc, POSSIBLE_CC_POS
 from nlgoals.interfaces.gcbc import babyai_obs_prepare
-from nlgoals.babyai.eval_utils import (
+from nlgoals.babyai.custom.eval_utils import (
     check_conf_done,
     run_oracle,
     update_videos,

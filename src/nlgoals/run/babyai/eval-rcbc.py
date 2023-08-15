@@ -15,7 +15,7 @@ from nlgoals.data.transforms import CLIPImageTransform
 from nlgoals.models.rcbc import BABYAI_RCBC, RCBC
 from nlgoals.babyai.custom import GoToSpecObj, make_cc, POSSIBLE_CC_POS
 from nlgoals.interfaces.rcbc import babyai_obs_prepare
-from nlgoals.babyai.eval_utils import (
+from nlgoals.babyai.custom.eval_utils import (
     check_conf_done,
     run_oracle,
     update_videos,
@@ -176,7 +176,7 @@ def main(args):
     env = GoToSpecObj(**env_kwargs, highlight=False)
     env = RGBImgObsWrapper(env, tile_size=28)
 
-    # Custom-GoToSpecObj-v0-RB is first in nlgoals.babyai.utils.SIZE_TO_ENVS
+    # Custom-GoToSpecObj-v0-RB is first in nlgoals.babyai.custom.constants.SIZE_TO_ENVS
     task_id = 0
 
     policy = BABYAI_RCBC.load_from_checkpoint(args.model_checkpoint, strict=False)

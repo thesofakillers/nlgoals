@@ -11,7 +11,7 @@ import numpy as np
 from transformers import AutoTokenizer
 
 from nlgoals.data.transforms import CLIPImageTransform
-from nlgoals.babyai.eval_utils import (
+from nlgoals.babyai.custom.eval_utils import (
     print_results,
     run_oracle,
     save_results,

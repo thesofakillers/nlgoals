@@ -12,7 +12,6 @@ from typing import Optional, Dict
 
 import multiprocessing as mp
 from typing import Optional, Dict
-import random
 
 from minigrid.core.constants import COLOR_TO_IDX
 from minigrid.utils.baby_ai_bot import BabyAIBot
