@@ -37,21 +37,22 @@ def print_demo_lengths(demos):
 
 def paraphrase_mission(mission: str) -> str:
     """
-    Paraphrase a "go to the {color} {obj}" string
+    Paraphrase a "go to the/a {color} {obj}" string
     By rephrasing or using synonyms
     """
     mission_words = mission.split(" ")
+    article = mission_words[2]
     color, obj = mission_words[3:]
-    verb = mission_words[0]
+    verb = mission_words[:2]
 
     possible_colors = utils.COLOR_TO_SYN[color]
     color = np.random.choice(possible_colors)
     possible_objs = utils.OBJ_TO_SYN[obj]
     obj = np.random.choice(possible_objs)
-    possible_verbs = ["go", "move", "navigate", "proceed", "advance", "make your way"]
+    possible_verbs = utils.VERB_TO_SYN[verb]
     verb = np.random.choice(possible_verbs)
 
-    new_mission = f"{verb} to the {color} {obj}"
+    new_mission = f"{verb} {article} {color} {obj}"
 
     return new_mission
 

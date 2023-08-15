@@ -169,19 +169,42 @@ NAME_TO_KWARGS = {
     "Custom-GoToSpecObj-v0-GyK": {"obj_kind": "key", "obj_color": "grey"},
 }
 
+VERB_TO_SYN = {
+    "go to": [
+        "go to",
+        "move to",
+        "navigate to",
+        "proceed to",
+        "advance to",
+        "make your way to",
+        "head to",
+    ],
+    "pick up": [
+        "pick up",
+        "grab",
+        "take",
+        "get",
+        "remove",
+        "collect",
+    ],
+}
+
 COLOR_TO_SYN = {
-    "blue": {"blue", "turquoise", "azure", "sapphire", "indigo"},
+    "blue": {"blue", "azure", "sapphire", "cyan"},
     "green": {"green", "emerald"},
-    "red": {"red", "scarlet", "crimson", "ruby", "cherry"},
+    "red": {"red", "scarlet", "crimson", "ruby", "carmine", "vermilion"},
     "purple": {"purple", "violet", "lavender", "lilac"},
-    "yellow": {"yellow", "gold"},
+    "yellow": {"yellow", "gold", "amber", "lemon", "mustard", "ochre"},
     "grey": {"grey", "gray", "silver"},
 }
 
+AMBIG_COLORS = ["turquoise", "indigo", "cherry", "burgundy", "teal", "lime"]
+
 OBJ_TO_SYN = {
     "ball": {"ball", "sphere", "orb", "globe", "circle", "marble"},
-    "box": {"box", "cube", "cuboid", "chest", "crate"},
+    "box": {"box", "cube", "cuboid", "chest", "crate", "square", "rectangle"},
     "key": {"key"},
+    "object": {"object", "thing", "item"},
 }
 
 
