@@ -39,6 +39,8 @@ def paraphrase_mission(mission: str) -> str:
     """
     Paraphrase a "go to the/a {color} {obj}" string
     By rephrasing or using synonyms
+
+    # TODO: doesn't work with "PutNext" missions
     """
     mission_words = mission.split(" ")
     article = mission_words[2]
