@@ -17,12 +17,14 @@ import random
 from minigrid.core.constants import COLOR_TO_IDX
 from minigrid.utils.baby_ai_bot import BabyAIBot
 from minigrid.wrappers import RGBImgObsWrapper
+import nlgoals.babyai.custom.constants as constants
 import numpy as np
 import blosc
 import torch
 from tqdm.auto import tqdm
 from nlgoals.babyai.custom.envs import OBJ_MAP
 from nlgoals.babyai.custom.wrappers import ColorTypeLockWrapper
+from nlgoals.babyai.custom.utils import paraphrase_mission
 import nlgoals.babyai.utils as utils
 
 
@@ -38,40 +40,6 @@ def print_demo_lengths(demos):
     )
 
 
-def paraphrase_mission(mission: str) -> str:
-    """
-    Paraphrase a "{go to}/{pick up} the/a {color} {obj} {remainder}" string.
-    The {color} and {remainder} are optional, i.e. may not appear in the string
-    By rephrasing or using synonyms
-
-    """
-    mission_splits = mission.split(" ")
-    verb = " ".join(mission_splits[:2])
-
-    # No paraphrase for 'put' missions
-    if verb.startswith("put"):
-        return mission
-
-    article, *rest = mission_splits[2:]
-
-    # Determine color and object, if color is not present
-    color_obj = rest[:2]
-    color, obj = (
-        color_obj if color_obj[0] in utils.COLOR_TO_SYN else (None, color_obj[0])
-    )
-    mission_remainder = " ".join(rest[2:] if color else rest[1:])
-
-    # Select synonyms
-    color = random.choice(utils.COLOR_TO_SYN[color]) if color else None
-    obj = random.choice(utils.OBJ_TO_SYN[obj])
-    verb = random.choice(utils.VERB_TO_SYN[verb])
-
-    # Build new mission with synonyms
-    words = [verb, article, color, obj, mission_remainder]
-
-    # Ignore None when joining words
-    return " ".join(word for word in words if word)
-
 
 def generate_episode(
     seed,
@@ -82,12 +50,12 @@ def generate_episode(
     paraphrase: bool = False,
 ):
     utils.seed(seed)
-    possible_envs = utils.SIZE_TO_ENVS[envs_size]
+    possible_envs = constants.SIZE_TO_ENVS[envs_size]
 
     # sample a random environment
     env_name = np.random.choice(possible_envs)
-    EnvClass = utils.NAME_TO_CLASS[env_name]
-    env_kwargs = utils.NAME_TO_KWARGS[env_name]
+    EnvClass = constants.NAME_TO_CLASS[env_name]
+    env_kwargs = constants.NAME_TO_KWARGS[env_name]
     env = EnvClass(highlight=False, **env_kwargs)
     if causally_confuse:
         env = ColorTypeLockWrapper(env, **cc_kwargs)

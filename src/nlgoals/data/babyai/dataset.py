@@ -4,9 +4,8 @@ import torch
 import blosc
 import pickle
 from torch.utils.data import Dataset
-import pdb
 
-import nlgoals.babyai.utils as babyai
+import nlgoals.babyai.custom.constants as babyai
 
 
 class BabyAIDataset(Dataset):

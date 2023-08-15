@@ -4,6 +4,7 @@ Generates dataset of annotated CCLIPT Embeddings
 import os
 import pickle
 from minigrid.wrappers import RGBImgObsWrapper
+from nlgoals.babyai.custom.constants import NAME_TO_CLASS, SIZE_TO_ENVS
 
 import torch
 from transformers import AutoTokenizer
@@ -12,7 +13,8 @@ from tqdm.auto import tqdm
 
 from nlgoals.babyai.custom.envs import COLOR_NAMES, OBJ_MAP
 from nlgoals.babyai.eval_utils import run_oracle
-from nlgoals.babyai.utils import NAME_TO_CLASS, NAME_TO_KWARGS, SIZE_TO_ENVS
+from nlgoals.babyai.custom.constants import NAME_TO_KWARGS
+from nlgoals.babyai.custom.utils import paraphrase_mission
 from nlgoals.data.transforms import CLIPImageTransform
 from nlgoals.models.clipt import CLIPT
 
@@ -156,6 +158,13 @@ def generate_data(clipt, num_rollouts, seed, img_transform, text_transform):
 
     return textual_traj_embs, visual_traj_embs, task_ids, seeds, goals, dists
 
+class ParaphrasingTokenizer:
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+
+    def __call__(self, text, return_tensors=None):
+        para_text = paraphrase_mission(text)
+        return self.tokenizer(para_text, return_tensors=return_tensors)
 
 def main(args):
     _ = torch.set_grad_enabled(False)
@@ -166,7 +175,10 @@ def main(args):
     # transforms
     img_transform = CLIPImageTransform(**args.img_transform.as_dict())
     tokenizer = AutoTokenizer.from_pretrained(clipt.clip_model_name)
-    text_transform = tokenizer
+    if args.paraphrase:
+        text_transform = ParaphrasingTokenizer(tokenizer)
+    else:
+        text_transform = tokenizer
 
     # generate data
     data = generate_data(

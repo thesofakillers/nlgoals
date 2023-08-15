@@ -16,6 +16,7 @@ from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 from minigrid.envs.babyai.goto import LevelGen
 from minigrid.utils.baby_ai_bot import BabyAIBot
 from minigrid.wrappers import RGBImgObsWrapper
+import nlgoals.babyai.custom.constants as constants
 import numpy as np
 import blosc
 import torch
@@ -43,9 +44,9 @@ def paraphrase_mission(mission: str) -> str:
     color, obj = mission_words[3:]
     verb = mission_words[0]
 
-    possible_colors = utils.COLOR_TO_SYN[color]
+    possible_colors = constants.COLOR_TO_SYN[color]
     color = np.random.choice(possible_colors)
-    possible_objs = utils.OBJ_TO_SYN[obj]
+    possible_objs = constants.OBJ_TO_SYN[obj]
     obj = np.random.choice(possible_objs)
     possible_verbs = ["go", "move", "navigate", "proceed", "advance", "make your way"]
     verb = np.random.choice(possible_verbs)
@@ -63,15 +64,15 @@ def generate_episode(
     cc_kwargs: Optional[Dict[str, str]] = None,
     single_kwargs: Optional[Dict[str, str]] = None,
 ):
-    possible_envs = utils.SIZE_TO_ENVS[envs_size]
+    possible_envs = constants.SIZE_TO_ENVS[envs_size]
 
     # sample a random environment
     env_name = np.random.choice(possible_envs)
-    EnvClass = utils.NAME_TO_CLASS[env_name]
+    EnvClass = constants.NAME_TO_CLASS[env_name]
     if envs_size == "single":
         env_kwargs = single_kwargs
     else:
-        env_kwargs = utils.NAME_TO_KWARGS[env_name]
+        env_kwargs = constants.NAME_TO_KWARGS[env_name]
     if causally_confuse:
         # modify inheritance of EnvClass s.t. causal confusion is handled if requested
         EnvClass = make_cc(EnvClass)
