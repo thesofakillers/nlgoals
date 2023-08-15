@@ -443,7 +443,7 @@ class GCBC(pl.LightningModule):
             else self.prepare_textual_batch(batch)
         )
 
-    def fit_step(self, phase, batch, modality):
+    def fit_step(self, batch, phase, modality):
         if modality not in {"visual", "textual"}:
             modality = "visual" if random.random() < 0.5 else "textual"
 
@@ -452,7 +452,7 @@ class GCBC(pl.LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
-        loss = self.fit_step("train", batch, self.train_modality)
+        loss = self.fit_step(batch, "train", self.train_modality)
         return loss
 
     def validation_step(self, batch, batch_idx) -> None:
