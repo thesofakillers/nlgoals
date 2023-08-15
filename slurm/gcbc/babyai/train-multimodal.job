@@ -30,4 +30,6 @@ srun python src/nlgoals/run/babyai/train-gcbc.py \
   --trainer.logging.enable true \
   --trainer.checkpoint.dirpath "checkpoints/babyai/gcbc_clipt_mm/multi_task/" \
   --trainer.logging.enable true \
+  --gcbc.train_modality both \
+  --gcbc.val_modality both \
   --seed 1
