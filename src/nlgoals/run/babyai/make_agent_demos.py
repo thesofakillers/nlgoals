@@ -8,8 +8,11 @@ https://github.com/mila-iqia/babyai/blob/master/scripts/make_agent_demos.py
 import jsonargparse
 import logging
 import time
+from typing import Optional, Dict
+
 import multiprocessing as mp
 from typing import Optional, Dict
+import random
 
 from minigrid.core.constants import COLOR_TO_IDX
 from minigrid.utils.baby_ai_bot import BabyAIBot
@@ -20,8 +23,8 @@ import torch
 from tqdm.auto import tqdm
 from nlgoals.babyai.custom.envs import OBJ_MAP
 from nlgoals.babyai.custom.wrappers import ColorTypeLockWrapper
-
 import nlgoals.babyai.utils as utils
+
 
 logger = logging.getLogger(__name__)
 
@@ -37,26 +40,37 @@ def print_demo_lengths(demos):
 
 def paraphrase_mission(mission: str) -> str:
     """
-    Paraphrase a "go to the/a {color} {obj}" string
+    Paraphrase a "{go to}/{pick up} the/a {color} {obj} {remainder}" string.
+    The {color} and {remainder} are optional, i.e. may not appear in the string
     By rephrasing or using synonyms
 
-    # TODO: doesn't work with "PutNext" missions
     """
-    mission_words = mission.split(" ")
-    article = mission_words[2]
-    color, obj = mission_words[3:]
-    verb = mission_words[:2]
+    mission_splits = mission.split(" ")
+    verb = " ".join(mission_splits[:2])
 
-    possible_colors = utils.COLOR_TO_SYN[color]
-    color = np.random.choice(possible_colors)
-    possible_objs = utils.OBJ_TO_SYN[obj]
-    obj = np.random.choice(possible_objs)
-    possible_verbs = utils.VERB_TO_SYN[verb]
-    verb = np.random.choice(possible_verbs)
+    # No paraphrase for 'put' missions
+    if verb.startswith("put"):
+        return mission
 
-    new_mission = f"{verb} {article} {color} {obj}"
+    article, *rest = mission_splits[2:]
 
-    return new_mission
+    # Determine color and object, if color is not present
+    color_obj = rest[:2]
+    color, obj = (
+        color_obj if color_obj[0] in utils.COLOR_TO_SYN else (None, color_obj[0])
+    )
+    mission_remainder = " ".join(rest[2:] if color else rest[1:])
+
+    # Select synonyms
+    color = random.choice(utils.COLOR_TO_SYN[color]) if color else None
+    obj = random.choice(utils.OBJ_TO_SYN[obj])
+    verb = random.choice(utils.VERB_TO_SYN[verb])
+
+    # Build new mission with synonyms
+    words = [verb, article, color, obj, mission_remainder]
+
+    # Ignore None when joining words
+    return " ".join(word for word in words if word)
 
 
 def generate_episode(
@@ -65,7 +79,9 @@ def generate_episode(
     envs_size,
     causally_confuse: bool = False,
     cc_kwargs: Optional[Dict[str, str]] = None,
+    paraphrase: bool = False,
 ):
+    utils.seed(seed)
     possible_envs = utils.SIZE_TO_ENVS[envs_size]
 
     # sample a random environment
@@ -115,18 +131,20 @@ def generate_episode(
                 obs = new_obs
             # if our demos was succesful, save it
             if mission_success:
-                return (
-                    mission,
+                return_mission = paraphrase_mission(mission) if paraphrase else mission
+                return_tuple = (
+                    return_mission,
                     env_name,
                     blosc.pack_array(np.array(images)),
                     directions,
                     actions,
                     rewards,
                 )
+                return return_tuple
             # handle unsuccessful demos
             else:
-                raise Exception
-        except (Exception, AssertionError, ValueError):
+                raise ValueError("Mission unsuccessful")
+        except AssertionError:
             curr_seed += seed_offset
             logger.debug("Mission either failed or crashed, trying again...")
             continue
@@ -140,6 +158,7 @@ def generate_demos(
     num_workers: int,
     causally_confuse: bool = False,
     cc_kwargs: Optional[Dict[str, str]] = None,
+    paraphrase: bool = False,
 ):
     """
     Generate a set of agent demonstrations from the BabyAIBot
@@ -153,8 +172,8 @@ def generate_demos(
         num_workers: number of workers to use for multiprocessing
         causally_confuse (bool): whether to causally confuse the environment
         cc_kwargs (dict): kwargs for the causal confusion
+        paraphrase (bool): whether to paraphrase the mission
     """
-    utils.seed(seed)
     checkpoint_time = time.time()
 
     demos = []
@@ -171,6 +190,7 @@ def generate_demos(
                 envs_size,
                 causally_confuse,
                 cc_kwargs,
+                paraphrase,
             ),
         )
         for seed in seeds
@@ -211,7 +231,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--save_path",
         default=None,
-        help="path to save demonstrations (based on --model and --origin by default)",
+        help="path to save demonstrations",
     )
     parser.add_argument(
         "--episodes",
@@ -251,6 +271,12 @@ if __name__ == "__main__":
         required=False,
         help="Object color to use for causal confusion",
     )
+    parser.add_argument(
+        "--paraphrase",
+        type=bool,
+        default=False,
+        help="Whether to paraphrase the mission",
+    )
 
     args = parser.parse_args()
 
@@ -269,6 +295,7 @@ if __name__ == "__main__":
         args.num_workers,
         args.causally_confuse,
         cc_kwargs,
+        args.paraphrase,
     )
     # Validation demos
     if args.val_episodes:
@@ -280,4 +307,5 @@ if __name__ == "__main__":
             args.num_workers,
             args.causally_confuse,
             cc_kwargs,
+            args.paraphrase,
         )
