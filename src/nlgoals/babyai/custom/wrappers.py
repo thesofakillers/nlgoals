@@ -51,14 +51,12 @@ class ColorTypeLockWrapper(Wrapper):
         only_one = self.env.only_one
 
         if goal_obj.color != self.color and isinstance(self.env, CustomGoToColor):
-            assert (
-                goal_obj.type != self.obj_type
-            ), "Cannot lock color of goal in GoToColor env."
+            if goal_obj.type == self.obj_type:
+                raise ValueError("Cannot lock color of goal in GoToColor env.")
 
         if goal_obj.type != self.obj_type and isinstance(self.env, CustomGoToObj):
-            assert (
-                goal_obj.color != self.color
-            ), "Cannot lock type of goal in GoToObj env."
+            if goal_obj.color == self.color:
+                raise ValueError("Cannot lock type of goal in GoToObj env.")
 
         if self.track_types:
             self.tracked_type_positions = []
@@ -198,14 +196,16 @@ class DistractorConstraintWrapper(Wrapper):
                 either self.tracked_type_positions or self.tracked_color_positions.
         """
         if count < min_value:
-            assert len(self.unwrapped.distractors) >= (
-                min_value - count
-            ), f"Cannot ensure minimum {min_value} of {attr} {attr_value}. Not enough distractors."
-            for distractor in self.unwrapped.distractors:
-                if getattr(distractor, attr) != attr_value:
-                    setattr(distractor, attr, attr_value)
-                    count += 1
-                    if positions is not None:
-                        positions.append(distractor.cur_pos)
-                if count >= min_value:
-                    break
+            if len(self.unwrapped.distractors) < (min_value - count):
+                raise ValueError(
+                    f"Cannot ensure minimum {min_value} of {attr} {attr_value}. Not enough distractors."
+                )
+            else:
+                for distractor in self.unwrapped.distractors:
+                    if getattr(distractor, attr) != attr_value:
+                        setattr(distractor, attr, attr_value)
+                        count += 1
+                        if positions is not None:
+                            positions.append(distractor.cur_pos)
+                    if count >= min_value:
+                        break
