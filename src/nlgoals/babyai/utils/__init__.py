@@ -23,7 +23,6 @@ from nlgoals.babyai.utils.log import (
 from nlgoals.babyai.utils.model import get_model_dir, load_model, save_model
 
 
-
 def storage_dir():
     # defines the storage directory to be in the root (Same level as babyai folder)
     return os.environ.get("BABYAI_STORAGE", ".")
