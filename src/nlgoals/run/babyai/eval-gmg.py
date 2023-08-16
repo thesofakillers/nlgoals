@@ -106,11 +106,7 @@ def check_conf_done(env, true_done: bool, agent_dir: int):
             Integer between 0 and 3 meaning right, down, left, up
     """
     # when not using the distractor-constraint wrapper, we are in the confounding setting
-    if (
-        hasattr(env, "wrapper_name")
-        and env.wrapper_name != "distractor-constraint"
-        and true_done is True
-    ):
+    if not hasattr(env, "wrapper_name") and true_done is True:
         return true_done
 
     # list of x, y coordinates of confounding objects
