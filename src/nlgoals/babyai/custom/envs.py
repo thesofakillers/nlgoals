@@ -75,6 +75,10 @@ class CustomGoToObj(RoomGridLevel):
         self.track_colors = track_colors
         self.track_types = track_types
 
+        if self.color_to_type is not None:
+            self.conf_color = self.color_to_type.keys()[0]
+            self.conf_type = self.color_to_type[self.conf_color]
+
         super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
 
     def gen_mission(self):

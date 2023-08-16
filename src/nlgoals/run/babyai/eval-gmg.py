@@ -95,7 +95,7 @@ def prepare_step_input(policy, obs, img_transform, goal=None):
     return policy_step_input
 
 
-def check_conf_done(env, true_done: bool, agent_dir: int):
+def check_conf_done(env, true_done: bool, agent_dir: int, conf_key: str):
     """
     Checks whether the confounding goal has been achieved.
 
@@ -104,6 +104,7 @@ def check_conf_done(env, true_done: bool, agent_dir: int):
         true_done: whether the true goal has been achieved
         agent_dir: the direction the agent is facing
             Integer between 0 and 3 meaning right, down, left, up
+        conf_key: the key of the positions to track
     """
     # when not using the distractor-constraint wrapper, we are in the confounding setting
     if not hasattr(env, "wrapper_name") and true_done is True:
@@ -114,7 +115,7 @@ def check_conf_done(env, true_done: bool, agent_dir: int):
     agent_pos = env.unwrapped.agent_pos
 
     direction_deltas = [(1, 0), (0, 1), (-1, 0), (0, -1)]
-    for cc_pos in conf_positions:
+    for cc_pos in conf_positions[conf_key]:
         delta_pos = (cc_pos[0] - agent_pos[0], cc_pos[1] - agent_pos[1])
         if delta_pos == direction_deltas[agent_dir]:
             return True
@@ -175,7 +176,7 @@ def run_rollout(
 
         obs, _reward, true_done, _, _ = env.step(action.item())
 
-        conf_done = check_conf_done(env, true_done, obs["direction"])
+        conf_done = check_conf_done(env, true_done, obs["direction"], env.conf_color)
 
         # save observation for visualization
         rollout_obs[step] = obs["image"].transpose(2, 0, 1)

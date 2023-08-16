@@ -50,6 +50,9 @@ class DistractorConstraintWrapper(Wrapper):
         self.track_colors = track_colors
         self.wrapper_name = "distractor-constraint"
 
+        self.env.conf_color = color
+        self.env.conf_type = obj_type
+
     def reset(self, **kwargs):
         obs = self.env.reset(**kwargs)
 
