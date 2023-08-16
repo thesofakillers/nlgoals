@@ -257,6 +257,12 @@ if __name__ == "__main__":
         default="red",
         help="Object color to use for causal confusion",
     )
+    parser.add_argument(
+        "--paraphrase",
+        type=bool,
+        default=False,
+        help="Whether to paraphrase the mission",
+    )
 
     args = parser.parse_args()
 
