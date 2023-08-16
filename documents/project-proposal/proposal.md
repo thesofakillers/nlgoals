@@ -5,7 +5,7 @@ subtitle: "Research Proposal"
 date: \today
 author: Giulio Starace
 bibliography:
-  - ../references.bib
+  - references.bib
 csl:
   - acm.csl
 reference-section-title: References

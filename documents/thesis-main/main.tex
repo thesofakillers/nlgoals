@@ -1,7 +1,7 @@
 \documentclass[12pt]{report}
 
 
-\usepackage{../mypreamble}
+\usepackage{mypreamble}
 
 \newcommand{\red}[1]{{\color{red}{#1}}}
 
@@ -16,7 +16,7 @@
 
 % finally, the content
 \chapter{Introduction}
-\subfile{../sharedsubfiles/introduction.tex}
+\subfile{subfiles/introduction.tex}
 
 \appendix
 \chapter{Optional appendix}
@@ -24,8 +24,8 @@
 Checking that citation works \citep{agarwal_reincarnating_2022}.
 Also inline \citet{abbeel_apprenticeship_2004}.
 
-\bibliographystyle{../bibstyle}
-\bibliography{../references-bibtex}
+\bibliographystyle{bibstyle}
+\bibliography{references-bibtex}
 
 \end{document}
 
