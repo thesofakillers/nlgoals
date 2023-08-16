@@ -22,7 +22,6 @@ import blosc
 import torch
 from tqdm.auto import tqdm
 from nlgoals.babyai.custom.envs import OBJ_MAP
-from nlgoals.babyai.custom.wrappers import ColorTypeLockWrapper
 from nlgoals.babyai.custom.utils import paraphrase_mission
 import nlgoals.babyai.utils as utils
 
@@ -37,7 +36,6 @@ def print_demo_lengths(demos):
             np.mean(num_frames_per_episode), np.std(num_frames_per_episode)
         )
     )
-
 
 
 def generate_episode(
@@ -55,9 +53,12 @@ def generate_episode(
     env_name = np.random.choice(possible_envs)
     EnvClass = constants.NAME_TO_CLASS[env_name]
     env_kwargs = constants.NAME_TO_KWARGS[env_name]
-    env = EnvClass(highlight=False, **env_kwargs)
     if causally_confuse:
-        env = ColorTypeLockWrapper(env, **cc_kwargs)
+        env_kwargs = {
+            "color_to_type": {cc_kwargs["color"]: cc_kwargs["obj_type"]},
+            **env_kwargs,
+        }
+    env = EnvClass(highlight=False, **env_kwargs)
     env = RGBImgObsWrapper(
         env, tile_size=28 if envs_size.split("-")[0] in {"small"} else 12
     )

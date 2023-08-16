@@ -22,7 +22,6 @@ from nlgoals.models.gcbc import BABYAI_GCBC
 from nlgoals.models.rcbc import BABYAI_RCBC
 from nlgoals.babyai.custom import (
     CustomGoToObj,
-    ColorTypeLockWrapper,
     DistractorConstraintWrapper,
 )
 
@@ -100,24 +99,22 @@ def check_conf_done(env, true_done: bool, agent_dir: int):
     """
     Checks whether the confounding goal has been achieved.
 
-    If the environment is an instance of ColorObjLockWrapper, then it means
-    we are in the confounding setting. In this case, conf_done == true_done
-
-    Otherwise, we check whether the agent is next to and facing one of the
-    confounding objects
-
     Args:
         env: the environment
         true_done: whether the true goal has been achieved
         agent_dir: the direction the agent is facing
             Integer between 0 and 3 meaning right, down, left, up
     """
-    # when this is the wrapper used, we are in the confounding setting
-    if env.wrapper_name == "color-obj-lock" and true_done is True:
+    # when not using the distractor-constraint wrapper, we are in the confounding setting
+    if (
+        hasattr(env, "wrapper_name")
+        and env.wrapper_name != "distractor-constraint"
+        and true_done is True
+    ):
         return true_done
 
     # list of x, y coordinates of confounding objects
-    conf_positions = env.tracked_color_positions
+    conf_positions = env.unwrapped.tracked_color_positions
     agent_pos = env.unwrapped.agent_pos
 
     direction_deltas = [(1, 0), (0, 1), (-1, 0), (0, -1)]
@@ -313,19 +310,23 @@ def setup_env(env_args):
     have at least one distractor object that is of the env.cc.color
     """
     not_colors = None if env_args.cc.enable == True else {env_args.cc.color}
-    env = CustomGoToObj(
-        obj_type=env_args.obj_type,
-        highlight=False,
-        only_one=True,
-        num_dists=3,
-        not_colors=not_colors,
-    )
+    env_kwargs = {
+        "obj_type": env_args.obj_type,
+        "highlight": False,
+        "only_one": True,
+        "num_dists": 3,
+        "not_colors": not_colors,
+    }
 
     if env_args.cc.enable:
-        env = ColorTypeLockWrapper(
-            env, obj_type=env_args.obj_type, color=env_args.cc.color, track_colors=True
-        )
+        env_kwargs = {
+            "color_to_type": {env_args.cc.color: env_args.obj_type},
+            "track_colors": True,
+            **env_kwargs,
+        }
+        env = CustomGoToObj(**env_kwargs)
     else:
+        env = CustomGoToObj(**env_kwargs)
         env = DistractorConstraintWrapper(
             env, min_color=1, color=env_args.cc.color, track_colors=True
         )

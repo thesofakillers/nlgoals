@@ -4,7 +4,7 @@ from typing import Optional, List, Tuple, Set
 
 from minigrid.core.constants import COLOR_TO_IDX
 from minigrid.core.grid import OBJECT_TO_IDX
-from minigrid.core.roomgrid import Ball, Box, Key
+from minigrid.core.roomgrid import Ball, Box, Key, Room
 from minigrid.core.world_object import WorldObj, Point
 from minigrid.envs.babyai.core.roomgrid_level import RoomGridLevel
 from minigrid.envs.babyai.core.verifier import GoToInstr, ObjDesc
@@ -16,6 +16,12 @@ OBJ_MAP = {
     "key": Key,
     "ball": Ball,
     "box": Box,
+}
+OBJ_NAMES = {"key", "ball", "box"}
+COLOR_MAP = {
+    "red": {},
+    "green": {},
+    "blue": {},
 }
 COLOR_NAMES = {"red", "green", "blue"}
 
@@ -35,6 +41,9 @@ class CustomGoToObj(RoomGridLevel):
         only_one: bool = False,
         num_dists: Optional[int] = None,
         not_colors: Optional[Set[str]] = None,
+        color_to_type: Optional[dict] = None,
+        track_colors: bool = False,
+        track_types: bool = False,
         **kwargs,
     ):
         """
@@ -42,13 +51,16 @@ class CustomGoToObj(RoomGridLevel):
             obj_type: type of object to go to. If not specified, will be random
             only_one: whether to have only one object of the given type
             num_dists: number of distractors to place
-            not_colors: set of colors to exclude from possible object colors
+            not_colors: set of colors to exclude from possible goal object colors
+            color_to_type: Mapping to lock color and object type exclusively
+            track_colors: whether to track the positions of colors
+            track_types: whether to track the positions of types
         """
         if obj_type is None:
             self.obj_type = self._rand_elem(OBJ_MAP.keys())
         else:
             assert (
-                obj_type in OBJECT_TO_IDX
+                obj_type in OBJ_MAP
             ), f"Invalid object type: {obj_type}. Must be one of {OBJ_MAP.keys()}."
             self.obj_type = obj_type
         self.only_one = only_one
@@ -56,22 +68,28 @@ class CustomGoToObj(RoomGridLevel):
             num_dists = self._rand_int(0, 8)
         self.num_dists = num_dists
         self.not_colors = not_colors
+        self.color_to_type = color_to_type
+        self.type_to_color = (
+            {v: k for k, v in color_to_type.items()} if color_to_type else None
+        )
+        self.track_colors = track_colors
+        self.track_types = track_types
+
         super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
 
     def gen_mission(self):
         # randomly place agent
         self.place_agent()
 
-        # setup object
-        #   randomly choose object color
-        self.set_obj_color()
-        #   init obj instance
+        # define goal object
+        self.obj_color = self.get_obj_color(self.obj_type, self.get_goal_color)
         self.goal_obj = get_obj(self.obj_type, self.obj_color)
+
         # randomly place obj
         self.place_obj(self.goal_obj)
 
         # distractors
-        self.distractor_types = {"ball", "box", "key"}
+        self.distractor_types = set(OBJ_MAP.keys())
         if self.only_one:
             self.distractor_types -= {self.obj_type}
         self.place_distractors()
@@ -81,17 +99,55 @@ class CustomGoToObj(RoomGridLevel):
         # generate goal/mission
         self.instrs = GoToInstr(ObjDesc(type=self.obj_type))
 
-    def set_obj_color(self):
+        self.grid_iterate_checks()
+
+    def grid_iterate_checks(self):
+        if self.track_colors:
+            self.tracked_color_positions = {"red": [], "green": [], "blue": []}
+        if self.track_types:
+            self.tracked_type_positions = {"key": [], "ball": [], "box": []}
+        for obj in self.grid.grid:
+            if obj is None:
+                continue
+            if self.track_types and obj.type in self.tracked_type_positions:
+                self.tracked_type_positions[obj.type].append(obj.cur_pos)
+            if self.track_colors and obj.color in self.tracked_color_positions:
+                self.tracked_color_positions[obj.color].append(obj.cur_pos)
+            if self.color_to_type is not None:
+                if obj.color in self.color_to_type:
+                    assert (
+                        obj.type == self.color_to_type[obj.color]
+                    ), "Something went wrong"
+                if obj.type in self.type_to_color:
+                    assert (
+                        obj.color == self.type_to_color[obj.type]
+                    ), "Something went wrong"
+
+    def get_goal_color(self, color_names):
         if self.not_colors is None:
-            self.obj_color = self._rand_elem(COLOR_NAMES)
+            color = self._rand_elem(color_names)
         else:
-            self.obj_color = self._rand_elem(COLOR_NAMES - self.not_colors)
+            color = self._rand_elem(color_names - self.not_colors)
+        return color
+
+    def get_obj_color(self, obj_type, alt_func):
+        if self.type_to_color is not None:
+            if obj_type in self.type_to_color:
+                obj_color = self.type_to_color[obj_type]
+            else:
+                obj_color = self._rand_elem(
+                    COLOR_NAMES - set(self.color_to_type.keys())
+                )
+        else:
+            obj_color = alt_func(COLOR_NAMES)
+
+        return obj_color
 
     def place_distractors(self):
         self.distractors = []
         for _ in range(self.num_dists):
             distractor_type = self._rand_elem(self.distractor_types)
-            distractor_color = self._rand_elem(COLOR_NAMES)
+            distractor_color = self.get_obj_color(distractor_type, self._rand_elem)
             distractor = get_obj(distractor_type, distractor_color)
             self.place_obj(distractor)
             self.distractors.append(distractor)
@@ -107,41 +163,55 @@ class CustomGoToColor(RoomGridLevel):
         obj_color: Optional[str] = None,
         only_one: bool = False,
         num_dists: Optional[int] = None,
+        not_types: Optional[Set[str]] = None,
+        color_to_type: Optional[dict] = None,
+        track_colors: bool = False,
+        track_types: bool = False,
         **kwargs,
     ):
         """
         Args:
             obj_color: color of object to go to. If not specified, will be random
-            only_one: whether to have only one object of the given color
+            only_one: whether to have only one object of the given type
             num_dists: number of distractors to place
+            not_types: set of types to exclude from possible goal object colors
+            color_to_type: Mapping to lock color and object type exclusively
+            track_colors: whether to track the positions of colors
+            track_types: whether to track the positions of types
         """
         if obj_color is None:
-            self.obj_color = self._rand_elem(COLOR_NAMES)
+            self.obj_color = self._rand_elem(COLOR_MAP.keys())
         else:
             assert (
-                obj_color in COLOR_NAMES
-            ), f"Invalid object color: {obj_color}. Must be one of {COLOR_NAMES}."
+                obj_color in COLOR_MAP
+            ), f"Invalid object color: {obj_color}. Must be one of {COLOR_MAP.keys()}."
             self.obj_color = obj_color
         self.only_one = only_one
         if num_dists is None:
             num_dists = self._rand_int(0, 8)
         self.num_dists = num_dists
+        self.not_types = not_types
+        self.color_to_type = color_to_type
+        self.type_to_color = (
+            {v: k for k, v in color_to_type.items()} if color_to_type else None
+        )
+        self.track_colors = track_colors
+        self.track_types = track_types
+
         super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
 
     def gen_mission(self):
-        # randomly place agent
         self.place_agent()
 
-        # setup object
-        #   randomly choose object type
-        self.set_obj_type()
-        #   init obj instance
+        # define goal object
+        self.obj_type = self.get_obj_type(self.obj_color, self.get_goal_type)
         self.goal_obj = get_obj(self.obj_type, self.obj_color)
-        # randomly place obj
+
+        # randomply place obj
         self.place_obj(self.goal_obj)
 
         # distractors
-        self.distractor_colors = set(COLOR_NAMES)
+        self.distractor_colors = set(COLOR_MAP.keys())
         if self.only_one:
             self.distractor_colors -= {self.obj_color}
         self.place_distractors()
@@ -151,17 +221,124 @@ class CustomGoToColor(RoomGridLevel):
         # generate goal/mission
         self.instrs = GoToInstr(ObjDesc(type=None, color=self.obj_color))
 
-    def set_obj_type(self):
-        self.obj_type = self._rand_elem(OBJ_MAP.keys())
+        self.grid_iterate_checks()
+
+    def grid_iterate_checks(self):
+        if self.track_colors:
+            self.tracked_color_positions = {"red": [], "green": [], "blue": []}
+        if self.track_types:
+            self.tracked_type_positions = {"key": [], "ball": [], "box": []}
+        for obj in self.grid.grid:
+            if obj is None:
+                continue
+            if self.track_types and obj.type in self.tracked_type_positions:
+                self.tracked_type_positions[obj.type].append(obj.cur_pos)
+            if self.track_colors and obj.color in self.tracked_color_positions:
+                self.tracked_color_positions[obj.color].append(obj.cur_pos)
+            if self.color_to_type is not None:
+                if obj.color in self.color_to_type:
+                    assert (
+                        obj.type == self.color_to_type[obj.color]
+                    ), "Something went wrong"
+                if obj.type in self.type_to_color:
+                    assert (
+                        obj.color == self.type_to_color[obj.type]
+                    ), "Something went wrong"
+
+    def get_goal_type(self, type_names):
+        if self.not_types is None:
+            obj_type = self._rand_elem(type_names)
+        else:
+            obj_type = self._rand_elem(type_names - self.not_types)
+        return obj_type
+
+    def get_obj_type(self, obj_color, alt_func):
+        if self.color_to_type is not None:
+            if obj_color in self.color_to_type:
+                obj_type = self.color_to_type[obj_color]
+            else:
+                obj_type = self._rand_elem(OBJ_NAMES - set(self.type_to_color.keys()))
+        else:
+            obj_type = alt_func(OBJ_NAMES)
+
+        return obj_type
 
     def place_distractors(self):
         self.distractors = []
+
         for _ in range(self.num_dists):
-            distractor_type = self._rand_elem(OBJ_MAP.keys())
             distractor_color = self._rand_elem(self.distractor_colors)
+            distractor_type = self.get_obj_type(distractor_color, self._rand_elem)
             distractor = get_obj(distractor_type, distractor_color)
             self.place_obj(distractor)
             self.distractors.append(distractor)
+
+
+# class CustomGoToColor(RoomGridLevel):
+#     """
+#     "Go to the/a {obj_color} object" task
+#     """
+
+#     def __init__(
+#         self,
+#         obj_color: Optional[str] = None,
+#         only_one: bool = False,
+#         num_dists: Optional[int] = None,
+#         **kwargs,
+#     ):
+#         """
+#         Args:
+#             obj_color: color of object to go to. If not specified, will be random
+#             only_one: whether to have only one object of the given color
+#             num_dists: number of distractors to place
+#         """
+#         if obj_color is None:
+#             self.obj_color = self._rand_elem(COLOR_NAMES)
+#         else:
+#             assert (
+#                 obj_color in COLOR_NAMES
+#             ), f"Invalid object color: {obj_color}. Must be one of {COLOR_NAMES}."
+#             self.obj_color = obj_color
+#         self.only_one = only_one
+#         if num_dists is None:
+#             num_dists = self._rand_int(0, 8)
+#         self.num_dists = num_dists
+#         super().__init__(num_rows=1, num_cols=1, room_size=8, **kwargs)
+
+#     def gen_mission(self):
+#         # randomly place agent
+#         self.place_agent()
+
+#         # setup object
+#         #   randomly choose object type
+#         self.set_obj_type()
+#         #   init obj instance
+#         self.goal_obj = get_obj(self.obj_type, self.obj_color)
+#         # randomly place obj
+#         self.place_obj(self.goal_obj)
+
+#         # distractors
+#         self.distractor_colors = set(COLOR_NAMES)
+#         if self.only_one:
+#             self.distractor_colors -= {self.obj_color}
+#         self.place_distractors()
+
+#         self.check_objs_reachable()
+
+#         # generate goal/mission
+#         self.instrs = GoToInstr(ObjDesc(type=None, color=self.obj_color))
+
+#     def set_obj_type(self):
+#         self.obj_type = self._rand_elem(OBJ_MAP.keys())
+
+#     def place_distractors(self):
+#         self.distractors = []
+#         for _ in range(self.num_dists):
+#             distractor_type = self._rand_elem(OBJ_MAP.keys())
+#             distractor_color = self._rand_elem(self.distractor_colors)
+#             distractor = get_obj(distractor_type, distractor_color)
+#             self.place_obj(distractor)
+#             self.distractors.append(distractor)
 
 
 class RoomGridLevelCC(RoomGridLevel):
