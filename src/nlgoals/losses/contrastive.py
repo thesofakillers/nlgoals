@@ -12,6 +12,11 @@ def clip_contrastive_loss(
     CLIP contrastive loss
     Radford et al. (2021) Contrastive Language-Image Pre-Training
 
+    Args:
+        modality_one_embs (torch.Tensor): (B x emb_dim) Embeddings from modality one
+        modality_two_embs (torch.Tensor): (B x emb_dim) Embeddings from modality two
+        temperature (torch.nn.parameter.Parameter): (1) Temperature parameter
+
     Adapted from
     https://github.com/mlfoundations/open_clip/blob/main/src/open_clip/loss.py
     """
