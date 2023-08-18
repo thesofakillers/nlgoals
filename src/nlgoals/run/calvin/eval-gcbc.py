@@ -3,7 +3,7 @@ Batched evaluation of a trained GCBC policy on the CALVIN environment/benchmark 
 python multiprocessing.
 """
 
-from typing import Set, Dict, Tuple, Union, Any
+from typing import Optional, Set, Dict, Tuple, Union, Any
 from termcolor import colored
 import zipfile
 from tqdm.auto import tqdm
@@ -146,6 +146,7 @@ def rollout(
     task_oracle: Tasks,
     task: str,
     verbose: bool = False,
+    reset_freq: Optional[int] = None,
 ) -> Tuple[bool, np.ndarray]:
     rollout_obs = np.zeros((rollout_steps, 3, 224, 224), dtype=np.float32)
     # the starting state
@@ -153,14 +154,16 @@ def rollout(
     start_info = env.get_info()
 
     model.reset()
-    for _step in tqdm(range(rollout_steps), desc="Steps", disable=not verbose):
+    for step in tqdm(range(rollout_steps), desc="Steps", disable=not verbose):
+        if reset_freq is not None and step % reset_freq == 0:
+            model.reset()
         prepared_obs = calvin_obs_prepare(obs, model.device)
         # (1, 7) squeezed into (7,)
         action = model.step(prepared_obs, goal, traj_mode).squeeze()
         obs, _, _, current_info = env.step(action)
 
         # save observation for visualization
-        rollout_obs[_step] = obs["rgb_obs"]["rgb_static"].squeeze().cpu().numpy()
+        rollout_obs[step] = obs["rgb_obs"]["rgb_static"].squeeze().cpu().numpy()
 
         # check if current step solves the task
         completed_tasks: Set = task_oracle.get_task_info_for_set(
@@ -189,6 +192,7 @@ def evaluate_task(
     task_oracle,
     verbose,
     target_device,
+    reset_freq,
 ):
     # move model to target device
     model.to(target_device)
@@ -232,6 +236,7 @@ def evaluate_task(
             task_oracle=task_oracle,
             task=task,
             verbose=verbose,
+            reset_freq=reset_freq,
         )
         results[i] = was_success
         # save first 3 videos
@@ -275,6 +280,7 @@ def eval_policy(
     suggestive_start: bool,
     num_rollouts: int = 100,
     verbose: bool = False,
+    reset_freq: Optional[int] = None,
 ) -> Tuple[Dict[str, Any]]:
     """
     Returns:
@@ -305,6 +311,7 @@ def eval_policy(
         task_oracle,
         verbose,
         target_device,
+        reset_freq,
     )
 
     return eval_output
@@ -323,6 +330,7 @@ def eval_and_save(
     suggestive_start: bool,
     num_rollouts: int = 100,
     verbose: bool = False,
+    reset_freq: Optional[int] = None,
 ):
     """
     Evaluate a policy on the CALVIN environment for a given task
@@ -343,6 +351,7 @@ def eval_and_save(
         suggestive_start: whether to use the suggestive start or not
         num_rollouts: the number of rollouts to perform
         verbose: whether to print the results of each rollout
+        reset_freq: Reset the model every `reset_freq` steps
     """
     eval_output = eval_policy(
         model,
@@ -356,6 +365,7 @@ def eval_and_save(
         suggestive_start,
         num_rollouts,
         verbose,
+        reset_freq,
     )
     (task, (eval_idxs, results, videos, videos_metadata)) = eval_output
 
@@ -452,12 +462,19 @@ def main(args):
         suggestive_start=args.suggestive_start,
         num_rollouts=args.num_rollouts,
         verbose=args.verbose,
+        reset_freq=args.reset_freq,
     )
 
 
 if __name__ == "__main__":
     parser = jsonargparse.ArgumentParser(description=__doc__)
 
+    parser.add_argument(
+        "--reset_freq",
+        type=int,
+        required=False,
+        help="Reset the policy every `reset_freq` steps when evaluating",
+    )
     parser.add_argument(
         "--task_name",
         type=str,
