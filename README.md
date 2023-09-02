@@ -82,4 +82,15 @@ The top level `data/` and `models/` directory are in version control only to
 show structure. Their contents will not be committed and are ignored via
 `.gitignore`.
 
+## Demo videos
+
+"turn on the light bulb"
+
+https://github.com/thesofakillers/nlgoals/assets/26286291/e6849007-11f0-44e9-9d66-3b2b575492fc
+
+"go to the key"
+
+https://github.com/thesofakillers/nlgoals/assets/26286291/4d8711f4-e53a-4c7f-bd2d-9fb5a2ee1bdb
+
+
 ---
