@@ -92,5 +92,4 @@ https://github.com/thesofakillers/nlgoals/assets/26286291/e6849007-11f0-44e9-9d6
 
 https://github.com/thesofakillers/nlgoals/assets/26286291/4d8711f4-e53a-4c7f-bd2d-9fb5a2ee1bdb
 
-
 ---
