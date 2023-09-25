@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --partition=thin
+#SBATCH --partition=genoa
 #SBATCH --job-name=BBYAI-CC-S
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
