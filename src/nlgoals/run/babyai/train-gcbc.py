@@ -69,9 +69,9 @@ def train(args):
         log_model=False,
         tags=["gcbc", *model.datasets],
     )
-    early_stopping = pl.callbacks.early_stopping.EarlyStopping(
-        monitor="textual/val_loss", mode="min", strict=False
-    )
+    # early_stopping = pl.callbacks.early_stopping.EarlyStopping(
+    #     monitor="textual/val_loss", mode="min", strict=False
+    # )
     args.trainer.checkpoint.filename = (
         f"{model.name}-{'_'.join(model.datasets)}-s{args.seed}"
     )
@@ -85,7 +85,7 @@ def train(args):
         enable_progress_bar=args.trainer.enable_progress_bar,
         deterministic=True,
         logger=logger,
-        callbacks=[early_stopping, checkpoint_callback],
+        callbacks=[checkpoint_callback], #, early_stopping],
         log_every_n_steps=args.trainer.log_every_n_steps,
         val_check_interval=args.trainer.val_check_interval,
         check_val_every_n_epoch=args.trainer.check_val_every_n_epoch,
