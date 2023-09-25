@@ -1,0 +1,45 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=GCBC-T
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=24:00:00
+#SBATCH --mem-per-gpu=120G
+#SBATCH --output=slurm/outputs/gcbc_train_%A_%a.out
+#SBATCH --array=1-3%3
+#SBATCH --constraint=scratch-node
+
+
+source "./slurm/.secrets"
+
+source_path=/scratch-shared/gstarace/repos/thesis/data/calvin/task_D_D.zip
+source ./slurm/setup_calvin.sh $source_path
+# this will have setup the variable $data_dir
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+source activate nlgoals
+
+# multiple seeds
+HPARAMS_FILE=slurm/gcbc/calvin/train-array.txt
+
+srun python src/nlgoals/run/calvin/train-gcbc.py \
+  --model_variant CALVIN \
+  --clipt_checkpoint checkpoints/calvin/cclipt/cclipt-s42.ckpt \
+  --clipt.precomputed_clip false \
+  --clipt.contextualize_text true \
+  --gcbc.rolling_traj false \
+  --data.config_name default.yaml \
+  --data.data_dir=$data_dir \
+  --trainer.logging.enable true \
+  --trainer.checkpoint.dirpath "checkpoints/calvin/gcbc_cclipt" \
+  --data.num_workers 4 \
+  --data.batch_size 16 \
+  --data.shared_memory true \
+  --trainer.min_epochs 10 \
+  --trainer.max_epochs 10 \
+  $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
