@@ -12,10 +12,6 @@ class LoggingConfig:
 @dataclass
 class CheckpointConfig:
     dirpath: str = os.path.join("checkpoints", "rcbc")
-    monitor: str = "val_loss"
-    mode: str = "min"
-    save_last: bool = True
-
 
 @dataclass
 class TrainerConfig:
