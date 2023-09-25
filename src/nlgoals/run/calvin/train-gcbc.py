@@ -98,6 +98,7 @@ def train(args):
         val_check_interval=args.trainer.val_check_interval,
         check_val_every_n_epoch=args.trainer.check_val_every_n_epoch,
         precision=args.trainer.precision,
+        limit_val_batches=args.trainer.limit_val_batches,
     )
 
     trainer.fit(model, datamodule, ckpt_path=args.model_checkpoint)

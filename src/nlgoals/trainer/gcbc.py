@@ -27,3 +27,4 @@ class TrainerConfig:
     val_check_interval: float = 0.5
     check_val_every_n_epoch: int = 1
     precision: int = 16
+    limit_val_batches: float = 0
