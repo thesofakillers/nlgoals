@@ -1,2 +1,6 @@
---env.cc.enable false
---env.cc.enable true
+--model_checkpoint checkpoints/babyai/rcbc/multi_task/RCBC-BabyAI-s1.ckpt --env.cc.enable false
+--model_checkpoint checkpoints/babyai/rcbc/multi_task/RCBC-BabyAI-s1.ckpt --env.cc.enable true
+--model_checkpoint checkpoints/babyai/rcbc/multi_task/RCBC-BabyAI-s2.ckpt --env.cc.enable false
+--model_checkpoint checkpoints/babyai/rcbc/multi_task/RCBC-BabyAI-s2.ckpt --env.cc.enable true
+--model_checkpoint checkpoints/babyai/rcbc/multi_task/RCBC-BabyAI-s3.ckpt --env.cc.enable false
+--model_checkpoint checkpoints/babyai/rcbc/multi_task/RCBC-BabyAI-s3.ckpt --env.cc.enable true

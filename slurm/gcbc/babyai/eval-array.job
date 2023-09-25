@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=18
 #SBATCH --time=00:30:00
 #SBATCH --mem-per-gpu=120G
-#SBATCH --array=1-4%4
+#SBATCH --array=1-12%12
 #SBATCH --output=slurm/outputs/gcbc_eval_array_%A_%a.out
 
 source "./slurm/.secrets"
@@ -27,6 +27,5 @@ srun python src/nlgoals/run/babyai/eval-gmg.py \
   --conditioning goal \
   --clipt_checkpoint checkpoints/babyai/clipt/clipt-s1.ckpt \
   --clipt.contextualize_text false \
-  --model_checkpoint checkpoints/babyai/gcbc_cclipt/multi_task/GCBC-BabyAI-s1.ckpt \
   --save_dir outputs/babyai/gcbc_clipt/multi_task/ \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
