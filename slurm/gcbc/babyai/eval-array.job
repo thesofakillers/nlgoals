@@ -25,7 +25,8 @@ srun python src/nlgoals/run/babyai/eval-gmg.py \
   --eval.max_steps 50 \
   --eval.verbose false \
   --conditioning goal \
-  --clipt_checkpoint checkpoints/babyai/clipt/clipt-s1.ckpt \
-  --clipt.contextualize_text false \
-  --save_dir outputs/babyai/gcbc_clipt/multi_task/ \
+  --clipt_checkpoint checkpoints/babyai/cclipt/last.ckpt \
+  --clipt.contextualize_text true \
+  --clipt.precomputed_clip false \
+  --save_dir outputs/babyai/gcbc_cclipt/multi_task/ \
   $(head -$SLURM_ARRAY_TASK_ID $HPARAMS_FILE | tail -1)
