@@ -1,4 +1,13 @@
-# Natural Language for Goal Misgeneralization
+# Addressing Goal Misgeneralization with Natural Language Interfaces
+
+Official repository for my MSc thesis in Artificial Intelligence at the
+University of Amsterdam:
+
+_Addressing Goal Misgeneralization with Natural Language Interfaces_
+
+Find and read the thesis
+[here](https://scripties.uba.uva.nl/search?id=record_53979;setlang=en) or
+[here](./documents/thesis-main/main.pdf).
 
 ## Requirements and Setup
 
