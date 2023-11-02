@@ -1,31 +1,41 @@
-\documentclass[12pt]{report}
-
-
+\documentclass[a4paper, 11pt]{memoir}
 \usepackage{mypreamble}
-
-\newcommand{\red}[1]{{\color{red}{#1}}}
 
 \begin{document}
 
 % preambly things
 \subfile{subfiles/titlepage}
-\pagenumbering{roman}
-\tableofcontents
+
+\frontmatter
 \subfile{subfiles/abstract}
-\pagenumbering{arabic}
+
+\subfile{subfiles/acknowledgements}
+\cleardoublepage
+
+\tableofcontents*
+% \cleardoublepage
+\listoffigures*
+\listoftables*
 
 % finally, the content
-\chapter{Introduction}
+\mainmatter
+
 \subfile{subfiles/introduction.tex}
 
-\appendix
-\chapter{Optional appendix}
+\subfile{subfiles/background.tex}
 
-Checking that citation works \citep{agarwal_reincarnating_2022}.
-Also inline \citet{abbeel_apprenticeship_2004}.
+\subfile{subfiles/method.tex}
+
+\subfile{subfiles/experiments.tex}
+
+\subfile{subfiles/relatedwork.tex}
+
+\subfile{subfiles/conclusion.tex}
 
 \bibliographystyle{bibstyle}
 \bibliography{references-bibtex}
 
-\end{document}
+\appendix
+\subfile{subfiles/appendix}
 
+\end{document}

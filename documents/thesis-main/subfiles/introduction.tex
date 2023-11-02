@@ -1,74 +1,102 @@
-% comment out one of the next two lines accordingly
 \documentclass[../main.tex]{subfiles}
 \begin{document}
+\chapter{Introduction}
 
-Of the three Machine Learning (ML) paradigms, Reinforcement Learning (RL) is said to be the closest
-to the kind of learning humans do \citep{sutton_reinforcement_2018}, with debates around whether RL
-alone is sufficient for solving intelligence \citep{silver_reward_2021, vamplew_scalar_2022}. While
-already well-established as a field for decades \citep{minsky_theory_1954, bellman_dynamic_1957,
-klopf_brain_1972, bryson_optimal_1996}, the recent widespread adoption of deep neural networks (NNs)
-in (un)supervised learning in vision \citep{krizhevsky_imagenet_2012, he_deep_2016,
-mildenhall_nerf_2021} and language \citep{mikolov_distributed_2013, vaswani_attention_2017,
-devlin_bert_2019, brown_language_2020} has led to similar deep learning (DL) approaches to RL,
-achieving impressive results on a wide gamut of problems \citep{mnih_playing_2013,
-silver_general_2018, openai_dota_2019, fawzi_discovering_2022}.
+% Of the three Machine Learning (ML) paradigms, Reinforcement Learning (RL) is said to be the closest
+% to the kind of learning humans do \citep{sutton_reinforcement_2018}, with debates around whether RL
+% alone is sufficient for solving intelligence \citep{silver_reward_2021, vamplew_scalar_2022}.
 
-While these academic advances are certainly impressive, RL's inherently online nature has hindered
-its integration in contexts where interacting with the environment is either expensive or dangerous,
-such as consumer robotics \citep{singh_reinforcement_2022}, healthcare
-\citep{liu_reinforcement_2020} and autonomous vehicles \citep{kiran_deep_2022}. In synchrony with
-ML's shift to more data-driven approaches, much attention is now being dedicated to
-\textit{offline}\footnote{Also known as \textit{batch} RL.} RL \citep{levine_offline_2020,
-prudencio_survey_2022}. Rather than interacting with the environment in real-time, offline RL aims
-to learn optimal control policies using a fixed dataset of previously collected interactions. Making
-use of large, diverse datasets can lead to improved generalization, and still affords the option to
-fine-tune the resulting policies online at a later stage, drawing parallels with the ``pre-train
-first, then fine-tune'' trend in present-day ML.
+Sequential decision making (SDM) is a key subfield in the area of artificial intelligence (AI) that studies the problems and algorithms associated with autonomously interacting with an
+environment with the purpose of completing some task through a sequence of actions. With the increased popularity in machine
+learning (ML), some attention is now being devoted to rendering existing tool-like solutions more
+autonomous, for instance by allowing large language models (LLMs) to continuously prompt themselves, looping output into input for a number of iterations with the aim of achieving some higher level goal. Several contributions, including AutoGPT~\citep{yang_auto-gpt_2023} and others \citep{park_generative_2023, bakhtin_human-level_2022, zhou_agents_2023}, have been made in this vein, making SDM
+more relevant than ever. While already well-established as a field for
+decades~\citep{minsky_theory_1954, bellman_dynamic_1957, klopf_brain_1972, bryson_optimal_1996}, the
+recent widespread adoption of deep neural networks (NNs) in supervised and unsupervised learning in
+vision~\citep{krizhevsky_imagenet_2012, he_deep_2016, mildenhall_nerf_2021} and
+language~\citep{mikolov_distributed_2013, vaswani_attention_2017, devlin_bert_2019,
+	brown_language_2020} has led to similar deep learning (DL) approaches to SDM, particularly in the
+field of reinforcement learning (RL)~\citep{sutton_reinforcement_2018}, achieving impressive results
+on a wide range of problems~\citep{mnih_playing_2013, silver_general_2018, openai_dota_2019,
+	fawzi_discovering_2022}.
 
-Unfortunately, offline RL presents a series of non-trivial issues. In particular, offline RL can be
-vulnerable to \textit{distributional shift}, where the data distribution changes between training
-and deployment \citep{quinonero-candela_dataset_2008}. This issue of out-of-domain (OOD)
-generalization \citep{shen_towards_2021} is pervasive to the current paradigm of ML research
-\citep{arjovsky_out_2020}, and is generally exacerbated by the use of high-dimensional function
-approximators such as deep neural networks. One of the surprising effects of OOD misgeneralization
-is \textit{causal confusion}, where the learner wrongly identifies the causal model of the data due
-to spurious correlations \citep{de_haan_causal_2019}. The more classic  failure mode of causal
-confusion is \textit{capability misgeneralization}: the model fails to take correct/useful actions
-in deployment \citep{gupta_can_2022, tien_study_2022}. Along with \citet{shah_goal_2022},
-\citet{langosco_goal_2022} identify \textit{goal misgeneralization} as an additional, potentially
-more dangerous failure mode, where the model capably pursues the wrong goal in deployment. The
-classic example of goal misgeneralization is CoinRun. Here, an agent is trained with the intended
-goal of collecting coins in an obstacle-ridden environment. In testing, the agent is observed to
-misgeneralize to the unintended goal of capably navigating to the coin-barren right-hand side of the
-environment. During training, the coins were always presented on the right-hand side of the
-environment, causing the agent to erroneously learn the spurious correlation between right-hand
-sidedness and reward rather than coins and reward. Unsurprisingly, both works suggest more diverse
-training data as a potential mitigation.
+These advances are certainly impressive, but their inherently online nature has hindered
+their integration in contexts where interacting with the environment is either expensive or
+dangerous, such as consumer robotics~\citep{singh_reinforcement_2022},
+healthcare~\citep{liu_reinforcement_2020} and autonomous vehicles~\citep{kiran_deep_2022}. In
+synchrony with ML's shift to more data-driven approaches, much attention is now being dedicated to
+\textit{offline} solutions to SDM, such as batch RL~\citep{levine_offline_2020,
+	prudencio_survey_2022} and imitation learning~\citep{schaal_is_1999}. Rather than interacting with
+the environment in real-time, these offline solutions aim to learn control policies using a fixed
+dataset of previously collected interactions. Making use of large, diverse datasets can lead to
+improved generalization, and still affords the option to fine-tune the resulting policies online at
+a later stage, drawing parallels with the ``pre-train first, then fine-tune'' trend in present-day
+ML.
 
-In this vein, we set out to tackle the issue of goal misgeneralization by proposing the use of
-natural language (NL) as an additional data modality to be integrated into our offline RL
-algorithms. Inspired by their applications beyond a pure NLP context \citep{dosovitskiy_image_2022,
-ramesh_hierarchical_2022, rombach_high-resolution_2022}, we can develop a more natural and
-expressive interface between human and machine to specify goals. This is after-all how humans
-communicate desired outcomes to each other. Furthermore, we view the expressivity of NL as
-efficiently providing compressed representation that would otherwise have to be learned through
-additional training data, whose necessary distribution can be difficult to control and know ahead of
-testing. In short, we aim to address the following questions:
+\section{Motivation}
+
+ML solutions can be vulnerable to \textit{distributional shift},
+where the data distribution changes between training and
+deployment~\citep{quinonero-candela_dataset_2008}. This issue of out-of-distribution (OOD)
+generalization~\citep{shen_towards_2021} is pervasive to the current paradigm of ML
+research~\citep{arjovsky_out_2020}. \textit{Causal confusion} is a phenomenon closely linked to OOD misgeneralization in which the learner wrongly identifies the causal
+model of the data due to spurious correlations~\citep{de_haan_causal_2019}. The more classic failure
+mode of causal confusion is \textit{capability misgeneralization}, where the model generally fails
+to take correct or useful actions in deployment~\citep{gupta_can_2022, tien_study_2022}. Closely
+tied to the field of AI safety~\citep{hendrycks_unsolved_2022, ngo_alignment_2022,
+	hendrycks_overview_2023}, \citet{langosco_goal_2022} and later \citet{shah_goal_2022} identify
+\textit{goal misgeneralization} as an additional, potentially more dangerous failure mode, where the
+model capably pursues a different goal in deployment. The authors identify goal misgeneralization as
+being of particular concern due to the retained capability of the model when generalizing, allowing
+for the possibility of visiting arbitrarily undesirable states.
+
+In this work, we set out to tackle the issue of goal misgeneralization by improving the
+expressiveness by which we specify the goal or task. We focus on this direction because we
+hypothesize that goal misgeneralization may at times be caused by the limited nature by which tasks
+are specified. For instance, specifying a task to an RL agent via sparse rewards awarded only upon
+task completion may be too coarse of a specification for tasks that require more nuance in the
+behavior throughout the entirety of the trajectory~\citep{vamplew_scalar_2022}. We focus on the
+problem area of of sequential decision making (SDM) and, inspired by the recent applications of
+language in other fields~\citep{dosovitskiy_image_2022, ramesh_hierarchical_2022,
+	rombach_high-resolution_2022}, we choose explore the use of language for task specification. We
+choose this direction because we view task specification as a \emph{communication} between task
+requester and task executor. For communicative intents, we view language as the best option for
+providing a more natural and expressive interface between human and machine to specify goals. After
+all, this is how humans communicate desired outcomes to each other.
+
+\section{Contributions}
+
+With this work, we make the following contributions:
 
 \begin{enumerate}
-  \item How can we use natural language to address goal misgeneralization in offline RL?
-  \item Can natural language exacerbate goal misgeneralization?
-  \item If so, under which circumstances does natural language alleviate vs.~exacerbate the issue?
+	\item We are the first to employ natural language in an attempt to address the issue of goal misgeneralization.
+	\item To this end, we are the first to explicitly frame and treat goal misgeneralization in the
+	      context of multi-task learning, and present a new definition of the phenomenon.
+	\item Correspondingly, we outline an original framework for task specification in SDM, and outline why focusing on task specification may help with causal confusion.
+	\item We describe, implement and train an implementation under this framework and demonstrate how
+	      existing and future foundation models may be leveraged for the problem.
+	\item Finally, we are the first to the best of our knowledge to explicitly link goal
+	      misgeneralization to Occam's razor, and provide actionable advice to researchers for future
+	      work on the phenomenon.
 \end{enumerate}
 
-We frame these questions in the larger context of goal specification in RL
-\citep{white_unifying_2017, liu_goal-conditioned_2022, bansal_specification-guided_2022}:
-\textit{When is a goal specification good? What is a feasible, sensible way to specify goals? Can
-goal specification methods be used in a complementary manner?} These are some of the more general
-questions we wish to address at least partly in this work.
+We make our code publicly available at
+\href{https://github.com/thesofakillers/nlgoals}{github.com/thesofakillers/nlgoals}, along with
+a couple of demonstration videos.
+
+\section{Outline}
+
+The remainder of this document will be structured as follows. In Chapter~\ref{back:chap}, we provide
+the necessary background, introducing prior work and theory necessary for the following chapters. In
+Chapter~\ref{meth:chap}, we first outline our task specification framework, discuss the role
+of specification in CC and define GMG, relating it directly to multi-task learning. We then
+describe the implementation details for our approach to the problem. In Chapter~\ref{exp:chap}, we
+describe our experimental setup, the results of our experiments and discuss the implications of our
+findings. We review related work in Chapter~\ref{rel:chap}, and finally conclude in
+Chapter~\ref{conc:chap}.
 
 \ifSubfilesClassLoaded{%
-  \bibliographystyle{../bibstyle}
-  \bibliography{../references-bibtex}%
+	\bibliographystyle{\subfix{bibstyle}}
+	\bibliography{\subfix{references-bibtex}}%
 }{}
 \end{document}

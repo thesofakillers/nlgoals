@@ -1,29 +1,32 @@
-\RequirePackage[a4paper,margin=2cm]{geometry} % template margins
-\RequirePackage[labelfont=bf]{caption}
-\RequirePackage[]{subcaption}
+% \RequirePackage[a4paper,margin=1in]{geometry} % template margins
+% \RequirePackage{geometry}
+% \RequirePackage{caption}
+% \RequirePackage[]{subcaption}
 \RequirePackage{multirow}
 \RequirePackage[dvipsnames]{xcolor}
 \definecolor{darkblue}{rgb}{0, 0, 0.5}
 \definecolor{darkred}{HTML}{8b0000}
+\newcommand{\darkred}[1]{{\color{darkred}{#1}}}
 \RequirePackage{blindtext} % Package to generate dummy text
-\RequirePackage[utf8]{inputenc} % Use UTF-8 encoding
-\RequirePackage{charter} % Use the Charter font
-\RequirePackage{microtype} % Slightly tweak font spacing for aesthetics
+% \RequirePackage[utf8]{inputenc} % Use UTF-8 encoding
+% \RequirePackage{charter} % Use the Charter font
+% \RequirePackage{microtype} % Slightly tweak font spacing for aesthetics
 \RequirePackage[english]{babel} % Language hyphenation and typographical rules
 \RequirePackage{amsthm, amsmath, amssymb, amsfonts, bbm, stmaryrd} % Mathematical typesetting
-\RequirePackage{float} % Improved interface for floating objects
+% \RequirePackage{float} % Improved interface for floating objects
 \RequirePackage{graphicx, multicol} % Enhanced support for graphics
 \RequirePackage{pgfplots} \pgfplotsset{compat=1.13}
 \RequirePackage{xcolor} % Driver-independent color extensions
 \RequirePackage{marvosym, wasysym} % More symbols
 \RequirePackage{rotating} % Rotation tools
 \RequirePackage{booktabs} % Enhances quality of tables
-\RequirePackage[numbers, sort&compress]{natbib}
+\RequirePackage[authoryear, sort&compress]{natbib}
 \RequirePackage{bm}
 \RequirePackage{wrapfig}
 \RequirePackage{enumitem}
 \RequirePackage{csquotes} % Context sensitive quotation facilities
-\RequirePackage[nodayofweek]{datetime} % Uses YEAR-MONTH-DAY format for dates
+\MakeOuterQuote{"}
+% \RequirePackage[nodayofweek]{datetime} % Uses YEAR-MONTH-DAY format for dates
 \RequirePackage{acronym}
 \RequirePackage{adjustbox}
 \RequirePackage{pifont}
@@ -32,21 +35,56 @@
 \RequirePackage{nicefrac}
 \let\rfb\reflectbox
 
-\RequirePackage{fancyhdr} % Headers and footers
-\pagestyle{fancy} % All pages have headers and footers
-\fancyhead{}\renewcommand{\headrulewidth}{0pt} % Blank out the default header
-\fancyfoot[L]{} % Custom footer text
-\fancyfoot[C]{} % Custom footer text
-\fancyfoot[R]{\thepage} % Custom footer text
 
 %%------------------------------------------------------------------
 
+\RequirePackage{xr}
+\RequirePackage[all]{nowidow}
+\RequirePackage[parindent, lastparline]{impnattypo}
+\RequirePackage{url}
+% \RequirePackage{parskip} % skip line instead of indenting
+\newcommand{\red}[1]{{\color{red}{#1}}} % for reminders of TODO tasks
+\newcommand{\blue}[1]{{\color{blue}{#1}}} % for marking things
 \RequirePackage[T1]{fontenc}  % for better font handling
 \RequirePackage{bookmark} % extension of hyperref for more customized referencing
+\renewcommand\thefootnote{\textcolor{darkred}{\arabic{footnote}}}
 \hypersetup{
-  colorlinks,
-  linkcolor=black,
-  citecolor=darkred,
-  urlcolor=darkred
+	colorlinks,
+	linkcolor=darkred,
+	citecolor=darkred,
+	urlcolor=darkred,
+	linktoc=page
 }
 \RequirePackage{subfiles} % for splitting report into subfiles
+% \RequirePackage[style=empty]{clrdblpg}
+
+% chapter styling
+\chapterstyle{veelo}
+\renewcommand{\chapnumfont}{\color{darkred}}
+
+% bold vectors
+\newcommand{\vect}[1]{\bm #1}
+
+% numbers for subsections
+\setsecnumdepth{subsection}
+
+% dont add spacing between chapters in lof and lof
+% https://tex.stackexchange.com/a/251395/199033
+% \renewcommand{\insertchapterspace}{}
+
+% defer commands to next page
+\RequirePackage{afterpage}
+
+% advanced tables
+\RequirePackage{tabularx}
+
+% help controlling float placement
+\RequirePackage{placeins}
+
+% to determine textwidth and other dimensions
+% \RequirePackage{layouts}
+
+% for todos
+\RequirePackage{todonotes}
+\RequirePackage{marginnote}
+\renewcommand{\marginpar}{\marginnote} % https://tex.stackexchange.com/a/402075/199033

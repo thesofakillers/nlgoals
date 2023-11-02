@@ -1,0 +1,502 @@
+\documentclass[../main.tex]{subfiles}
+\begin{document}
+\chapter{Method}\label{meth:chap}
+
+\section{Preliminaries}\label{chap:prel}
+
+As mentioned, in this work we tackle the issue of GMG in SDM by focusing on improving task
+specification. Below, we first outline specifically what we mean by task specification, and later
+discuss the implications for our own definition of GMG.
+
+\subsection{Task specification}\label{prel:sec:task-spec}
+
+\emph{Task specification} is the scenario in which a \textit{requester} $\mathcal{R}$ specifies
+a \textit{task} $\mathcal{T}$ to be performed by an \textit{actor} $\mathcal{A}$\footnote{This
+	generalizes self-proposed tasks, in which the actor is also the requester
+	$\mathcal{A}=\mathcal{R}$.}. In SDM, The requester expresses a high-level representation
+$\mathcal{Z}$ of the ideal trajectory of state-action pairs, corresponding to the task they
+would like to be performed. We specifically allow high-level representations of trajectories because
+it can occur that the requester does not know exactly what sequence of state-action pairs they want,
+and are typically more interested in more abstract, higher level desiderata anyway.
+
+The actor is necessarily a multi-task policy, as otherwise task-specification would be futile. The
+actor receives $\mathcal{Z}$ and ``interprets'' it by using it as a conditional variable on its
+policy. Like \citet{cho_multi-task_2022}, we therefore write the actor's policy as $\pi(a \mid s,
+	\mathcal{Z})$, where $\mathcal{Z}$ represents an encoding of the intended task. We underline that
+$\mathcal{Z}$ can in principle take any form and originate from any source. Examples include
+rewards, one-hot encodings, demonstrations, preferences~\citep{christiano_deep_2017}, formal
+language~\citep{bansal_specification-guided_2022}, natural language, \textit{et cetera}.
+
+\subsection{Specification and causal confusion}\label{meth:sec:spec_causal}
+
+Suppose we have some latent \emph{notion} $N$, an abstraction encapsulating some semantic
+information, that we wish to communicate. The notion is latent, i.e. not observed directly, and we
+can instead communicate it through some language $L$ which maps the notion $N$ to some corresponding
+expression $N_L$. Note that there can be more than one corresponding expression per notion. In
+general, the mapping between notion and language expression is many-to-many. Under our task
+specification framework from above, the task we wish to specify $\mathcal{T}$ is the notion we wish
+to communicate $N$, and the high-level representation $\mathcal{Z}$ is the expression $N_L$ we use
+to communicate it.
+
+In the context of communication, a notion $N$ and its corresponding expressions $N_L^1, N_L^2, \dots$,
+can be treated as random variables. This assumption can be made given the wide, almost infinite
+range of possible notions one may wish to communicate, and similarly to the wide range of ways in
+which a notion can be expressed. These lead to uncertainty which we can treat probabilistically with
+random variables.
+
+We can therefore quantify the information content of a given notion or expression using the concept
+of entropy~\citep{shannon_mathematical_1948}. Entropy effectively quantifies the average level of
+uncertainty or ``surprise'' associated with a random variable. For a discrete random variable $X$,
+its entropy $H(X)$ is defined as
+\begin{equation}
+	H(X) = -\sum_{x \in X} p(x) \log p(x)
+\end{equation}
+where $p(x)$ is the probability mass function of $X$, and the summation is over all possible
+outcomes $x$ of $X$. A higher entropy indicates greater uncertainty and thus greater information
+content. If an outcome is highly uncertain, it means we have very little prior knowledge about what
+that outcome will be. Therefore, learning the actual outcome provides us with a substantial amount
+of new information. Conversely, if an event is certain to occur, then learning that this event has
+indeed occurred doesn't provide us with any new information because we already knew it would happen.
+Thus, a higher entropy indicates greater uncertainty and thus greater information content.
+
+The entropy of a given notion $N$ and an expression of it $N_L$ therefore serves as the measure of
+their respective information content. For a notion, we can write
+
+\begin{equation}
+	H(N) = -\sum_{n \in N} p(n) \log p(n),
+\end{equation}
+where $p(n)$ is the probability of notion $n$ being the one intended for communication. For an
+expression, we can write
+\begin{equation}
+	H(N_L) = -\sum_{n_l \in N_L} p(n_l) \log p(n_l),
+\end{equation}
+where $p(n_l)$ is the probability of expression $n_l$ being the one used for communication.
+
+$N_L$ will typically be a \emph{compressed} representation of $N$. In other words, the mapping
+between notion and expression is not necessarily \emph{lossless} in terms of information
+
+\begin{equation}
+	\text{H}(N_L) \leq \text{H}(N)
+\end{equation}
+
+This compression can be either \emph{intrinsic} or \emph{extrinsic}. The former case corresponds to
+compression that occurs due to the fundamentally limited expressivity of the language $L$. For
+example, a language that lacks the grammar and/or vocabulary for expressing negation, will be
+fundamentally limited from expressing the notion of absence.
+
+Extrinsic compression is compression that occurs due to reasons external to the language itself.
+This is typically the communicator choosing to use a coarser expression the notion. For example,
+choosing to communicate ``go to the block'' rather than ``breathe in, activate your muscles such
+that your right thigh lifts your right foot off the ground and forward, breathe out, breathe in,
+...''.
+
+Compression, whether intrinsic, extrinsic or either, can lead to \emph{ambiguity}. These are cases
+where the same expression $F$, due to underspecification, maps to multiple semantically different
+notions $N_1, N_2, \dots$. We view this as a potential avenue for causal confusion to occur.
+
+For instance, under our definitions, we can frame rewards as a language used to communicate some
+notion of a desired task to SDM agents. When our rewards are underspecified, they can over-compress
+our task notion, such that the same reward maps to multiple tasks. The policy may therefore suffer
+from causal confusion and learn to pursue the wrong task.
+
+We therefore posit that causal confusion and hence GMG can be addressed by focusing on how we
+specify the task, so to reduce ambiguity in the task specification. We move away from
+rewards~\citep{vamplew_scalar_2022} and instead leverage the potentially much higher expressiveness
+of natural language, spurred by recent advancements in the field of natural language processing
+(NLP)~\citep{devlin_bert_2019, brown_language_2020, touvron_llama_2023}. For a given notion $N$,
+assuming the same amount of engineering effort, we expect the compression faced by the language of
+rewards $LR$ to be higher than the compression faced by natural language $NL$, i.e. we expect the
+following
+
+\begin{equation}
+	\text{H}(N_{LR})	< \text{H}(N_{NL}) \leq \text{H}(N).
+\end{equation}
+
+We reason that the language of rewards faces higher intrinsic compression due to its scalar nature,
+rendering it more difficult to capture nuance than what would be possible with the
+multidimensionality and compositionality of natural language, which could not only encode more
+information directly, but could also allow for factored representations which may more easily be
+leveraged for generalization. Similarly, we expect the language of rewards to also face higher
+extrinsic compression when compared to natural language. We reason that task specification is
+a communication problem, and to this end natural language is the most natural or ``comfortable''
+interface we have as communicators. Rewards, while succinct, may at times be awkward to specify due
+to the nature of the tasks. This is for instance the case for sparse rewards awarded only upon task
+completion, or for the denser proxy rewards awarded in the process of reward shaping
+\citep{ng_policy_1999}.
+
+\subsection{Defining GMG in the context of multi-task learning}\label{prel:sec:gmg}
+
+Goal Misgeneralization is inherently Multi-task. Indeed, all definitions and examples of GMG so far
+have implicitly defined a multi-task setup, with the presence of some goal task $c_g$ and some other
+confounding task $c_c$. After all, the definition of GMG implies the existence of at least one other
+task beyond the one intended by the designers, as without such a task, it would be impossible for
+the model to pursue it. We instead choose to explicitly define this multi-task setup, relying on the
+framework from \citet{wilson_multi-task_2007}.
+
+Specifically, let $\mathcal{C} = \left\{c_i\right\}_{i=1}^N$ be a set of discrete episodic tasks.
+This could for example the set of all tasks $\mathcal{T}$ with natural language instructions
+$\mathcal{T}_{NL}$, following the notion and expression notation from the previous section. Let
+$p_\text{train}(\mathcal{C})$ and $p_\text{test}(\mathcal{C})$ be the distributions from which the
+tasks are sampled during training and testing respectively. Each task $c_i$ then defines a separate
+MDP $M_i = (S, A, R_i, P_i)$, such that the reward and transition functions differ by task. At
+training time we try to find a task-conditioned policy \begin{equation*} \pi : S \times \mathcal{C}
+	\rightarrow \Delta (A), \end{equation*} with an objective conductive to good performance across the
+tasks. For multi-task RL, such an objective maximizes the expected reward over the distribution of
+tasks, i.e.
+
+\begin{equation}
+	\pi^*_\text{RL} =
+	\underset{\pi \in \Pi}{\arg \max } \mathbb{E}_{c \sim p_{\text{train}}(C)}
+	\left[\mathbb{E}_{\pi_c}
+		\left[\sum_{t=1}^{T_c} \gamma^t R_{t,c}\right]
+		\right],
+\end{equation}
+where $T$ is the horizon of time steps $t$ and $\gamma$ is the discount factor.
+For multi-task IL, such an objective minimizes the expected loss $L$ between policy and expert
+behaviour over the distribution of tasks, i.e.
+\begin{equation}
+	\pi^*_\text{IL} =
+	\underset{\pi \in \Pi}{\arg \min } \mathbb{E}_{c \sim p_{\text {train }}(C)}
+	\left[\mathbb{E}_{\pi_{\varepsilon}}
+	\left[L_{c}\right]
+	\right].
+\end{equation}
+
+Given the above, we define \emph{Goal misgeneralization (GMG)} as the observed phenomenon in which
+a system successfully trained to pursue a particular goal $c_1$ in setting $X$ fails to generalize
+to a new setting $Y$ and instead capably pursues a different goal $c_2$. A \emph{goal} in this
+definition can either be a specific state (static) or a behaviour (dynamic). Note that we use the words ``task'' and ``goal'' interchangeably, and will do so for the remainder of this work. A system will be in
+\emph{capable pursuit} of a given goal if a metric $M$ describing the extent of goal achievement
+(e.g. success rate) is significantly higher than equivalent metric for most other goals in
+$\mathcal{C}$. Mathematically, we say GMG happens if
+\begin{equation}
+	\exists c_1, c_2 \in \mathcal{C},~\text{s.t.}~p_\text{test}(c_1), p_\text{test}(c_1) > 0,
+\end{equation}
+and
+\begin{equation}
+	\mathbb{E}_{\pi_{c_1}}\left[ M_{c_2}\right]>\mathbb{E}_{\pi_{c_1}}\left[M_{c_1}\right].
+\end{equation}
+
+We place our definition in between those of \citet{langosco_goal_2022} and \citet{shah_goal_2022},
+relaxing the former's reliance on RL and \citet{orseau_agents_2018}'s agents and devices framework
+for simplicity, while focusing on SDM rather than the more general case proposed by the latter, to avoid overly wide characterizations of the phenomenon.
+
+\section{Conditioned Behavioural Cloning}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\textwidth]{figures/cbc_architecture}
+	\caption[A high-level overview the CBC architecture.]{A high-level overview the CBC architecture.
+		At every time step in the sequence, a CBC instance receives an RGB representation of the
+		environment state, proprioceptive state and a task specification from the requester. These are
+		encoded by their respective encoders. In the case of GCBC, the specification encoder is CLIPT
+		(see Figure~\ref{fig:clipt}), while in the case of RCBC, the specification encoder simply
+		multiplies the reward by a one-hot vector encoding the specified task. The output of the
+		encoders is concatenated and fed into the policymaker module, which recursively computes
+		a hidden representation $\vect{v}_h$ utilizing hidden state from previous steps. Finally, the
+		actor module uses this $\vect{v}_h$ to compute a distribution over the action space.}
+	\label{fig:cbc}
+\end{figure}
+
+We are interested in addressing GMG in SDM by improving task specification. We follow our
+requester-actor task specification framework where our SDM policy is conditioned on our
+specification. More specifically, our policy takes the current state $s \in S$ and our task
+specification $z \sim \mathcal{Z}$ as input, and outputs a distribution over possible actions $a
+	\sim A$, $\pi(a \vert s, z)$. For the sake of simplicity, we take inspiration from
+\citet{lynch_learning_2020}'s baselines and define a \emph{conditioned behavioural cloning (CBC)}
+architecture. Represented in Figure~\ref{fig:cbc}, our CBC policy consists in the following modules:
+
+
+\begin{itemize}[leftmargin=*, label={}, itemsep=0em, partopsep=0em, topsep=1em]
+
+	\item A \textbf{perception encoder}, which at each time step perceives a static view of the
+	      environment state as RGB images and outputs a $64$-dimensional dense
+	      representation $\vect{v}_\text{perc}$. We use the same encoder as \citet{lynch_learning_2020},
+	      also adopted in following papers~\citep{lynch_language_2021, mees_calvin_2022, mees_what_2022}.
+	      This consists in a deep neural network comprising of a series of convolutional layers
+	      interleaved with the ReLU activation function. Spatial softmax~\citep{finn_deep_2016} is used to
+	      flatten the convolution features into the output dimension. Figure~\ref{fig:perc-enc} outlines
+	      the architecture in more detail.
+
+	\item A \textbf{proprioceptive encoder}, which at each time step encodes proprioceptive state from
+	      the agent (such as e.g. joint positions in the case of a robotic arm) into a sparse
+	      representation $\vect{v}_\text{proprio}$. For our experiments (see Chapter
+	      ~\ref{exp:chap}) the proprioceptive state was simple enough that the encoder was simply
+	      the identity function.
+
+	\item A \textbf{specification encoder} which encodes the requester's specification into
+	      a specification vector $\vect{v}_\text{spec}$. We implement this differently based on which
+	      subclass of CBC we are considering (see Sections~\ref{meth:sec:rcbc} and~\ref{meth:sec:gcbc}).
+
+	\item A \textbf{``policymaker'' module} which at each time step takes a concatenation of
+	      $\vect{v}_\text{perc}$, $\vect{v}_\text{proprio}$ and $\vect{v}_\text{spec}$ and recursively
+	      encodes it  into a 2048-dimensional vector $\vect{v}_h$ using a gated-recurrent-unit (GRU)
+	      ~\citep{cho_learning_2014}. We choose a GRU and this particular dimension following
+	      \citet{mees_what_2022}.
+
+	\item An \textbf{actor module} which takes the hidden representation $\vect{v}_h$ from the
+	      policymaker and encodes it into a distribution over our action space. We implement the actor
+	      module differently based on whether we are dealing with discrete or continuous action spaces
+	      (see Section~\ref{meth:sec:actor-modules}).
+
+\end{itemize}
+
+During training, CBC receives batches of demonstration rollouts,
+consisting of trajectories of environment state and expert next actions. In parallel to each
+trajectory, if applicable\footnote{As noted in Section~\ref{meth:sec:gcbc}, at least one of our training
+	setups allows for trajectories that are not labeled with specification nor task ID.}, the batch
+contains the specification (for example raw text) for the trajectory and the ID of the task
+completed in the trajectory, the latter of which may or may not be used to assist with handling multi-task considerations. Only the perception encoder, policymaker and actor are trained, with
+the other modules either being trained separately or not requiring training at all.
+
+At inference time, CBC receives the current state and specification and samples an action from the
+computed action distribution. Recurrence is allowed for a specific number of steps (typically
+equivalent to the length of the trajectories shown during training), after which the hidden state is
+reset.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\textwidth]{figures/perc_encoder}
+	\caption[The perception encoder of our CBC policy.]{The perception encoder of our CBC policy. Not
+		pictured: Layer normalization~\citep{ba_layer_2016} is applied after the final fully connected layer.}
+	\label{fig:perc-enc}
+\end{figure}
+
+\subsection{RCBC: Reward-conditioned Behavioural Cloning}\label{meth:sec:rcbc}
+To serve as a baseline for our experiments addressing GMG (see Section~\ref{exp:sec:gmg}), we
+formulate a subclass of CBC where the task is specified by conditioning on reward, similarly to~\citep{chen_decision_2021}. To fit under our multi-task setup, the specification encoder simply
+multiplies the reward by a one-hot encoding vector obtained from the task ID similarly to \citet{cho_multi-task_2022}, such that each
+dimension corresponds to a different task in our multi-task ensemble. Therefore, for e.g.\ a 6-task
+ensemble, we have a 6-dimensional one-hot vector for $\vect{v}_\text{spec}$, with the non-zero
+element corresponding to the reward for task at hand.
+
+\subsection{GCBC: Goal-conditioned Behavioural Cloning}\label{meth:sec:gcbc}
+As stated in previous sections, we posit that task specification can be improved by using natural
+language instead of rewards, and that this improvement will manifest itself when comparing behaviour
+in causally confused setups. Following our requester-actor framework, we view natural language
+specifications as representations of the task that is being specified, or the goal we want our agent
+to achieve.
+
+Naively we would like to condition our policy on the rich dense representations provided by
+state-of-the-art language models. However, due to the grounding problem (see Section~\ref{back:sec:grounding}), using these representation directly could result in the policy failing to appropriately relate them to their referents in the environment and in the policy's internal representations. Additionally,
+we are faced with the reality that language-annotated trajectories are rare and expensive to
+collect.
+
+To address these issues, we instead train on \emph{visual} representations
+$\vect{v}_\text{spec}^\text{vis}$ of our goals originating directly from the environment (whose
+state we represent visually, in RGB images), and assume that these visual representations are in
+a semantic space similar to the equivalent \emph{textual} representations of the same goals
+$\vect{v}_\text{spec}^\text{txt}$, obtained via e.g.\ some form of contrastive representation
+learning~\citep{chen_simple_2020, le-khac_contrastive_2020}. That is, we assume that when
+conditioning on the visual goal of e.g. going to object $G$, this representation will be similar to
+the representation for the instruction ``go to object $G$''. We keep this description relatively
+high-level at this stage to keep our method general. We follow with more detail about how we
+implement visual and textual goals in Section~\ref{meth:sec:clipt}.
+
+Our assumption allows us to leverage the much larger availability of visual data for training.
+During this phase, the policy is trained on a behavioural cloning objective, i.e. matching the
+behaviour in the expert demonstrations as closely as possible\footnote{The specific implementation
+	will vary depending on which actor module is used. See Section~\ref{meth:sec:actor-modules}.}.
+Because our (visual) goal representations can be constructed directly from the environment and do
+not rely on the notion of rewards, they are flexible enough to be applied to any trajectory where the goal can be described with the final image. We
+therefore can afford to expand our training beyond merely ``successful'' trajectories as dictated by
+our task ensemble. Instead, we can encompass a wider range of behaviors, incorporating for instance
+much cheaper and more available ``play data'', consisting in exploratory, potentially random
+behaviour in the environment, covering a wide range of states and actions~\citep{lynch_learning_2020}. We posit that the increased variability from this training data should
+aid with grounding, as the policy learns to interpret incoming representations. At inference time,
+thanks to our assumption, the visual representations can be swapped for more easily articulable
+textual representations.
+
+\section{Actor Modules}\label{meth:sec:actor-modules}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\textwidth]{figures/clip_overview}
+	\caption[General overview of CLIP.]{A general overview of CLIP. Pairs of images and captions are
+		respectively fed as input to text and image encoders. The encoders are trained contrastively,
+		such that the similarity between the textual and image representations $T_i$ and $I_i$ is
+		maximized for the original pairings (the diagonal) and minimized for the remaining pairings (off
+		the diagonal).}
+	\label{fig:clip}
+\end{figure}
+
+We implement our actor modules differently depending on the kind of action space our policy needs to
+act in. In discrete action spaces, the possible actions the policy can take are finite, for instance ``move forward'', ``turn right'', ``turn left'', et cetera. In continuous
+action spaces, the possible actions are potentially infinite. These could for
+instance be a vector describing the $(x, y, z, \phi, \theta)$ coordinates for the position and
+orientation of a robotic arm. We describe our implementations for both cases below.
+
+\subsection{Discrete Action spaces}\label{meth:sec:actor-modules:discrete}
+
+Our implementation for discrete action spaces is very simple. For an $N$-dimensional action space,
+we use a linear layer to project our policymaker's output representation $\vect{v}_h$ to
+a $3N$-dimensional hidden representation. We apply ReLU and then use another linear layer to project
+the hidden representation to a $N$-dimensional vector. We apply a softmax activation function and
+train our policy on the cross-entropy loss between the resulting predicted action distribution and
+the labeled expert action. We sample actions by selecting the action with the highest probability
+using the argmax operation. We log the action prediction accuracy as our performance metric
+throughout training.
+
+\subsection{Continuous Action spaces}\label{meth:sec:actor-modules:continuous}
+
+For continuous action spaces, we follow \citet{lynch_learning_2020} and use a \emph{discretized
+	logistic mixture likelihood (DLML)}\footnote{Also known as ``Discretized Mixture of Logistics
+	(DMoL)'', ``Discretized Logistic Mixture (DLM).'', ``Mixture of Discretized Logistics
+	(MDL)''}\footnote{A detailed tutorial, including motivation and implementation details, was produced
+	as part of the thesis:
+	\href{https://www.giuliostarace.com/posts/dlml-tutorial}{giuliostarace.com/posts/dlml-tutorial}}~\citep{salimans_pixelcnn_2017}. This is of particular utility for our use case, where many
+high-level behaviours may satisfy the same task specification. Utilizing a mixture of distributions
+can help with modeling this potentially multi-modal problem. For a given continuous output variable
+$y$, the details of DLML consist of the following:
+
+\begin{enumerate}
+
+	\item We assume that there is a latent value $v$ with a continuous distribution.
+
+	\item We take $y$ to come from a discretization of this continuous distribution of $v$. We do this
+	      8-bit representation. What this means is that if e.g. $v$ can be any value between $0$ and
+	      $255$, then $y$ will be any \emph{integer} between those two numbers.
+
+	\item We model $v$ using the logistic distribution $v \sim \mathfrak{L}(\mu, d)$, where $\mu$
+	      and $d$ are ``location'' and ``scale'' parameters respectively, defining the distribution.
+
+	\item We then take a further step, choosing to model $v$ as a mixture of $K$ logistic
+	      distributions:
+
+	      \begin{equation}\label{meth:eq:mixture-likelihood}
+		      v \sim \sum_i^K q_i \mathfrak{L}(\mu_i, d_i),
+	      \end{equation}
+
+	      where $q_i$ is some coefficient weighing the likelihood of the $i$th distribution, which we
+	      refer to as ``mixture logit''.
+
+	\item To compute the likelihood of $y$, we sum its (weighted) probability masses over the $K$
+	      mixtures. We can obtain the probability masses by computing the difference between consecutive
+	      cumulative density function (CDF) values of equation (\ref{meth:eq:mixture-likelihood}). Note
+	      that the CDF of the logistic distribution is a sigmoid function, $\sigma$. We therefore write:
+
+	      \begin{equation}\label{meth:eq:computed-mixture-likelihood}
+		      p(y | \vect{q}, \vect{\mu}, \vect{d} )  = \sum_{i=1}^K q_i
+		      \left[\sigma\left(\frac{y + 0.5 - \mu_i}{d_i}\right) -
+			      \sigma\left(\frac{y - 0.5 - \mu_i}{d_i}\right)\right],
+	      \end{equation}
+
+	      The 0.5 value comes from the fact that we have discretized $v$ into $y$ through rounding,
+	      and therefore successive values of our discrete random variable $y$ are found at this
+	      boundary.
+
+	\item Finally, we can model edge cases, to avoid assigning probability mass outside the valid
+	      range of values. We do this by replacing $y - 0.5$ with $-\infty$ when $y=0$ and $y + 0.5$ with
+	      $+\infty$ when $y = 2^8 = 255$.
+
+\end{enumerate}
+
+We are left with nothing more than a likelihood. We can therefore apply a maximum likelihood
+estimation (MLE) process to estimate our parameters $q$, $\mu$ and $d$. Pragmatically, For a given
+output variable $y$, using $K$ mixture elements, our model should output $K$ locations, scales and
+mixture logits. We therefore implement a separate linear layer for each of our mixture parameters,
+each projecting the policymaker's output representation $\vect{v}_h$ into a $K$-dimensional vector,
+with each dimension corresponding to one of the mixture elements. For cases in which our output
+variable $y$ is actually an $M$-dimensional vector $\vect{y}$, the linear layers project to a $(K
+	\times M)$-dimensional vector instead. We train the resulting policy architecture on the negative
+log likelihood loss based on equation (\ref{meth:eq:computed-mixture-likelihood}).
+
+To sample actions, we sample a distribution from the mixture based on the predicted mixture logits
+using the Gumbel-Max trick~\citep{gumbel_statistical_1954}. We then use inverse sampling with the
+sampled distribution location and scale parameters to sample a predicted action. For multivariate
+actions, we log action cosine similarity and action L1 distance as the performance metrics during
+training.
+
+
+\section{CLIPT: Visual/Textual Goal Representations}\label{meth:sec:clipt}
+
+\afterpage{
+	\begin{figure}[t]
+		\centering
+		\includegraphics[width=\textwidth]{figures/clipt_overview}
+		\caption[A high-level overview of CLIPT.]{A high-level overview of CLIPT. During phase 1P, the
+			start and end state of a trajectory are encoded by the CLIP vision encoder (CLIP Vis) and
+			concatenated into $\vect{v}_c$. This is projected into $\vect{v}_{vg}$ by
+			$\text{MLP}_\text{vis}$ which is trained contrastively to match the paired $\vect{v}_t$
+			representations of the natural language instructions produced by CLIP's text encoder (CLIP Txt).
+			In phase 2P, the start state of the trajectory is encoded by CLIP Vis and concatenated to
+			$\vect{v}_t$ to form $\vect{v}_k$. This is projected into $\vect{v}_{tg}$ by
+			$\text{MLP}_\text{txt}$, which is trained contrastively to match the paired $\vect{v}_{vg}$
+			representations produced by (frozen) $\text{MLP}_\text{vis}$.}
+		\label{fig:clipt}
+	\end{figure}
+}
+
+In Section~\ref{meth:sec:gcbc}, we make the assumption that we have access to nearly aligned visual
+and textual goal representations. That is, for a given goal, we can represent it visually based on
+combinations of environment start and end state from demonstrated trajectories, and this visual representation
+will be semantically similar to an equivalent textual instruction for the goal.
+
+To fulfill our assumption, we propose a number of modifications to CLIP~\citep{radford_learning_2021}. CLIP is a method for training two models: a text
+encoder and vision encoder, such that representations of the same concept are in similar
+semantic spaces across the two modalities. We refer to Figure~\ref{fig:clip} for an example and
+overview. CLIP
+achieves this with two ingredients. First, the authors collect a large dataset of image-caption
+pairs. Secondly, the authors train their encoders on a contrastive loss objective: maximizing the
+cosine similarity of the vision and text representations of the $B$ true pairs in a given batch,
+while minimizing the cosine similarity of the remaining $B^2 - B$ incorrect pairings. This is implemented using the \textit{multi-class N-pair loss} of~\citet{sohn_improved_2016}, which uses categorical cross entropy. For a given image $\vect{x}$, its correctly paired caption $\vect{t^+}$ and the remaining $N-1$ incorrectly paired captions $\{\vect{t^-_i}\}$, this is defined as
+\begin{equation}
+	\mathcal{L}\left(\vect{x}, \vect{t}^+, \{\vect{t}^-_i\}^{N-1}_{i=1}\right)
+	= \log\left[1 + \sum_{i=1}^{N-1} \exp\left(f(\vect{x})^\top g(\vect{t}^-_i) - f(\vect{x})^\top g(\vect{t}^+)\right)\right],
+\end{equation}
+where $f$ is the CLIP vision encoder and $g$ is the CLIP text encoder. We refer
+readers to the original paper for further details~\citep{radford_learning_2021}.
+
+Since the release of the paper, a number of off-the-shelf vision-text encoder pairings have become
+available~\citep{ilharco_openclip_2021, schuhmann_laion-5b_2022}. We aim to leverage the rich
+representations made available by these models but envision two limitations which we address with
+our modifications. Firstly, we expect images of the environment state to be at least slightly out of
+domain when compared to the dataset CLIP was trained on. The same applies to the instructions we
+intend to use for textual goal specifications. Secondly, we define a visual goal as being composed
+of at least two images representing the start and end state of the trajectory.
+However, CLIPT is trained on single-image inputs, necessitating a modification to this end.
+
+To address these limitations, we perform the following steps:
+
+\begin{enumerate}
+	\item We collect a dataset of language-annotated trajectories.
+	\item For each sample, we encode the start and end state of the trajectory using CLIP's vision
+	      encoder, resulting in $u$-dimensional representations $\vect{v}_s$ and $\vect{v}_e$
+	\item We concatenate $\vect{v}_s$ and $\vect{v}_e$ into a $\vect{v}_c$ of dimension $2u$.
+	\item We project $\vect{v}_c$ back to a $u$-dimensional vector representing our visual goal,
+	      $\vect{v}_{vg}$, using a multilayer perceptron ($\text{MLP}_{vis}$) with a single $u$-dimensional hidden layer
+	      and ReLU activation function.
+	\item In parallel, we encode the language annotation using CLIP's textual encoder, resulting in
+	      $u$-dimensional representation $\vect{v}_t$.
+	\item Keeping the CLIP encoders frozen, we train the MLP on the same contrastive objective CLIP was
+	      trained on, using $\vect{v}_t$ and $\vect{v}_{vg}$ instead
+\end{enumerate}
+
+The first phase of training (termed as phase 1P) involves training GCBC on the $\vect{v}_{vg}$ representations from $\text{MLP}_{vis}$. However, we plan to evaluate using textual representations, which could cause a performance gap to emerge due to sub-par representation matching between vision and text
+modalities, particularly given that the latter does not rely on the context of the start state. We therefore perform a second phase (which we refer to as phase 2P) of training, where
+we instead work on the textual side. Specifically
+
+\begin{enumerate}
+	\item Using the same dataset from phase 1P, we repeat steps 2-4 from phase 1P.
+	\item In parallel however, we concatenate $\vect{v}_s$ with $\vect{v}_t$ into $\vect{v}_k$, in
+	      a sense providing ``context'' to our language annotations.
+	\item Just like in phase 1P, we use a separate but architecturally identical MLP ($\text{MLP}_\text{txt}$) to project
+	      $\vect{v}_k$ back to a $u$-dimensional vector $\vect{v}_{tg}$ representing our textual
+	      goal.
+	\item We train this MLP on the aforementioned contrastive loss with
+	      ($\vect{v}_{tg}, \vect{v}_{vg}$) pairs, this time additionally freezing $\text{MLP}_\text{vis}$ from phase
+	      1P, so to only train the textual goal representations.
+\end{enumerate}
+
+We settle on this two-phase training setup rather than directly training both MLP heads together as
+we expect that the contrastive objective, mixed with the shared context vector $\vect{v}_s$, would
+entice the MLPs to ignore the second halves of the concatenated inputs, $\vect{v}_e$ and
+$\vect{v}_t$ respectively, which would greatly harm our abilities to specify tasks. We refer to the
+resulting model as CLIPT: Contrastive Language Image Pretraining for Trajectories. Figure~\ref{fig:clipt} provides a visual overview of the process.
+
+
+\ifSubfilesClassLoaded{%
+	\bibliographystyle{\subfix{bibstyle}}
+	\bibliography{\subfix{references-bibtex}}%
+}{}
+\end{document}

@@ -1,6 +1,9 @@
 \documentclass[../main.tex]{subfiles}
 \begin{document}
-\begin{titlepage}
+% \newgeometry{centering}
+\begin{titlingpage}
+    \calccentering\unitlength
+    \begin{adjustwidth}{\unitlength}{-\unitlength}
     \newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
     \center % Center everything on the page
 
@@ -11,7 +14,6 @@
     \includegraphics[width=\textwidth]{logos/uvalogo_regular_p_en.eps}\\
     \vfill
     \textsc{\Large MSc Artificial Intelligence}\\[0.2cm]
-    % \textsc{\normalsize Track: \red{track}}\\[1.0cm] % track
     \textsc{\Large Master Thesis}\\[0.5cm]
 
     %--------------------------------------------------------------
@@ -19,7 +21,7 @@
     %--------------------------------------------------------------
 
     \HRule \\[0.4cm]
-    { \huge \bfseries Addressing Goal Misgeneralization in Offline RL with Natural Language} % Title of your document
+    { \huge \bfseries Addressing Goal Misgeneralization with Natural Language Interfaces} % Title of your document
     \HRule \\[0.5cm]
 
     %--------------------------------------------------------------
@@ -34,10 +36,8 @@
     %	DATE SECTION
     %--------------------------------------------------------------
 
-    {\Large \today}\\[1cm] % Date, change the \today to a set date if you want to be precise
-
     48 ECTS\\ %
-    November 2022 - August 2023\\[1cm]%
+    September 2023\\[1cm]%
 
     %--------------------------------------------------------------
     %	COMMITTEE SECTION
@@ -45,17 +45,20 @@
     \begin{minipage}[t]{0.4\textwidth}
         \begin{flushleft} \large
             \emph{Supervisor:} \\
-            \textsc{Niklas Höpner}
+            \textsc{Niklas Höpner} \\
+            \vspace{0.5cm}
+            \emph{External Supervisor:} \\
+            \textsc{Juan Rocamonde}
         \end{flushleft}
     \end{minipage}
     ~
     \begin{minipage}[t]{0.4\textwidth}
         \begin{flushright} \large
             \emph{Examiner:} \\
-            \textsc{YOUR EXAMINER} \\
+            \textsc{Herke van Hoof} \\
             \vspace{0.5cm}
             \emph{Second Reader:} \\
-            \textsc{YOUR SECOND READER}
+            \textsc{Niklas Höpner}
         \end{flushright}
     \end{minipage}\\[2cm]
 
@@ -65,11 +68,12 @@
     %--------------------------------------------------------------
 
     % \framebox{\rule{0pt}{2.5cm}\rule{2.5cm}{0pt}}\\[0.5cm]
-    \includegraphics[width=2.5cm]{logos/uvalogo_tag_p.eps}\\[0.5cm]
+    \includegraphics[width=1.5cm]{logos/uvalogo_tag_p.eps}\\[0.5cm]
     % \includegraphics[width=2.5cm]{logos/uvaLogo.pdf}\\[0.5cm] % Include a department/university logo - this will require the graphicx package
     \textsc{\large Informatics Institute (IvI)}\\[1.0cm] %
 
     %--------------------------------------------------------------
+  \end{adjustwidth}
 
-\end{titlepage}
+\end{titlingpage}
 \end{document}

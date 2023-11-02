@@ -1,0 +1,24 @@
+\documentclass[../main.tex]{subfiles}
+\begin{document}
+\chapter{Conclusion}\label{conc:chap}
+
+In this work, we presented a first attempt at addressing the issue of goal misgeneralization by
+focusing on the improvement of task specification through the use of natural language. We devoted
+our attention to sequential decision making, and provided a preliminary formalization of a task
+specification framework. Here, we identified requester and executor parties, as well as the notion
+of a latent specification representation, corresponding to some high-level abstraction of the
+desired trajectory. Concurrently, we provide a new definition of the goal misgeneralization
+phenomenon, and are the first to explicitly frame it in the context of multi-task learning and to
+link it to Occam's razor. We developed our own implementation of a possible solution, first
+demonstrating its applicability on a challenging benchmark, and later tackling a simpler environment
+platform for toy scenarios of goal misgeneralization. Here, we showed that, under our
+implementation, natural language appears to decrease the extent of goal misgeneralization, but
+nevertheless fails to completely eliminate the problem. We performed some diagnostic experiments to
+understand possible failure modes, and provide some discussions around current limitations and
+potential future work.
+
+\ifSubfilesClassLoaded{%
+	\bibliographystyle{\subfix{bibstyle}}
+	\bibliography{\subfix{references-bibtex}}%
+}{}
+\end{document}

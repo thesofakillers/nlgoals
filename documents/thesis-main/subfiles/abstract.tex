@@ -1,6 +1,26 @@
 \documentclass[../main.tex]{subfiles}
 \begin{document}
+\thispagestyle{empty}
+
 \begin{abstract}
-	\red{Provide a short overview and description of your thesis here.}
+
+	We present an approach to address the issue of \emph{goal misgeneralization}, an intriguing
+	phenomenon most intuitively linked to sequential decision making (SDM) models. Here, a policy
+	trained to complete a particular goal during training, misgeneralizes in an out-of-distribution
+	test environment and instead capably pursues some other confounding goal. We view goal
+	misgeneralization as a consequence of \emph{causal confusion}, a phenomenon in which machine
+	learning models learn the wrong causal model for some predictive behaviour due to spurious
+	correlations. We posit that the way in which we specify tasks to our SDM agents is a key factor in
+	their proclivity to suffer from causal confusion and goal misgeneralization. Using the framework
+	of multi-task imitation learning, in the context of goal misgeneralization, we study the effects
+	of conditioning on (more expressive) factored task representations derived from natural language,
+	as opposed to simply conditioning on rewards. To this end, we present an implementation for
+	specifying tasks to behavioural cloning agents by conditioning on natural language. Compared to
+	a reward-conditioned baseline, we show that this approach diminishes the extent of goal
+	misgeneralization in a toy environment, but nevertheless still suffers from the phenomenon. We
+	perform some diagnostic experiments for further analysis of our approach, and provide some
+	discussions around current limitations and potential future work.
+
 \end{abstract}
+
 \end{document}
